@@ -1,0 +1,42 @@
+<main class="auth-page">
+  <section class="auth-panel">
+    <div class="auth-heading">
+      <%= link_to "Sessia", root_path, class: "public-brand" %>
+      <h1>Create your account</h1>
+      <p>Set up your session workspace in a minute.</p>
+    </div>
+
+    <%= render "shared/form_errors", object: @user %>
+
+    <%= form_with model: @user, url: sign_up_path, class: "form-stack" do |form| %>
+      <div class="field">
+        <%= form.label :name %>
+        <%= form.text_field :name, autofocus: true, autocomplete: "name" %>
+      </div>
+      <div class="field">
+        <%= form.label :email %>
+        <%= form.email_field :email, autocomplete: "email" %>
+      </div>
+      <div class="field">
+        <%= form.label :time_zone, "Timezone" %>
+        <%= form.select :time_zone, iana_time_zone_options, {}, data: { time_zone_auto: true } %>
+        <small class="field-hint">
+          Detected from this browser as
+          <strong data-time-zone-detected-label data-fallback-time-zone="<%= @user.time_zone %>"><%= @user.time_zone %></strong>.
+          You can change it.
+        </small>
+      </div>
+      <div class="field">
+        <%= form.label :password %>
+        <%= form.password_field :password, autocomplete: "new-password" %>
+      </div>
+      <div class="field">
+        <%= form.label :password_confirmation %>
+        <%= form.password_field :password_confirmation, autocomplete: "new-password" %>
+      </div>
+      <%= form.submit "Create account", class: "primary-button full" %>
+    <% end %>
+
+    <p class="auth-switch">Already have an account? <%= link_to "Sign in", sign_in_path %></p>
+  </section>
+</main>

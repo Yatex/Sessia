@@ -1,0 +1,203 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>AI message monitor</h1>
+    <p class="page-subtitle">Follow every AI task, whether it tried to send a WhatsApp message, and what the provider reported back.</p>
+  </div>
+  <div class="header-actions">
+    <%= link_to "Platform analytics", admin_analytics_path, class: "secondary-button" %>
+  </div>
+</section>
+
+<section class="summary-grid admin-ai-summary">
+  <article class="metric-panel">
+    <span>Tasks today</span>
+    <strong><%= @metrics[:recent_tasks] %></strong>
+  </article>
+  <article class="metric-panel">
+    <span>Pending AI work</span>
+    <strong><%= @metrics[:pending_tasks] %></strong>
+  </article>
+  <article class="metric-panel <%= "attention" if @metrics[:failed_tasks].positive? %>">
+    <span>Failed tasks</span>
+    <strong><%= @metrics[:failed_tasks] %></strong>
+  </article>
+  <article class="metric-panel">
+    <span>Queued messages</span>
+    <strong><%= @metrics[:queued_messages] %></strong>
+  </article>
+  <article class="metric-panel <%= "attention" if @metrics[:failed_messages].positive? %>">
+    <span>Failed messages</span>
+    <strong><%= @metrics[:failed_messages] %></strong>
+  </article>
+  <article class="metric-panel">
+    <span>Open alerts</span>
+    <strong><%= @metrics[:open_alerts] %></strong>
+  </article>
+</section>
+
+<section class="filter-panel">
+  <%= form_with url: admin_ai_messages_path, method: :get, class: "filter-form" do %>
+    <div class="filter-grid admin-ai-messages">
+      <div class="field">
+        <%= label_tag :query, "Search" %>
+        <%= text_field_tag :query, @filters[:query], placeholder: "Professional, client, or email" %>
+      </div>
+      <div class="field">
+        <%= label_tag :task_status, "AI task" %>
+        <%= select_tag :task_status, options_for_select([["All tasks", ""]] + AiTask.statuses.keys.map { |status| [status.humanize, status] }, @filters[:task_status]) %>
+      </div>
+      <div class="field">
+        <%= label_tag :message_status, "Message" %>
+        <%= select_tag :message_status, options_for_select([
+          ["All messages", ""],
+          ["Sent", "sent"],
+          ["Queued", "queued"],
+          ["Failed", "failed"],
+          ["No message", "not_sent"]
+        ], @filters[:message_status]) %>
+      </div>
+    </div>
+    <div class="filter-actions">
+      <%= link_to "Reset", admin_ai_messages_path, class: "secondary-button" %>
+      <%= submit_tag "Filter", class: "primary-button" %>
+    </div>
+  <% end %>
+</section>
+
+<section class="table-panel">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">AI trace</p>
+      <h2>Recent decisions</h2>
+      <p>Shows the latest <%= @tasks.size %> AI tasks across every Sessia workspace.</p>
+    </div>
+  </div>
+
+  <% if @tasks.any? %>
+    <table class="data-table admin-ai-table">
+      <thead>
+        <tr>
+          <th>Workspace</th>
+          <th>Task</th>
+          <th>Decision</th>
+          <th>Message</th>
+          <th>When</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @tasks.each do |task| %>
+          <% latest_message = task.latest_outbound_message %>
+          <tr>
+            <td>
+              <div class="stacked-cell">
+                <strong><%= task.user.name %></strong>
+                <span><%= task.user.email %></span>
+              </div>
+            </td>
+            <td>
+              <div class="stacked-cell">
+                <strong><%= task.trigger_event.humanize %></strong>
+                <span><%= [task.client&.name, task.session&.title].compact.join(" · ").presence || task.automation_key&.humanize || "-" %></span>
+              </div>
+            </td>
+            <td>
+              <div class="stacked-cell">
+                <%= status_badge(task.status) %>
+                <strong><%= task.performed_action_names.map { |action| action.to_s.humanize }.join(", ") %></strong>
+                <span><%= truncate(task.decision_reason.presence || task.activity_summary, length: 160) %></span>
+              </div>
+            </td>
+            <td>
+              <div class="stacked-cell">
+                <span class="status-badge message-delivery <%= task.message_delivery_status_class %>"><%= task.message_delivery_summary.humanize %></span>
+                <% if latest_message.present? %>
+                  <span><%= latest_message.channel.humanize %> · <%= truncate(latest_message.body, length: 140) %></span>
+                  <% if latest_message.error_message.present? %>
+                    <span class="admin-error-text"><%= truncate(latest_message.error_message, length: 140) %></span>
+                  <% elsif latest_message.metadata.dig("provider", "status").present? %>
+                    <span>Provider: <%= latest_message.metadata.dig("provider", "status").humanize %></span>
+                  <% end %>
+                <% else %>
+                  <span>No outbound message was created for this task.</span>
+                <% end %>
+              </div>
+            </td>
+            <td><%= l((task.processed_at || task.scheduled_for).in_time_zone(current_user.time_zone), format: :short) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="empty-state compact">
+      <h2>No AI tasks match these filters</h2>
+      <p>When the AI loop runs, decisions and message delivery state will appear here.</p>
+    </div>
+  <% end %>
+</section>
+
+<section class="admin-grid-two">
+  <div class="table-panel">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Provider issues</p>
+        <h2>Failed AI messages</h2>
+      </div>
+    </div>
+    <% if @failed_messages.any? %>
+      <table class="data-table compact-table">
+        <thead>
+          <tr><th>Workspace</th><th>Client</th><th>Error</th><th>When</th></tr>
+        </thead>
+        <tbody>
+          <% @failed_messages.each do |message| %>
+            <tr>
+              <td><%= message.user.email %></td>
+              <td><%= message.client&.name || "-" %></td>
+              <td><small><%= truncate(message.error_message.presence || message.metadata.dig("provider", "error_message").presence || "Unknown provider failure", length: 180) %></small></td>
+              <td><%= l(message.updated_at.in_time_zone(current_user.time_zone), format: :short) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty-state compact">
+        <h2>No failed AI messages</h2>
+        <p>Nothing currently indicates a WhatsApp delivery problem.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="table-panel">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Attention</p>
+        <h2>Open AI alerts</h2>
+      </div>
+    </div>
+    <% if @open_alerts.any? %>
+      <table class="data-table compact-table">
+        <thead>
+          <tr><th>Workspace</th><th>Alert</th><th>When</th></tr>
+        </thead>
+        <tbody>
+          <% @open_alerts.each do |alert| %>
+            <tr>
+              <td><%= alert.user.email %></td>
+              <td>
+                <strong><%= alert.title %></strong>
+                <small><%= truncate(alert.body, length: 180) %></small>
+              </td>
+              <td><%= l(alert.created_at.in_time_zone(current_user.time_zone), format: :short) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty-state compact">
+        <h2>No open AI alerts</h2>
+        <p>The assistant has not flagged anything that needs admin attention.</p>
+      </div>
+    <% end %>
+  </div>
+</section>

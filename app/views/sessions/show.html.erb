@@ -1,0 +1,73 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Session</p>
+    <h1><%= @session.title %></h1>
+  </div>
+  <div class="header-actions">
+    <%= link_to "Edit session", edit_session_path(@session), class: "secondary-button" %>
+    <%= link_to "Back to agenda", dashboard_path(week: @session.start_time.to_date.iso8601), class: "primary-button" %>
+  </div>
+</section>
+
+<section class="detail-layout">
+  <aside class="detail-panel">
+    <dl class="detail-list">
+      <div><dt>Client</dt><dd><%= link_to @session.client.name, client_path(@session.client), class: "text-link" %></dd></div>
+      <div><dt>Time</dt><dd><%= l(@session.start_time, format: :long) %><br><%= session_time_range(@session) %></dd></div>
+      <div><dt>Duration</dt><dd><%= @session.duration_minutes %> minutes</dd></div>
+      <div><dt>Price</dt><dd><%= session_price(@session) %></dd></div>
+      <div><dt>Status</dt><dd><%= status_badge(@session.status) %></dd></div>
+      <div><dt>Confirmation</dt><dd><%= status_badge(@session.confirmation_status) %></dd></div>
+      <div><dt>Payment</dt><dd><%= payment_status_badge(@session.payment_status) %></dd></div>
+      <div>
+        <dt>Google Calendar</dt>
+        <dd>
+          <% if @session.google_calendar_event_id.present? %>
+            <%= status_badge("synced") %>
+            <br><small><%= @session.google_calendar_synced_at ? l(@session.google_calendar_synced_at, format: :short) : "Event created" %></small>
+          <% elsif @session.sync_to_google_calendar? %>
+            <%= status_badge("pending") %>
+          <% else %>
+            Not enabled
+          <% end %>
+        </dd>
+      </div>
+      <div><dt>Recurring</dt><dd><%= @session.recurring? ? @session.recurrence_frequency.humanize : "No" %></dd></div>
+      <% if @session.recurring? %>
+        <div><dt>Generated until</dt><dd><%= @session.recurrence_generated_until&.to_fs(:long) || @session.recurrence_ends_on&.to_fs(:long) || "3 months ahead" %></dd></div>
+      <% elsif @session.generated_occurrence? %>
+        <div><dt>Series</dt><dd><%= link_to @session.parent_session.title, session_path(@session.parent_session), class: "text-link" %></dd></div>
+      <% end %>
+    </dl>
+  </aside>
+
+  <section class="detail-panel wide">
+    <div class="section-heading">
+      <h2>Session notes</h2>
+      <%= link_to "Update", edit_session_path(@session), class: "text-link" %>
+    </div>
+    <div class="notes-block">
+      <%= simple_format(@session.notes.presence || "No notes yet.") %>
+    </div>
+
+    <div class="action-strip">
+      <span>Google Calendar</span>
+      <% if @calendar_connection&.connected? %>
+        <p>Add or refresh this session on your connected Google Calendar.</p>
+        <%= button_to "Sync this session", sync_google_calendar_session_path(@session), method: :post, class: "secondary-button" %>
+        <% if @session.google_calendar_sync_error.present? %>
+          <p class="field-hint calendar-error"><%= @session.google_calendar_sync_error %></p>
+        <% end %>
+      <% else %>
+        <p>Connect Google Calendar in Settings to add sessions to your calendar.</p>
+        <%= link_to "Open Settings", settings_path, class: "secondary-button" %>
+      <% end %>
+    </div>
+
+    <div class="action-strip">
+      <span>AI follow-up ready</span>
+      <p>Confirmation, reminder, feedback, and escalation settings are prepared in the AI Assistant area.</p>
+      <%= link_to "Open AI settings", ai_assistant_path, class: "secondary-button" %>
+    </div>
+  </section>
+</section>

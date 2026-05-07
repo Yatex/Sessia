@@ -1,0 +1,87 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Sessions</p>
+    <h1>All sessions</h1>
+  </div>
+  <%= link_to "New session", new_session_path, class: "primary-button" %>
+</section>
+
+<section class="filter-panel">
+  <%= form_with url: sessions_path, method: :get, local: true, class: "filter-form" do %>
+    <div class="filter-grid sessions">
+      <div class="field">
+        <%= label_tag :client_id, "Client" %>
+        <%= select_tag :client_id, options_from_collection_for_select(@filter_clients, :id, :name, @filters[:client_id]), include_blank: "All clients" %>
+      </div>
+      <div class="field">
+        <%= label_tag :date_from, "From" %>
+        <%= date_field_tag :date_from, @filters[:date_from] %>
+      </div>
+      <div class="field">
+        <%= label_tag :date_to, "To" %>
+        <%= date_field_tag :date_to, @filters[:date_to] %>
+      </div>
+      <div class="field">
+        <%= label_tag :status, "Session status" %>
+        <%= select_tag :status, options_for_select([["All statuses", ""]] + Session.statuses.keys.map { |status| [status.humanize, status] }, @filters[:status]) %>
+      </div>
+      <div class="field">
+        <%= label_tag :confirmation_status, "Confirmation" %>
+        <%= select_tag :confirmation_status, options_for_select([["All confirmations", ""]] + Session.confirmation_statuses.keys.map { |status| [status.humanize, status] }, @filters[:confirmation_status]) %>
+      </div>
+      <div class="field">
+        <%= label_tag :payment_status, "Payment" %>
+        <%= select_tag :payment_status, options_for_select([["All payments", ""]] + Session.payment_statuses.keys.map { |status| [status == "pending" ? "Unpaid" : status.humanize, status] }, @filters[:payment_status]) %>
+      </div>
+      <div class="field">
+        <%= label_tag :recurrence, "Recurrence" %>
+        <%= select_tag :recurrence, options_for_select([["All sessions", ""], ["One-off", "one_off"], ["Recurrent", "recurrent"], ["Generated", "generated"]], @filters[:recurrence]) %>
+      </div>
+    </div>
+    <div class="filter-actions">
+      <%= link_to "Reset", sessions_path, class: "secondary-button" %>
+      <%= submit_tag "Apply filters", class: "primary-button" %>
+    </div>
+  <% end %>
+</section>
+
+<section class="table-panel">
+  <% if @sessions.any? %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Client</th>
+          <th>Title</th>
+          <th>Price</th>
+          <th>Status</th>
+          <th>Repeat</th>
+          <th>Confirmation</th>
+          <th>Payment</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @sessions.each do |session_record| %>
+          <tr>
+            <td><%= l(session_record.start_time, format: :long) %></td>
+            <td><strong><%= session_record.client.name %></strong></td>
+            <td><%= session_record.title %></td>
+            <td><%= session_price(session_record) %></td>
+            <td><%= status_badge(session_record.status) %></td>
+            <td><%= session_record.recurring? ? session_record.recurrence_frequency.humanize : (session_record.generated_occurrence? ? "Generated" : "-") %></td>
+            <td><%= status_badge(session_record.confirmation_status) %></td>
+            <td><%= payment_status_badge(session_record.payment_status) %></td>
+            <td><%= link_to "Open", session_path(session_record), class: "text-link" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="empty-state">
+      <h2>No sessions found</h2>
+      <p>Adjust the filters or schedule a new session linked to a client.</p>
+      <%= link_to "Schedule session", new_session_path, class: "primary-button" %>
+    </div>
+  <% end %>
+</section>

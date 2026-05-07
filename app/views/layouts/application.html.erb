@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sessia</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+  </head>
+
+  <body class="<%= authenticated? ? "app-body" : "public-body" %>">
+    <% if authenticated? %>
+      <div class="app-shell">
+        <aside class="sidebar">
+          <%= link_to dashboard_path, class: "brand-lockup" do %>
+            <span class="brand-mark">S</span>
+            <span>
+              <strong>Sessia</strong>
+              <small>Session OS</small>
+            </span>
+          <% end %>
+
+          <nav class="sidebar-nav" aria-label="Primary navigation">
+            <% nav_items.each do |label, path| %>
+              <%= link_to label, path, class: nav_link_class(path) %>
+            <% end %>
+            <% if current_user.admin? %>
+              <span class="sidebar-section-label">Admin</span>
+              <% admin_nav_items.each do |label, path| %>
+                <%= link_to label, path, class: nav_link_class(path) %>
+              <% end %>
+            <% end %>
+          </nav>
+
+          <div class="sidebar-footer">
+            <div class="sidebar-status-card">
+              <strong>WhatsApp AI</strong>
+              <small><%= current_user.ai_setting&.use_professional_whatsapp? ? "Professional number configured" : "Provider not connected" %></small>
+            </div>
+          </div>
+        </aside>
+
+        <div class="app-content">
+          <header class="app-topbar">
+            <div>
+              <p><%= current_user.name %></p>
+              <strong><%= controller_name.tr("_", " ").humanize %></strong>
+            </div>
+            <div class="topbar-actions">
+              <%= link_to "New session", new_session_path, class: "secondary-button" %>
+              <details class="profile-menu">
+                <summary aria-label="Open profile menu">
+                  <span><%= current_user.name.first.upcase %></span>
+                  <div>
+                    <strong><%= current_user.name %></strong>
+                    <small><%= current_user.email %></small>
+                  </div>
+                </summary>
+                <div class="profile-menu-panel">
+                  <%= link_to t("navigation.settings"), settings_path %>
+                  <%= link_to t("navigation.ai_assistant"), ai_assistant_path %>
+                  <%= link_to t("navigation.subscriptions"), subscription_path %>
+                  <%= button_to "Sign out", sign_out_path, method: :delete %>
+                </div>
+              </details>
+            </div>
+          </header>
+
+          <main class="app-main">
+            <%= render "shared/flash" %>
+            <%= yield %>
+          </main>
+        </div>
+      </div>
+    <% else %>
+      <%= render "shared/flash" %>
+      <%= yield %>
+    <% end %>
+  </body>
+</html>

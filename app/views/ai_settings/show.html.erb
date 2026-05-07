@@ -1,0 +1,149 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">AI Assistant</p>
+    <h1>Client communication settings</h1>
+  </div>
+  <%= button_to "Run AI loop now", run_ai_assistant_path, method: :post, class: "secondary-button" %>
+</section>
+
+<section class="form-panel">
+  <%= render "shared/form_errors", object: @ai_setting %>
+
+  <%= form_with model: @ai_setting, url: ai_assistant_path, method: :patch, class: "settings-form" do |form| %>
+    <div class="whatsapp-settings-panel">
+      <label class="toggle-row">
+        <%= form.check_box :use_professional_whatsapp %>
+        <span>
+          <strong>Use my WhatsApp for AI conversations</strong>
+          <small>Let Sessia route client questions and escalation context through your professional WhatsApp number.</small>
+        </span>
+      </label>
+      <div class="field">
+        <%= form.label :professional_whatsapp_phone, "Your WhatsApp number" %>
+        <%= form.telephone_field :professional_whatsapp_phone, placeholder: "+598 99 123 456", autocomplete: "tel" %>
+        <small class="field-hint">This prepares the same kind of professional-owned AI communication flow used in Attendly-style client support.</small>
+      </div>
+    </div>
+
+    <div class="toggle-list">
+      <label class="toggle-row">
+        <%= form.check_box :confirm_sessions %>
+        <span>
+          <strong>Confirm sessions</strong>
+          <small>Prepare confirmation messages for upcoming sessions.</small>
+        </span>
+      </label>
+      <label class="toggle-row">
+        <%= form.check_box :send_pre_session_reminders %>
+        <span>
+          <strong>Send pre-session reminders</strong>
+          <small>Queue reminders before scheduled sessions.</small>
+        </span>
+      </label>
+      <label class="toggle-row">
+        <%= form.check_box :follow_up_no_response %>
+        <span>
+          <strong>Follow up when there is no response</strong>
+          <small>Keep unresolved confirmations visible.</small>
+        </span>
+      </label>
+      <label class="toggle-row">
+        <%= form.check_box :ask_feedback_after_sessions %>
+        <span>
+          <strong>Ask for feedback after sessions</strong>
+          <small>Prepare post-session feedback prompts.</small>
+        </span>
+      </label>
+      <label class="toggle-row">
+        <%= form.check_box :answer_basic_questions %>
+        <span>
+          <strong>Answer basic session questions</strong>
+          <small>Support simple time, place, and session detail replies.</small>
+        </span>
+      </label>
+      <label class="toggle-row">
+        <%= form.check_box :escalate_important_conversations %>
+        <span>
+          <strong>Escalate important conversations</strong>
+          <small>Surface sensitive or uncertain conversations to the professional.</small>
+        </span>
+      </label>
+      <label class="toggle-row muted">
+        <%= form.check_box :payment_reminders %>
+        <span>
+          <strong>Send payment reminders</strong>
+          <small>Remind clients when a priced session is pending or overdue.</small>
+        </span>
+      </label>
+    </div>
+
+    <div class="field">
+      <%= form.label :instructions, "Practice instructions" %>
+      <%= form.text_area :instructions, rows: 8, placeholder: "Tone, boundaries, escalation rules, and phrases Sessia should avoid." %>
+    </div>
+
+    <div class="form-actions">
+      <%= form.submit "Save AI settings", class: "primary-button" %>
+    </div>
+  <% end %>
+</section>
+
+<section class="ai-activity-grid">
+  <div class="table-panel">
+    <div class="section-heading">
+      <h2>Recent AI tasks</h2>
+      <span class="section-count"><%= @recent_ai_tasks.size %></span>
+    </div>
+    <% if @recent_ai_tasks.any? %>
+      <table class="data-table compact-table">
+        <thead>
+          <tr><th>Task</th><th>Client</th><th>Status</th><th>When</th></tr>
+        </thead>
+        <tbody>
+          <% @recent_ai_tasks.each do |task| %>
+            <tr>
+              <td>
+                <strong><%= task.automation_key.presence&.humanize || task.trigger_event.humanize %></strong>
+                <small><%= task.activity_summary %></small>
+              </td>
+              <td><%= task.client&.name || "No client" %></td>
+              <td><%= status_badge(task.status) %></td>
+              <td><%= l(task.created_at, format: :short) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty-state compact">
+        <h2>No AI tasks yet</h2>
+        <p>Run the AI loop or receive a client message to create the first task.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="table-panel">
+    <div class="section-heading">
+      <h2>Open escalations</h2>
+      <span class="section-count"><%= @ai_alerts.size %></span>
+    </div>
+    <% if @ai_alerts.any? %>
+      <div class="alert-list">
+        <% @ai_alerts.each do |alert| %>
+          <article class="ai-alert-card">
+            <header>
+              <strong><%= alert.title %></strong>
+              <%= status_badge(alert.severity) %>
+            </header>
+            <p><%= alert.body %></p>
+            <small><%= [alert.client&.name, alert.session&.title].compact.join(" · ") %></small>
+          </article>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="empty-state compact">
+        <h2>No open escalations</h2>
+        <p>Schedule changes and sensitive client messages will appear here.</p>
+      </div>
+    <% end %>
+  </div>
+</section>

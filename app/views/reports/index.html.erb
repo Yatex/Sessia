@@ -1,0 +1,38 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Analytics</p>
+    <h1>This month</h1>
+  </div>
+</section>
+
+<section class="summary-grid">
+  <div class="metric-panel">
+    <span>Scheduled sessions</span>
+    <strong><%= @scheduled_count %></strong>
+  </div>
+  <div class="metric-panel">
+    <span>Completed sessions</span>
+    <strong><%= @completed_count %></strong>
+  </div>
+  <div class="metric-panel">
+    <span>Cancelled sessions</span>
+    <strong><%= @cancelled_count %></strong>
+  </div>
+  <div class="metric-panel attention">
+    <span>Payment attention</span>
+    <strong><%= @payment_pending_count %></strong>
+  </div>
+  <div class="metric-panel">
+    <span>Paid revenue</span>
+    <strong><%= money_from_cents(@paid_revenue_cents) %></strong>
+  </div>
+  <div class="metric-panel attention">
+    <span>Unpaid revenue</span>
+    <strong><%= money_from_cents(@unpaid_revenue_cents) %></strong>
+  </div>
+</section>
+
+<section class="report-band">
+  <h2>Practice rhythm</h2>
+  <p><%= pluralize(@active_client_count, "active client") %> with monthly utilization, revenue, cancellation, and payment attention signals ready for the demo profile.</p>
+</section>

@@ -1,0 +1,62 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Client</p>
+    <h1><%= @client.name %></h1>
+  </div>
+  <div class="header-actions">
+    <%= link_to "Edit client", edit_client_path(@client), class: "secondary-button" %>
+    <%= link_to "New session", new_session_path(client_id: @client.id), class: "primary-button" %>
+  </div>
+</section>
+
+<section class="detail-layout">
+  <aside class="detail-panel">
+    <dl class="detail-list">
+      <div><dt>Email</dt><dd><%= @client.email.presence || "Not set" %></dd></div>
+      <div><dt>WhatsApp</dt><dd><%= @client.phone %></dd></div>
+      <div><dt>Contact</dt><dd><%= @client.preferred_contact_channel.humanize %></dd></div>
+      <div><dt>Portal</dt><dd><%= @client.linked? ? "Linked #{time_ago_in_words(@client.linked_at)} ago" : "Not linked yet" %></dd></div>
+      <div><dt>Status</dt><dd><%= status_badge(@client.status) %></dd></div>
+    </dl>
+    <div class="portal-link-panel">
+      <h2>Client link</h2>
+      <p>Send this private link to <%= @client.name %> on WhatsApp. Once opened, the client is linked and can request schedule changes or ask questions.</p>
+      <input readonly value="<%= client_portal_url(@client.portal_token) %>">
+    </div>
+    <div class="notes-block">
+      <h2>Notes</h2>
+      <%= simple_format(@client.notes.presence || "No notes yet.") %>
+    </div>
+  </aside>
+
+  <section class="table-panel">
+    <div class="section-heading">
+      <h2>Recent sessions</h2>
+      <%= link_to "Schedule", new_session_path(client_id: @client.id), class: "text-link" %>
+    </div>
+    <% if @sessions.any? %>
+      <table class="data-table">
+        <thead>
+          <tr><th>Date</th><th>Title</th><th>Price</th><th>Confirmation</th><th>Payment</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% @sessions.each do |session_record| %>
+            <tr>
+              <td><%= l(session_record.start_time, format: :long) %></td>
+              <td><strong><%= session_record.title %></strong></td>
+              <td><%= session_price(session_record) %></td>
+              <td><%= status_badge(session_record.confirmation_status) %></td>
+              <td><%= payment_status_badge(session_record.payment_status) %></td>
+              <td><%= link_to "Open", session_path(session_record), class: "text-link" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty-state compact">
+        <h2>No sessions yet</h2>
+        <p>Schedule a first session with <%= @client.name %>.</p>
+      </div>
+    <% end %>
+  </section>
+</section>

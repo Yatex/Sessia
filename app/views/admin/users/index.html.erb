@@ -1,0 +1,122 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Users and plans</h1>
+  </div>
+  <div class="header-actions">
+    <%= link_to "Platform analytics", admin_analytics_path, class: "secondary-button" %>
+  </div>
+</section>
+
+<section class="filter-panel">
+  <%= form_with url: admin_users_path, method: :get, class: "filter-form" do %>
+    <div class="filter-grid admin-users">
+      <div class="field">
+        <%= label_tag :query, "Search" %>
+        <%= text_field_tag :query, @filters[:query], placeholder: "Name or email" %>
+      </div>
+      <div class="field">
+        <%= label_tag :role, "Role" %>
+        <%= select_tag :role, options_for_select([["All roles", ""]] + User.roles.keys.map { |role| [role.humanize, role] }, @filters[:role]) %>
+      </div>
+      <div class="field">
+        <%= label_tag :subscription, "Subscription" %>
+        <%= select_tag :subscription, options_for_select([
+          ["All subscriptions", ""],
+          ["Active access", "active"],
+          ["Paying Stripe plans", "paying"],
+          ["Admin granted", "admin_granted"],
+          ["No active access", "none"]
+        ], @filters[:subscription]) %>
+      </div>
+    </div>
+    <div class="filter-actions">
+      <%= link_to "Reset", admin_users_path, class: "secondary-button" %>
+      <%= submit_tag "Filter", class: "primary-button" %>
+    </div>
+  <% end %>
+</section>
+
+<section class="table-panel">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Users</p>
+      <h2><%= pluralize(@total_count, "user") %></h2>
+    </div>
+  </div>
+
+  <table class="data-table admin-users-table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Role</th>
+        <th>Clients</th>
+        <th>Subscription</th>
+        <th>Created</th>
+        <th>Extend plan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @users.each do |user| %>
+        <% subscription = user.current_subscription || user.subscriptions.order(created_at: :desc).first %>
+        <tr>
+          <td>
+            <strong><%= user.name %></strong>
+            <small><%= user.email %></small>
+          </td>
+          <td>
+            <% if user == current_user %>
+              <%= status_badge(user.role) %>
+            <% else %>
+              <%= form_with url: role_admin_user_path(user), method: :patch, class: "compact-admin-form" do %>
+                <%= hidden_field_tag :return_query, @filters[:query] %>
+                <%= hidden_field_tag :return_role, @filters[:role] %>
+                <%= hidden_field_tag :return_subscription, @filters[:subscription] %>
+                <%= hidden_field_tag :return_page, @page %>
+                <%= select_tag :role, options_for_select(User.roles.keys.map { |role| [role.humanize, role] }, user.role), onchange: "this.form.requestSubmit()" %>
+              <% end %>
+            <% end %>
+          </td>
+          <td><%= user.clients.active.count %></td>
+          <td>
+            <% if subscription %>
+              <div class="admin-subscription-cell">
+                <strong><%= subscription.plan_tier.humanize %></strong>
+                <%= status_badge(subscription.status) %>
+                <small><%= subscription.provider %><%= subscription.current_period_end ? " until #{l(subscription.current_period_end, format: :short)}" : "" %></small>
+              </div>
+            <% else %>
+              <span class="muted-cell">No subscription</span>
+            <% end %>
+          </td>
+          <td><%= l(user.created_at, format: :short) %></td>
+          <td>
+            <%= form_with url: extend_subscription_admin_user_path(user), method: :post, class: "admin-extend-form" do %>
+              <%= hidden_field_tag :return_query, @filters[:query] %>
+              <%= hidden_field_tag :return_role, @filters[:role] %>
+              <%= hidden_field_tag :return_subscription, @filters[:subscription] %>
+              <%= hidden_field_tag :return_page, @page %>
+              <%= select_tag :plan_tier, options_for_select(@plans.map { |plan| [plan.name, plan.tier] }, subscription&.plan_tier || "starter") %>
+              <%= date_field_tag :end_date, ((subscription&.current_period_end&.future? ? subscription.current_period_end : 1.month.from_now).to_date) %>
+              <%= submit_tag "Extend", class: "secondary-button" %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <% if @total_pages > 1 %>
+    <div class="pagination-row">
+      <span>Page <%= @page %> of <%= @total_pages %></span>
+      <div>
+        <% if @page > 1 %>
+          <%= link_to "Previous", admin_users_path(@filters.merge(page: @page - 1)), class: "secondary-button" %>
+        <% end %>
+        <% if @page < @total_pages %>
+          <%= link_to "Next", admin_users_path(@filters.merge(page: @page + 1)), class: "secondary-button" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</section>

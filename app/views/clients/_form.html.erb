@@ -1,0 +1,33 @@
+<%= render "shared/form_errors", object: client %>
+
+<%= form_with model: client, class: "form-grid" do |form| %>
+  <div class="field">
+    <%= form.label :name %>
+    <%= form.text_field :name, autofocus: true %>
+  </div>
+  <div class="field">
+    <%= form.label :email %>
+    <%= form.email_field :email, autocomplete: "email" %>
+  </div>
+  <div class="field">
+    <%= form.label :phone, "WhatsApp phone" %>
+    <%= form.telephone_field :phone, autocomplete: "tel", placeholder: "+598 99 123 456" %>
+    <small class="field-hint">Clients communicate with Sessia only through WhatsApp.</small>
+  </div>
+  <div class="detected-field">
+    <span>Preferred channel</span>
+    <strong>WhatsApp only</strong>
+  </div>
+  <div class="field">
+    <%= form.label :status %>
+    <%= form.select :status, Client.statuses.keys.map { |status| [status.humanize, status] } %>
+  </div>
+  <div class="field full-span">
+    <%= form.label :notes %>
+    <%= form.text_area :notes, rows: 7 %>
+  </div>
+  <div class="form-actions full-span">
+    <%= link_to "Cancel", clients_path, class: "secondary-button" %>
+    <%= form.submit class: "primary-button" %>
+  </div>
+<% end %>

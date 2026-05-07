@@ -1,0 +1,65 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Clients</p>
+    <h1>Client workspace</h1>
+  </div>
+  <%= link_to "New client", new_client_path, class: "primary-button" %>
+</section>
+
+<section class="filter-panel">
+  <%= form_with url: clients_path, method: :get, local: true, class: "filter-form" do %>
+    <div class="filter-grid">
+      <div class="field">
+        <%= label_tag :query, "Search" %>
+        <%= text_field_tag :query, @filters[:query], placeholder: "Name, email, or WhatsApp" %>
+      </div>
+      <div class="field">
+        <%= label_tag :status, "Status" %>
+        <%= select_tag :status, options_for_select([["All statuses", ""]] + Client.statuses.keys.map { |status| [status.humanize, status] }, @filters[:status]) %>
+      </div>
+      <div class="field">
+        <%= label_tag :linked, "Client link" %>
+        <%= select_tag :linked, options_for_select([["All clients", ""], ["Linked", "linked"], ["Not linked", "unlinked"]], @filters[:linked]) %>
+      </div>
+    </div>
+    <div class="filter-actions">
+      <%= link_to "Reset", clients_path, class: "secondary-button" %>
+      <%= submit_tag "Apply filters", class: "primary-button" %>
+    </div>
+  <% end %>
+</section>
+
+<section class="table-panel">
+  <% if @clients.any? %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Contact</th>
+          <th>Preferred channel</th>
+          <th>Client link</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @clients.each do |client| %>
+          <tr>
+            <td><strong><%= client.name %></strong></td>
+            <td><%= client.display_contact %></td>
+            <td><%= client.preferred_contact_channel.humanize %></td>
+            <td><%= client.linked? ? status_badge("linked") : status_badge("not_linked") %></td>
+            <td><%= status_badge(client.status) %></td>
+            <td><%= link_to "Open", client_path(client), class: "text-link" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="empty-state">
+      <h2>No clients found</h2>
+      <p>Adjust the filters or create a new client to start scheduling sessions.</p>
+      <%= link_to "Create client", new_client_path, class: "primary-button" %>
+    </div>
+  <% end %>
+</section>

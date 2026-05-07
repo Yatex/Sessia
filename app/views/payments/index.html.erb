@@ -1,0 +1,154 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Payments</p>
+    <h1>Session payment tracking</h1>
+  </div>
+  <%= link_to "Subscriptions", subscription_path, class: "secondary-button" %>
+</section>
+
+<section class="filter-panel">
+  <%= form_with url: payments_path, method: :get, local: true, class: "filter-form" do %>
+    <div class="filter-grid payments">
+      <div class="field">
+        <%= label_tag :client_id, "Client" %>
+        <%= select_tag :client_id, options_from_collection_for_select(@payment_clients, :id, :name, @filters[:client_id]), include_blank: "All clients" %>
+      </div>
+      <div class="field">
+        <%= label_tag :payment_status, "Payment status" %>
+        <%= select_tag :payment_status, options_for_select([["All tracked statuses", ""]] + PaymentRecord.statuses.keys.map { |status| [status == "pending" ? "Unpaid" : status.humanize, status] }, @filters[:payment_status]) %>
+      </div>
+      <div class="field">
+        <%= label_tag :date_from, "From" %>
+        <%= date_field_tag :date_from, @filters[:date_from] %>
+      </div>
+      <div class="field">
+        <%= label_tag :date_to, "To" %>
+        <%= date_field_tag :date_to, @filters[:date_to] %>
+      </div>
+    </div>
+    <div class="filter-actions">
+      <%= link_to "Reset", payments_path, class: "secondary-button" %>
+      <%= submit_tag "Apply filters", class: "primary-button" %>
+    </div>
+  <% end %>
+</section>
+
+<section class="summary-grid three">
+  <div class="metric-panel">
+    <span>Pending</span>
+    <strong><%= @summary[:pending] %></strong>
+    <small><%= money_from_cents(@summary[:unpaid_cents]) %> unpaid</small>
+  </div>
+  <div class="metric-panel attention">
+    <span>Overdue</span>
+    <strong><%= @summary[:overdue] %></strong>
+  </div>
+  <div class="metric-panel">
+    <span>Paid</span>
+    <strong><%= @summary[:paid] %></strong>
+    <small><%= money_from_cents(@summary[:paid_cents]) %> collected</small>
+  </div>
+</section>
+
+<section class="table-panel">
+  <div class="section-heading">
+    <h2>Client payment position</h2>
+  </div>
+  <% if @client_payment_rows.any? %>
+    <table class="data-table payment-position-table">
+      <thead>
+        <tr><th>Client</th><th>Behind</th><th>Paid</th><th>Sessions ahead</th><th>Next session</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% @client_payment_rows.each do |row| %>
+          <tr>
+            <td><strong><%= row[:client].name %></strong></td>
+            <td>
+              <span class="payment-position <%= row[:behind_count].positive? ? "behind" : "clear" %>">
+                <%= pluralize(row[:behind_count], "session") %>
+                <small><%= money_from_cents(row[:behind_cents]) %><%= " · #{pluralize(row[:overdue_count], "overdue")}" if row[:overdue_count].positive? %></small>
+              </span>
+            </td>
+            <td>
+              <span class="payment-position clear">
+                <%= pluralize(row[:paid_count], "session") %>
+                <small><%= money_from_cents(row[:paid_cents]) %></small>
+              </span>
+            </td>
+            <td>
+              <span class="payment-position">
+                <%= pluralize(row[:upcoming_count], "session") %>
+                <small><%= pluralize(row[:paid_ahead_count], "paid ahead") %></small>
+              </span>
+            </td>
+            <td><%= row[:next_session] ? l(row[:next_session].start_time, format: :short) : "None scheduled" %></td>
+            <td><%= link_to "Open", client_path(row[:client]), class: "text-link" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="empty-state compact">
+      <h2>No client payment activity</h2>
+      <p>Priced sessions will show who is unpaid, paid, and booked ahead.</p>
+    </div>
+  <% end %>
+</section>
+
+<section class="table-panel">
+  <div class="section-heading">
+    <h2>Tracked session payments</h2>
+  </div>
+  <% if @sessions.any? %>
+    <table class="data-table">
+      <thead>
+        <tr><th>Session</th><th>Client</th><th>Date</th><th>Price</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% @sessions.each do |session_record| %>
+          <tr>
+            <td><strong><%= session_record.title %></strong></td>
+            <td><%= session_record.client.name %></td>
+            <td><%= l(session_record.start_time, format: :long) %></td>
+            <td><%= session_price(session_record) %></td>
+            <td><%= payment_status_badge(session_record.payment_status) %></td>
+            <td><%= link_to "Open", session_path(session_record), class: "text-link" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="empty-state compact">
+      <h2>No tracked payments</h2>
+      <p>Set a session payment status to pending, paid, or overdue to see it here.</p>
+    </div>
+  <% end %>
+</section>
+
+<section class="table-panel">
+  <div class="section-heading">
+    <h2>Payment records</h2>
+  </div>
+  <% if @records.any? %>
+    <table class="data-table">
+      <thead>
+        <tr><th>Amount</th><th>Client</th><th>Due</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <% @records.each do |record| %>
+          <tr>
+            <td><strong><%= number_to_currency(record.amount, unit: "#{record.currency} ") %></strong></td>
+            <td><%= record.client&.name || "Unassigned" %></td>
+            <td><%= record.due_on&.to_fs(:long) || "Not set" %></td>
+            <td><%= payment_status_badge(record.status) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="empty-state compact">
+      <h2>No payment records yet</h2>
+      <p>Sessia is ready for richer payment records when the workflow expands.</p>
+    </div>
+  <% end %>
+</section>

@@ -1,0 +1,86 @@
+<main class="client-portal">
+  <section class="client-portal-hero">
+    <p class="eyebrow">Sessia client link</p>
+    <h1>Hi <%= @client.name %></h1>
+    <p>
+      You are linked with <strong><%= @client.user.name %></strong>. Use this private page to request schedule changes or ask questions about your sessions.
+    </p>
+  </section>
+
+  <section class="portal-grid">
+    <div class="portal-panel">
+      <div class="section-heading">
+        <h2>Upcoming sessions</h2>
+      </div>
+      <% if @sessions.any? %>
+        <div class="portal-session-list">
+          <% @sessions.each do |session_record| %>
+            <article class="portal-session">
+              <time><%= l(session_record.start_time, format: :long) %></time>
+              <strong><%= session_record.title %></strong>
+              <span><%= session_time_range(session_record) %></span>
+            </article>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="empty-state compact">
+          <h2>No upcoming sessions</h2>
+          <p>Your professional will add future sessions here.</p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="portal-panel">
+      <div class="section-heading">
+        <h2>Send a request</h2>
+      </div>
+
+      <%= render "shared/form_errors", object: @message %>
+
+      <%= form_with model: @message, url: client_portal_messages_path(@client.portal_token), class: "form-stack" do |form| %>
+        <div class="field">
+          <%= form.label :subject, "Request type" %>
+          <%= form.select :subject, [["Request schedule change", "Schedule change request"], ["Ask a question", "Client question"]] %>
+        </div>
+        <div class="field">
+          <%= form.label :session_id, "Related session" %>
+          <%= form.select :session_id, [["No specific session", nil]] + @sessions.map { |session_record| ["#{session_record.title} · #{l(session_record.start_time, format: :long)}", session_record.id] } %>
+        </div>
+        <div class="field">
+          <%= form.label :body, "Message" %>
+          <%= form.text_area :body, rows: 7, placeholder: "Write what you need to change or ask." %>
+        </div>
+        <%= form.submit "Send to #{@client.user.name}", class: "primary-button full" %>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="portal-panel portal-conversation">
+    <div class="section-heading">
+      <h2>Conversation</h2>
+      <span class="section-count"><%= @messages.size %></span>
+    </div>
+
+    <% if @messages.any? %>
+      <div class="conversation-thread">
+        <% @messages.each do |message| %>
+          <article class="conversation-message <%= message.inbound? ? "from-client" : "from-assistant" %>">
+            <header>
+              <strong><%= message.inbound? ? @client.name : "Sessia Assistant" %></strong>
+              <time><%= l(message.sent_at || message.created_at, format: :short) %></time>
+            </header>
+            <div class="message-body"><%= simple_format(message.body) %></div>
+            <% if message.outbound? %>
+              <small><%= message.status.humanize %></small>
+            <% end %>
+          </article>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="empty-state compact">
+        <h2>No messages yet</h2>
+        <p>Questions and AI assistant replies will appear here.</p>
+      </div>
+    <% end %>
+  </section>
+</main>

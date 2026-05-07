@@ -1,0 +1,122 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Platform analytics</h1>
+  </div>
+  <div class="header-actions">
+    <%= link_to "Manage users", admin_users_path, class: "secondary-button" %>
+  </div>
+</section>
+
+<section class="summary-grid admin-summary">
+  <article class="metric-panel">
+    <span>Total users</span>
+    <strong><%= @metrics[:total_users] %></strong>
+  </article>
+  <article class="metric-panel">
+    <span>Paying plans</span>
+    <strong><%= @metrics[:paying_subscriptions] %></strong>
+    <small>Stripe-backed active subscriptions</small>
+  </article>
+  <article class="metric-panel">
+    <span>Estimated MRR</span>
+    <strong><%= number_to_currency(@metrics[:estimated_mrr], precision: 0) %></strong>
+    <small>Based on active Stripe plan tiers</small>
+  </article>
+  <article class="metric-panel">
+    <span>Admin grants</span>
+    <strong><%= @metrics[:admin_granted_subscriptions] %></strong>
+  </article>
+  <article class="metric-panel attention">
+    <span>No active plan</span>
+    <strong><%= @metrics[:users_without_active_subscription] %></strong>
+  </article>
+</section>
+
+<section class="summary-grid three">
+  <article class="metric-panel">
+    <span>Admins</span>
+    <strong><%= @metrics[:admins] %></strong>
+  </article>
+  <article class="metric-panel">
+    <span>Active clients</span>
+    <strong><%= @metrics[:active_clients] %></strong>
+  </article>
+  <article class="metric-panel">
+    <span>Scheduled sessions</span>
+    <strong><%= @metrics[:scheduled_sessions] %></strong>
+  </article>
+</section>
+
+<section class="admin-grid-two">
+  <div class="table-panel">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Subscriptions</p>
+        <h2>Active plans by tier</h2>
+      </div>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr><th>Plan</th><th>Active</th><th>Paying</th></tr>
+      </thead>
+      <tbody>
+        <% StripeBilling.plans.each do |plan| %>
+          <tr>
+            <td><strong><%= plan.name %></strong></td>
+            <td><%= @subscriptions_by_tier[plan.tier].to_i %></td>
+            <td><%= @paying_by_tier[plan.tier].to_i %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-panel">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Users</p>
+        <h2>Recent signups</h2>
+      </div>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr><th>User</th><th>Role</th><th>Created</th></tr>
+      </thead>
+      <tbody>
+        <% @recent_users.each do |user| %>
+          <tr>
+            <td><%= user.email %></td>
+            <td><%= status_badge(user.role) %></td>
+            <td><%= l(user.created_at, format: :short) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="table-panel admin-recent-subscriptions">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Subscriptions</p>
+      <h2>Recent subscription activity</h2>
+    </div>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr><th>User</th><th>Plan</th><th>Status</th><th>Provider</th><th>Access until</th></tr>
+    </thead>
+    <tbody>
+      <% @recent_subscriptions.each do |subscription| %>
+        <tr>
+          <td><%= subscription.user.email %></td>
+          <td><%= subscription.plan_tier.humanize %></td>
+          <td><%= status_badge(subscription.status) %></td>
+          <td><%= subscription.provider %></td>
+          <td><%= subscription.current_period_end ? l(subscription.current_period_end, format: :short) : "--" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

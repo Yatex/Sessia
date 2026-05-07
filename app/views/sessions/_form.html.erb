@@ -1,0 +1,88 @@
+<%= render "shared/form_errors", object: session_record %>
+
+<% if @clients.empty? %>
+  <div class="empty-state compact">
+    <h2>Create a client first</h2>
+    <p>Sessions belong to clients so your agenda stays private and organized.</p>
+    <%= link_to "New client", new_client_path, class: "primary-button" %>
+  </div>
+<% else %>
+  <%= form_with model: session_record, class: "form-grid" do |form| %>
+    <div class="field">
+      <%= form.label :client_id, "Client" %>
+      <%= form.select :client_id, @clients.map { |client| [client.name, client.id] }, include_blank: "Choose client" %>
+    </div>
+    <div class="field">
+      <%= form.label :title, "Session type or title" %>
+      <%= form.text_field :title %>
+    </div>
+    <div class="field">
+      <%= form.label :start_time, "Start time" %>
+      <%= form.select :start_time,
+        options_for_select(@available_start_options, session_record.start_time&.in_time_zone&.strftime("%Y-%m-%dT%H:%M")),
+        {},
+        data: {
+          session_start_select: true,
+          duration_minutes: (session_record.duration_minutes.to_i.positive? ? session_record.duration_minutes : 50),
+          end_time_target: "#session_end_time"
+        } %>
+      <small class="field-hint">Only working hours without existing sessions or blocked time are shown.</small>
+    </div>
+    <div class="field">
+      <%= form.label :end_time %>
+      <%= form.datetime_local_field :end_time, data: { session_end_time: true } %>
+    </div>
+    <div class="field">
+      <%= form.label :price, "Session price" %>
+      <%= form.number_field :price, min: 0, step: "0.01", inputmode: "decimal" %>
+    </div>
+    <div class="field">
+      <%= form.label :currency %>
+      <%= form.select :currency, %w[USD EUR UYU GBP BRL ARS].map { |currency| [currency, currency] } %>
+    </div>
+    <div class="field full-span">
+      <% if @calendar_connection&.connected? %>
+        <label class="toggle-row compact">
+          <%= form.check_box :sync_to_google_calendar %>
+          <span>
+            <strong>Add this session to Google Calendar</strong>
+            <small>Creates or updates an event on your connected Google Calendar.</small>
+          </span>
+        </label>
+      <% else %>
+        <div class="detected-field">
+          <span>Google Calendar is not connected.</span>
+          <%= link_to "Connect in Settings", settings_path, class: "text-link" %>
+        </div>
+      <% end %>
+    </div>
+    <div class="field full-span">
+      <div class="recurrence-panel">
+        <div class="field">
+          <%= form.label :recurrence_frequency, "Recurrent" %>
+          <%= form.select :recurrence_frequency, [["No", "none"], ["Weekly", "weekly"], ["Monthly", "monthly"]] %>
+        </div>
+        <div class="field full-span">
+          <%= form.label :recurrence_days, "Repeat on days" %>
+          <div class="weekday-picker">
+            <%= form.collection_check_boxes :recurrence_days, Session::RECURRENCE_WEEKDAYS, :last, :first do |box| %>
+              <%= box.label do %>
+                <%= box.check_box %>
+                <span><%= box.text.first(3) %></span>
+              <% end %>
+            <% end %>
+          </div>
+          <p class="field-hint">Used for weekly sessions. Monthly sessions repeat on the same day of the month.</p>
+        </div>
+      </div>
+    </div>
+    <div class="field full-span">
+      <%= form.label :notes %>
+      <%= form.text_area :notes, rows: 7 %>
+    </div>
+    <div class="form-actions full-span">
+      <%= link_to "Cancel", sessions_path, class: "secondary-button" %>
+      <%= form.submit class: "primary-button" %>
+    </div>
+  <% end %>
+<% end %>

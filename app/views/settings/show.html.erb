@@ -1,0 +1,168 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow"><%= t("navigation.settings") %></p>
+    <h1>Account settings</h1>
+  </div>
+</section>
+
+<section class="form-panel">
+  <%= render "shared/form_errors", object: @user %>
+
+  <%= form_with model: @user, url: settings_path, method: :patch, class: "form-grid", data: { settings_autosave: true } do |form| %>
+    <div class="field">
+      <%= form.label :name %>
+      <%= form.text_field :name, autocomplete: "name" %>
+    </div>
+    <div class="field">
+      <%= form.label :email %>
+      <%= form.email_field :email, autocomplete: "email" %>
+    </div>
+    <div class="field">
+      <%= form.label :locale, "Language" %>
+      <%= form.select :locale, language_options %>
+    </div>
+    <div class="field full-span">
+      <%= form.label :time_zone, "Timezone" %>
+      <div class="inline-control">
+        <%= form.select :time_zone, iana_time_zone_options %>
+        <button type="button" class="secondary-button" data-use-detected-time-zone="#user_time_zone">Use browser timezone</button>
+      </div>
+      <small class="field-hint">
+        Browser detected
+        <strong data-time-zone-detected-label data-fallback-time-zone="<%= @user.time_zone %>"><%= @user.time_zone %></strong>.
+      </small>
+    </div>
+    <div class="form-actions full-span">
+      <span class="autosave-status" data-autosave-status>Saved</span>
+    </div>
+  <% end %>
+</section>
+
+<section class="form-panel settings-availability-panel">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Availability</p>
+      <h2>Working hours</h2>
+    </div>
+  </div>
+  <p class="panel-copy">
+    Drag to mark or unmark hourly blocks where Sessia can offer sessions. New accounts start Monday to Friday, 08:00 to 18:00, but you can open earlier or later hours.
+  </p>
+
+  <%= form_with url: availability_settings_path, method: :patch, class: "settings-form", data: { settings_autosave: true } do %>
+    <% availability_slots = (0...(24 * 60)).step(60).to_a %>
+    <% selected_cells = {} %>
+    <% @availability_by_weekday.each do |weekday, rules| %>
+      <% rules.each do |rule| %>
+        <% (rule.start_minute...rule.end_minute).step(60).each do |minute| %>
+          <% selected_cells[[weekday, minute]] = true %>
+        <% end %>
+      <% end %>
+    <% end %>
+
+    <div class="availability-grid-editor" data-availability-grid>
+      <div class="availability-grid-head">
+        <span></span>
+        <% AvailabilityRule::WEEKDAY_LABELS.each do |_weekday, label| %>
+          <strong><%= label.first(3) %></strong>
+        <% end %>
+      </div>
+
+      <div class="availability-grid-body">
+        <% availability_slots.each do |minute| %>
+          <div class="availability-grid-row">
+            <time><%= AvailabilityRule.time_label(minute) %></time>
+            <% AvailabilityRule::WEEKDAY_LABELS.each do |weekday, label| %>
+              <% value = "#{weekday}|#{AvailabilityRule.time_label(minute)}" %>
+              <% checked = selected_cells[[weekday, minute]] %>
+              <label class="availability-cell <%= "selected" if checked %>" title="<%= label %> <%= AvailabilityRule.time_label(minute) %>">
+                <%= check_box_tag "availability_cells[]", value, checked, id: nil, data: { availability_cell: true } %>
+                <span><%= checked ? "Available" : "Closed" %></span>
+              </label>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <span class="autosave-status" data-autosave-status>Saved</span>
+    </div>
+  <% end %>
+</section>
+
+<section class="form-panel settings-integration-panel">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Integrations</p>
+      <h2>Google Calendar</h2>
+    </div>
+    <% if @calendar_connection&.connected? %>
+      <%= status_badge("connected") %>
+    <% else %>
+      <%= status_badge("not_connected") %>
+    <% end %>
+  </div>
+
+  <% if @calendar_connection&.connected? %>
+    <div class="integration-status">
+      <div>
+        <span>Connected account</span>
+        <strong><%= @calendar_connection.provider_account_email.presence || "Google Calendar" %></strong>
+      </div>
+      <div>
+        <span>Calendar</span>
+        <strong><%= @calendar_connection.calendar_id %></strong>
+      </div>
+      <div>
+        <span>Last sync</span>
+        <strong><%= @calendar_connection.last_synced_at ? l(@calendar_connection.last_synced_at, format: :short) : "Not synced yet" %></strong>
+      </div>
+    </div>
+
+    <%= form_with model: @calendar_connection, url: settings_google_calendar_path, method: :patch, class: "settings-form", data: { settings_autosave: true } do |form| %>
+      <label class="toggle-row">
+        <%= form.check_box :sync_sessions %>
+        <span>
+          <strong>Automatically add new sessions to Google Calendar</strong>
+          <small>New sessions will default to calendar sync. You can still turn it off per session.</small>
+        </span>
+      </label>
+      <div class="form-actions">
+        <span class="autosave-status" data-autosave-status>Saved</span>
+      </div>
+    <% end %>
+
+    <div class="integration-actions">
+      <%= button_to "Sync upcoming sessions", sync_google_calendar_path, method: :post, class: "secondary-button" %>
+      <%= button_to "Disconnect Google Calendar", disconnect_google_calendar_path, method: :delete, class: "ghost-button" %>
+    </div>
+    <% if @calendar_connection.error_message.present? %>
+      <p class="field-hint calendar-error"><%= @calendar_connection.error_message %></p>
+    <% end %>
+  <% else %>
+    <p class="panel-copy">
+      Connect Google Calendar so Sessia can add sessions to your primary calendar when you enable sync.
+    </p>
+    <% if @google_calendar_configured %>
+      <%= link_to "Connect Google Calendar", connect_google_calendar_path, class: "primary-button" %>
+    <% else %>
+      <p class="field-hint calendar-error">
+        Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable this integration.
+      </p>
+    <% end %>
+  <% end %>
+</section>
+
+<section class="form-panel settings-security-panel">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Security</p>
+      <h2>Password reset</h2>
+    </div>
+  </div>
+  <p class="panel-copy">
+    Send a password reset link to <strong><%= @user.email %></strong>. The link expires after 2 hours.
+  </p>
+  <%= button_to "Send reset link", password_reset_settings_path, method: :post, class: "secondary-button" %>
+</section>

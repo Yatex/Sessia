@@ -1,0 +1,88 @@
+es:
+  date:
+    formats:
+      default: "%d/%m/%Y"
+      short: "%-d %b"
+      long: "%-d de %B de %Y"
+    day_names:
+      - domingo
+      - lunes
+      - martes
+      - miércoles
+      - jueves
+      - viernes
+      - sábado
+    abbr_day_names:
+      - dom
+      - lun
+      - mar
+      - mié
+      - jue
+      - vie
+      - sáb
+    month_names:
+      -
+      - enero
+      - febrero
+      - marzo
+      - abril
+      - mayo
+      - junio
+      - julio
+      - agosto
+      - septiembre
+      - octubre
+      - noviembre
+      - diciembre
+    abbr_month_names:
+      -
+      - ene
+      - feb
+      - mar
+      - abr
+      - may
+      - jun
+      - jul
+      - ago
+      - sep
+      - oct
+      - nov
+      - dic
+  time:
+    formats:
+      default: "%d/%m/%Y %H:%M"
+      short: "%-d %b, %H:%M"
+      long: "%-d de %B de %Y %H:%M"
+      short_time: "%H:%M"
+  app_name: "Sessia"
+  errors:
+    format: "%{attribute} %{message}"
+    messages:
+      blank: "no puede estar en blanco"
+      invalid: "no es válido"
+      taken: "ya está en uso"
+      inclusion: "no está incluido en la lista"
+      too_short: "es demasiado corto"
+      too_long: "es demasiado largo"
+      wrong_length: "tiene una longitud incorrecta"
+      greater_than_or_equal_to: "debe ser mayor o igual a %{count}"
+  number:
+    format:
+      delimiter: "."
+      separator: ","
+    currency:
+      format:
+        delimiter: "."
+        format: "%u%n"
+        precision: 2
+        separator: ","
+        unit: "$"
+  navigation:
+    agenda: "Agenda"
+    sessions: "Sesiones"
+    clients: "Clientes"
+    ai_assistant: "Asistente IA"
+    payments: "Pagos"
+    subscriptions: "Suscripciones"
+    analytics: "Analítica"
+    settings: "Configuración"

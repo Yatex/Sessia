@@ -1,0 +1,155 @@
+<header class="public-nav">
+  <%= link_to root_path, class: "public-brand" do %>
+    <span class="brand-mark">S</span>
+    <strong>Sessia</strong>
+  <% end %>
+  <div class="public-actions">
+    <%= link_to "Sign in", sign_in_path, class: "text-link" %>
+    <%= link_to "Start free", sign_up_path, class: "primary-button" %>
+  </div>
+</header>
+
+<main class="landing">
+  <section class="landing-hero">
+    <div class="hero-agenda-scene" aria-hidden="true">
+      <div class="hero-agenda-toolbar">
+        <span>Week of May 4</span>
+        <strong>18 sessions</strong>
+        <em>6 open slots</em>
+      </div>
+      <div class="hero-agenda-grid">
+        <% [
+          ["Mon", [["09:00", "Therapy", "confirmed paid"], ["13:00", "Coaching", "pending unpaid"]]],
+          ["Tue", [["10:00", "Tutoring", "confirmed paid"], ["17:00", "Consulting", "confirmed unpaid"]]],
+          ["Wed", [["08:00", "Training", "pending unpaid"], ["15:00", "Therapy", "confirmed paid"]]],
+          ["Thu", [["11:00", "Coaching", "cancelled"], ["16:00", "Tutoring", "confirmed paid"]]],
+          ["Fri", [["09:00", "Consulting", "confirmed paid"], ["14:00", "Feedback", "pending paid"]]],
+          ["Sat", [["10:00", "Strategy", "confirmed unpaid"]]],
+          ["Sun", []]
+        ].each_with_index do |(day, sessions), index| %>
+          <div class="hero-agenda-day <%= "is-today" if index == 2 %>">
+            <header>
+              <span><%= day %></span>
+              <strong><%= sessions.size %></strong>
+            </header>
+            <% sessions.each do |time, title, tone| %>
+              <div class="hero-agenda-session <%= tone.tr(" ", "-") %>">
+                <small><%= time %></small>
+                <b><%= title %></b>
+                <i><%= tone.include?("paid") ? "$" : "!" %></i>
+              </div>
+            <% end %>
+            <% if sessions.empty? %>
+              <div class="hero-open-slot">Open day</div>
+            <% else %>
+              <div class="hero-open-slot compact"><%= 3 - sessions.size %> open slots</div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="hero-copy">
+      <p class="eyebrow">Session management SaaS</p>
+      <h1>Sessia</h1>
+      <p class="hero-lede">
+        Run your client sessions from one calm workspace: agenda, WhatsApp follow-ups, confirmations, payment tracking, and practice analytics.
+      </p>
+      <div class="hero-actions">
+        <%= link_to "Create account", sign_up_path, class: "primary-button large" %>
+        <%= link_to "Sign in", sign_in_path, class: "secondary-button large" %>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-proof" aria-label="Sessia product highlights">
+    <article>
+      <strong>Week and month</strong>
+      <span>See sessions, free slots, and blocked hours without digging.</span>
+    </article>
+    <article>
+      <strong>WhatsApp-first</strong>
+      <span>Clients connect through links and talk to the assistant in the channel they already use.</span>
+    </article>
+    <article>
+      <strong>Stripe billing</strong>
+      <span>Plan access is based on the number of clients in the practice.</span>
+    </article>
+  </section>
+
+  <section class="landing-section">
+    <div class="section-kicker">
+      <p class="eyebrow">What Sessia replaces</p>
+      <h2>A professional operating system for recurring client work.</h2>
+    </div>
+    <div class="landing-feature-grid">
+      <article>
+        <span>01</span>
+        <h3>Agenda</h3>
+        <p>Plan by week, inspect the month quickly, block hours, and let availability drive rescheduling options.</p>
+      </article>
+      <article>
+        <span>02</span>
+        <h3>Clients</h3>
+        <p>Keep each client profile, WhatsApp link status, session history, notes, and payment position together.</p>
+      </article>
+      <article>
+        <span>03</span>
+        <h3>AI assistant</h3>
+        <p>Confirm appointments, send reminders, answer basic questions, ask for feedback, and escalate when needed.</p>
+      </article>
+      <article>
+        <span>04</span>
+        <h3>Payments</h3>
+        <p>Track paid, pending, overdue, and ahead-of-schedule clients separately from Sessia subscription billing.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="landing-workflow">
+    <div>
+      <p class="eyebrow">Designed for small practices</p>
+      <h2>Less admin between sessions.</h2>
+      <p>
+        Sessia is built for psychologists, tutors, coaches, consultants, trainers, therapists, and independent professionals who need a compact daily command center instead of a generic calendar.
+      </p>
+      <%= link_to "Start with Sessia", sign_up_path, class: "primary-button large" %>
+    </div>
+
+    <div class="workflow-panel">
+      <div class="workflow-row">
+        <strong>08:00</strong>
+        <span class="workflow-pill confirmed">Confirmed</span>
+        <p>Therapy session</p>
+        <em>Paid</em>
+      </div>
+      <div class="workflow-row">
+        <strong>12:00</strong>
+        <span class="workflow-pill blocked">Blocked</span>
+        <p>Lunch break</p>
+        <em>No booking</em>
+      </div>
+      <div class="workflow-row">
+        <strong>15:00</strong>
+        <span class="workflow-pill pending">Pending</span>
+        <p>Tutoring follow-up</p>
+        <em>Reminder queued</em>
+      </div>
+      <div class="workflow-row">
+        <strong>18:00</strong>
+        <span class="workflow-pill open">Open</span>
+        <p>AI suggested slot</p>
+        <em>Available</em>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-final-cta">
+    <p class="eyebrow">Ready before the first client message</p>
+    <h2>Set your availability, add your clients, and let Sessia keep the week organized.</h2>
+    <div class="hero-actions">
+      <%= link_to "Create account", sign_up_path, class: "primary-button large" %>
+      <%= link_to "I already have an account", sign_in_path, class: "secondary-button large" %>
+    </div>
+  </section>
+</main>

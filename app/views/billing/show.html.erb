@@ -1,0 +1,47 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Subscriptions</p>
+    <h1>Plan and subscription</h1>
+  </div>
+  <% if current_user.stripe_customer_id.present? %>
+    <%= button_to "Manage in Stripe", portal_subscription_path, method: :post, class: "secondary-button" %>
+  <% end %>
+</section>
+
+<section class="billing-status">
+  <div>
+    <span>Current state</span>
+    <strong><%= @subscription&.status&.humanize || "No subscription yet" %></strong>
+  </div>
+  <p>
+    <%= @subscription&.period_label || "Choose a plan to create a Stripe Checkout subscription for Sessia." %>
+    <strong class="client-count-inline"><%= pluralize(@active_client_count, "active client") %></strong>
+  </p>
+</section>
+
+<section class="plan-grid">
+  <% @plans.each do |plan| %>
+    <% fit_class = plan_fit_class(plan, @active_client_count) %>
+    <article class="plan-card <%= fit_class %>">
+      <span><%= plan.name %></span>
+      <h2><%= plan.price %></h2>
+      <strong class="plan-limit"><%= plan.client_limit_label %></strong>
+      <p><%= plan.description %></p>
+      <% if @recommended_plan&.tier == plan.tier %>
+        <em class="plan-fit">Recommended for your client count</em>
+      <% elsif fit_class == "over-limit" %>
+        <em class="plan-fit">Too small for your current client count</em>
+      <% else %>
+        <em class="plan-fit">Available upgrade capacity</em>
+      <% end %>
+
+      <% if fit_class == "over-limit" %>
+        <button class="secondary-button full" disabled>Needs larger plan</button>
+      <% elsif plan_configured?(plan) %>
+        <%= button_to "Choose #{plan.name}", checkout_subscription_path(plan: plan.tier), method: :post, class: "primary-button full" %>
+      <% else %>
+        <button class="secondary-button full" disabled>Set <%= plan.price_env_key %></button>
+      <% end %>
+    </article>
+  <% end %>
+</section>
