@@ -1014,6 +1014,32 @@ textarea {
   gap: 10px;
 }
 
+.language-switcher-form {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 30;
+}
+
+.language-switcher {
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: var(--shadow-raised);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.language-switcher:hover {
+  border-color: #91aaa4;
+  color: var(--green);
+}
+
 .account-mini div {
   min-width: 0;
 }

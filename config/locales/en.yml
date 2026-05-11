@@ -93,3 +93,59 @@ en:
     subscriptions: "Subscriptions"
     analytics: "Analytics"
     settings: "Settings"
+  plans:
+    client_limit: "Up to %{count} active clients"
+    starter:
+      description: "For a focused solo practice getting Sessia running."
+    pro:
+      description: "For a busier professional with a deeper active roster."
+    studio:
+      description: "For small practices managing a larger client base."
+  landing:
+    nav:
+      sign_in: "Sign in"
+      start_free: "Start free"
+    actions:
+      create_account: "Create account"
+      start_with_sessia: "Start with Sessia"
+      have_account: "I already have an account"
+    hero:
+      eyebrow: "Session management SaaS"
+      lede: "Run your client sessions from one calm workspace: agenda, WhatsApp follow-ups, confirmations, payment tracking, and practice analytics."
+    proof:
+      week:
+        title: "Week and month"
+        body: "See sessions, free slots, and blocked hours without digging."
+      whatsapp:
+        title: "WhatsApp-first"
+        body: "Clients connect through links and talk to the assistant in the channel they already use."
+      billing:
+        title: "Stripe billing"
+        body: "Plan access is based on the number of clients in the practice."
+    features:
+      eyebrow: "What Sessia replaces"
+      heading: "A professional operating system for recurring client work."
+      agenda:
+        title: "Agenda"
+        body: "Plan by week, inspect the month quickly, block hours, and let availability drive rescheduling options."
+      clients:
+        title: "Clients"
+        body: "Keep each client profile, WhatsApp link status, session history, notes, and payment position together."
+      ai:
+        title: "AI assistant"
+        body: "Confirm appointments, send reminders, answer basic questions, ask for feedback, and escalate when needed."
+      payments:
+        title: "Payments"
+        body: "Track paid, pending, overdue, and ahead-of-schedule clients separately from Sessia subscription billing."
+    workflow:
+      eyebrow: "Designed for small practices"
+      heading: "Less admin between sessions."
+      body: "Sessia is built for psychologists, tutors, coaches, consultants, trainers, therapists, and independent professionals who need a compact daily command center instead of a generic calendar."
+    pricing:
+      eyebrow: "Plans"
+      heading: "Pricing grows with your active client list."
+      start_pro: "Start with Pro"
+      choose: "Choose %{plan}"
+    final:
+      eyebrow: "Ready before the first client message"
+      heading: "Set your availability, add your clients, and let Sessia keep the week organized."

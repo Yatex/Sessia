@@ -158,4 +158,15 @@ module ApplicationHelper
   def language_options
     User::AVAILABLE_LOCALES.map { |value, label| [label, value] }
   end
+
+  def public_language_switcher
+    target_locale = I18n.locale.to_s == "es" ? "en" : "es"
+    label = target_locale == "es" ? "ES" : "EN"
+
+    button_to label, locale_path,
+      method: :patch,
+      params: { locale: target_locale },
+      class: "language-switcher",
+      form_class: "language-switcher-form"
+  end
 end

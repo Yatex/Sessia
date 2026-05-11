@@ -86,3 +86,59 @@ es:
     subscriptions: "Suscripciones"
     analytics: "Analítica"
     settings: "Configuración"
+  plans:
+    client_limit: "Hasta %{count} clientes activos"
+    starter:
+      description: "Para una práctica individual enfocada que empieza a ordenar sus sesiones."
+    pro:
+      description: "Para profesionales con más movimiento y una cartera activa más profunda."
+    studio:
+      description: "Para prácticas pequeñas que gestionan una base de clientes más grande."
+  landing:
+    nav:
+      sign_in: "Ingresar"
+      start_free: "Empezar gratis"
+    actions:
+      create_account: "Crear cuenta"
+      start_with_sessia: "Empezar con Sessia"
+      have_account: "Ya tengo cuenta"
+    hero:
+      eyebrow: "SaaS de gestión de sesiones"
+      lede: "Gestiona tus sesiones desde un espacio tranquilo: agenda, seguimientos por WhatsApp, confirmaciones, pagos y analítica de tu práctica."
+    proof:
+      week:
+        title: "Semana y mes"
+        body: "Ve sesiones, espacios libres y horarios bloqueados sin tener que buscar."
+      whatsapp:
+        title: "WhatsApp primero"
+        body: "Los clientes se conectan desde WhatsApp y hablan con el asistente en el canal que ya usan."
+      billing:
+        title: "Planes con Stripe"
+        body: "El acceso al plan depende de la cantidad de clientes activos de la práctica."
+    features:
+      eyebrow: "Lo que reemplaza Sessia"
+      heading: "Un sistema operativo profesional para trabajo recurrente con clientes."
+      agenda:
+        title: "Agenda"
+        body: "Planifica por semana, revisa el mes rápido, bloquea horarios y deja que la disponibilidad guíe las opciones para reagendar."
+      clients:
+        title: "Clientes"
+        body: "Mantén perfil, estado de conexión por WhatsApp, historial de sesiones, notas y posición de pago en un solo lugar."
+      ai:
+        title: "Asistente IA"
+        body: "Confirma turnos, envía recordatorios, responde preguntas básicas, pide feedback y escala cuando hace falta."
+      payments:
+        title: "Pagos"
+        body: "Sigue pagos realizados, pendientes, vencidos y clientes con sesiones adelantadas, separado de la suscripción de Sessia."
+    workflow:
+      eyebrow: "Diseñado para prácticas pequeñas"
+      heading: "Menos administración entre sesiones."
+      body: "Sessia está pensado para psicólogos, tutores, coaches, consultores, entrenadores, terapeutas y profesionales independientes que necesitan un centro de comando compacto, no un calendario genérico."
+    pricing:
+      eyebrow: "Planes"
+      heading: "El precio crece con tu lista de clientes activos."
+      start_pro: "Empezar con Pro"
+      choose: "Elegir %{plan}"
+    final:
+      eyebrow: "Listo antes del primer mensaje del cliente"
+      heading: "Configura tu disponibilidad, agrega tus clientes y deja que Sessia mantenga la semana ordenada."

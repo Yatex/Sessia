@@ -41,6 +41,9 @@ class ApplicationController < ActionController::Base
     locale = current_user&.locale.to_s
     return locale if I18n.available_locales.map(&:to_s).include?(locale)
 
+    locale = cookies[:locale].to_s
+    return locale if I18n.available_locales.map(&:to_s).include?(locale)
+
     I18n.default_locale
   end
 
