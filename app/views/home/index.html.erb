@@ -144,6 +144,25 @@
     </div>
   </section>
 
+  <section class="landing-pricing">
+    <div class="section-kicker">
+      <p class="eyebrow">Plans</p>
+      <h2>Pricing grows with your active client list.</h2>
+    </div>
+
+    <div class="landing-pricing-grid">
+      <% StripeBilling.plans.each do |plan| %>
+        <article class="landing-price-card <%= "recommended" if plan.tier == "pro" %>">
+          <span><%= plan.name %></span>
+          <h3><%= plan.price %></h3>
+          <strong><%= plan.client_limit_label %></strong>
+          <p><%= plan.description %></p>
+          <%= link_to plan.tier == "pro" ? "Start with Pro" : "Choose #{plan.name}", sign_up_path, class: plan.tier == "pro" ? "primary-button full" : "secondary-button full" %>
+        </article>
+      <% end %>
+    </div>
+  </section>
+
   <section class="landing-final-cta">
     <p class="eyebrow">Ready before the first client message</p>
     <h2>Set your availability, add your clients, and let Sessia keep the week organized.</h2>

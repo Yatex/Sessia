@@ -417,6 +417,7 @@ textarea {
 
 .landing-section,
 .landing-workflow,
+.landing-pricing,
 .landing-final-cta {
   margin-bottom: 86px;
 }
@@ -431,6 +432,7 @@ textarea {
 
 .section-kicker h2,
 .landing-workflow h2,
+.landing-pricing h2,
 .landing-final-cta h2 {
   margin: 0;
   font-size: 42px;
@@ -565,6 +567,59 @@ textarea {
   border-color: #d8dde8;
   background: #f2f5f7;
   color: #536b67;
+}
+
+.landing-pricing {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 56px;
+}
+
+.landing-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.landing-price-card {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.landing-price-card.recommended {
+  border-color: #91aaa4;
+  box-shadow: var(--shadow-raised);
+}
+
+.landing-price-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.landing-price-card h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 42px;
+  letter-spacing: 0;
+}
+
+.landing-price-card strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.landing-price-card p {
+  min-height: 54px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
 }
 
 .landing-final-cta {
