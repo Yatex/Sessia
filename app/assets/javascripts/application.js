@@ -34,6 +34,11 @@
         setFieldTimeZone(target, timeZone);
       });
     });
+
+    document.querySelectorAll("[data-detected-time-zone-field]").forEach(function (field) {
+      if (!timeZone) return;
+      field.value = timeZone;
+    });
   }
 
   function dismissFlashes() {

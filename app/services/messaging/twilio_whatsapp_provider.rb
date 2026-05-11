@@ -23,7 +23,7 @@ module Messaging
       account_sid.present? && auth_token.present? && from.present?
     end
 
-    def deliver(to:, body:)
+    def deliver(to:, body:, template: nil)
       raise "Twilio WhatsApp is not configured." unless configured?
 
       uri = URI.parse("#{TWILIO_BASE_URL}/Accounts/#{account_sid}/Messages.json")
@@ -31,9 +31,14 @@ module Messaging
       request.basic_auth(account_sid, auth_token)
       form_data = {
         "From" => Messaging::WhatsappAddress.twilio_address(from),
-        "To" => Messaging::WhatsappAddress.twilio_address(to),
-        "Body" => body
+        "To" => Messaging::WhatsappAddress.twilio_address(to)
       }
+      if template.present?
+        form_data["ContentSid"] = template.fetch("content_sid")
+        form_data["ContentVariables"] = JSON.generate(template.fetch("variables", {}).to_h.transform_keys(&:to_s))
+      else
+        form_data["Body"] = body
+      end
       form_data["StatusCallback"] = status_callback_url if status_callback_url.present?
       request.set_form_data(form_data)
 
@@ -44,7 +49,13 @@ module Messaging
         raise "Twilio WhatsApp send failed: #{parsed["message"].presence || response.body}"
       end
 
-      { provider: "twilio_whatsapp", external_id: parsed["sid"] }
+      {
+        provider: "twilio_whatsapp",
+        external_id: parsed["sid"],
+        status: parsed["status"].presence,
+        error_code: parsed["error_code"].presence,
+        error_message: parsed["error_message"].presence
+      }
     rescue JSON::ParserError
       raise "Twilio WhatsApp returned invalid JSON."
     end

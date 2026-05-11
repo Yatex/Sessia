@@ -44,6 +44,7 @@ class MessagingInboundWhatsappProcessorTest < ActiveSupport::TestCase
     assert_equal client, result.client
     assert_equal "Can I ask something?", result.message.body
     assert_equal session_record, result.message.session
+    assert client.reload.linked?
     assert_equal [result.message], FakeAiProcessor.messages
   end
 

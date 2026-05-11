@@ -111,6 +111,25 @@ module ApplicationHelper
     session_records.count { |session_record| session_record.payment_pending? || session_record.payment_overdue? }
   end
 
+  def client_whatsapp_ai_start_url(client)
+    number = sessia_whatsapp_number
+    return if number.blank?
+
+    "https://wa.me/#{number}?text=#{CGI.escape(client_whatsapp_ai_start_message(client))}"
+  end
+
+  def client_whatsapp_ai_start_message(client)
+    if current_user&.locale.to_s.start_with?("es")
+      "Hola Sessia, soy #{client.name}. Quiero conectar mis sesiones por WhatsApp."
+    else
+      "Hi Sessia, this is #{client.name}. I want to connect my sessions on WhatsApp."
+    end
+  end
+
+  def sessia_whatsapp_number
+    Messaging::WhatsappAddress.normalize(ENV["TWILIO_WHATSAPP_FROM"])
+  end
+
   def confirmed_session_count(session_records)
     session_records.count(&:confirmation_confirmed?)
   end

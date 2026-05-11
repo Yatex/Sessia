@@ -1,0 +1,8 @@
+<%= form_with url: google_auth_path, method: :get, class: "google-auth-form" do %>
+  <%= hidden_field_tag :origin, local_assigns.fetch(:origin) %>
+  <%= hidden_field_tag :time_zone, User::DEFAULT_TIME_ZONE, data: { detected_time_zone_field: true } %>
+  <%= button_tag type: "submit", class: "google-auth-button" do %>
+    <span class="google-auth-mark" aria-hidden="true">G</span>
+    <span><%= local_assigns.fetch(:label) %></span>
+  <% end %>
+<% end %>

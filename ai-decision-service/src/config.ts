@@ -21,7 +21,7 @@ const appConfigSchema = z.object({
   host: z.string().trim().min(1).default("127.0.0.1"),
   port: z.coerce.number().int().positive().default(8788),
   provider: providerSchema.default("mock"),
-  modelProvider: modelProviderSchema.default("openai"),
+  modelProvider: modelProviderSchema.default("gateway"),
   model: z.string().trim().min(1).default("gpt-5-mini"),
   timeoutMs: z.coerce.number().int().positive().default(30_000),
   maxRetries: z.coerce.number().int().min(0).max(5).default(1),

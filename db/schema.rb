@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_05_07_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_05_08_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -256,7 +256,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_07_120000) do
     t.datetime "updated_at", null: false
     t.string "locale", default: "en", null: false
     t.integer "role", default: 0, null: false
+    t.string "google_uid"
+    t.string "google_avatar_url"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["google_uid"], name: "index_users_on_google_uid", unique: true, where: "(google_uid IS NOT NULL)"
     t.index ["locale"], name: "index_users_on_locale"
     t.index ["password_reset_token_digest"], name: "index_users_on_password_reset_token_digest", unique: true
     t.index ["role"], name: "index_users_on_role"

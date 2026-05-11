@@ -19,13 +19,14 @@ class AuthenticationAndScopeTest < ActionDispatch::IntegrationTest
   end
 
   test "dashboard is authenticated and scoped to current user" do
+    session_start = Time.current.beginning_of_week(:monday) + 9.hours
     user = User.create!(name: "Scoped Pro", email: "scoped@example.com", password: "password123")
     client = user.clients.create!(name: "Visible Client", email: "visible@example.com", phone: "+598 99 123 003")
     user.sessions.create!(
       client: client,
       title: "Visible Session",
-      start_time: Time.zone.parse("2026-05-05 09:00"),
-      end_time: Time.zone.parse("2026-05-05 09:50")
+      start_time: session_start,
+      end_time: session_start + 50.minutes
     )
 
     other_user = User.create!(name: "Other Pro", email: "otherpro@example.com", password: "password123")
@@ -33,8 +34,8 @@ class AuthenticationAndScopeTest < ActionDispatch::IntegrationTest
     other_user.sessions.create!(
       client: other_client,
       title: "Hidden Session",
-      start_time: Time.zone.parse("2026-05-05 10:00"),
-      end_time: Time.zone.parse("2026-05-05 10:50")
+      start_time: session_start + 1.hour,
+      end_time: session_start + 1.hour + 50.minutes
     )
 
     get dashboard_url

@@ -37,7 +37,8 @@ module Messaging
       return Result.new(status: :ignored, reason: "No outbound Sessia message matches #{message_sid}.") if message.blank?
 
       metadata = message.metadata.deep_dup
-      provider_metadata = metadata.fetch("provider", {}).merge(
+      existing_provider_metadata = metadata["provider"].is_a?(Hash) ? metadata["provider"] : { "name" => metadata["provider"].presence }.compact
+      provider_metadata = existing_provider_metadata.merge(
         "name" => "twilio_whatsapp",
         "status" => provider_status,
         "error_code" => provider_error_code,
@@ -93,6 +94,7 @@ module Messaging
         metadata: message_metadata
       )
       message.save!
+      client.mark_linked!
       [message, was_new]
     end
 

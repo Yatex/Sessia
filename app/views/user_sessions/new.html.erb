@@ -6,6 +6,9 @@
       <p>Open your session workspace.</p>
     </div>
 
+    <%= render "shared/google_auth_button", origin: "sign_in", label: "Sign in with Google" %>
+    <div class="auth-divider"><span>or</span></div>
+
     <%= form_with url: sign_in_path, class: "form-stack" do |form| %>
       <div class="field">
         <%= form.label :email %>

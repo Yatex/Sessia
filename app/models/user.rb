@@ -34,6 +34,7 @@ class User < ApplicationRecord
   validates :name, presence: true
   validates :email, presence: true, uniqueness: { case_sensitive: false },
                     format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :google_uid, uniqueness: true, allow_blank: true
   validates :password, length: { minimum: 8 }, allow_nil: true
   validates :time_zone, presence: true
   validates :locale, presence: true, inclusion: { in: AVAILABLE_LOCALES.keys }

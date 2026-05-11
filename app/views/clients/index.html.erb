@@ -18,7 +18,7 @@
         <%= select_tag :status, options_for_select([["All statuses", ""]] + Client.statuses.keys.map { |status| [status.humanize, status] }, @filters[:status]) %>
       </div>
       <div class="field">
-        <%= label_tag :linked, "Client link" %>
+        <%= label_tag :linked, "AI WhatsApp" %>
         <%= select_tag :linked, options_for_select([["All clients", ""], ["Linked", "linked"], ["Not linked", "unlinked"]], @filters[:linked]) %>
       </div>
     </div>
@@ -37,7 +37,7 @@
           <th>Name</th>
           <th>Contact</th>
           <th>Preferred channel</th>
-          <th>Client link</th>
+          <th>AI WhatsApp</th>
           <th>Status</th>
           <th></th>
         </tr>

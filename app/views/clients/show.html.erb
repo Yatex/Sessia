@@ -15,13 +15,18 @@
       <div><dt>Email</dt><dd><%= @client.email.presence || "Not set" %></dd></div>
       <div><dt>WhatsApp</dt><dd><%= @client.phone %></dd></div>
       <div><dt>Contact</dt><dd><%= @client.preferred_contact_channel.humanize %></dd></div>
-      <div><dt>Portal</dt><dd><%= @client.linked? ? "Linked #{time_ago_in_words(@client.linked_at)} ago" : "Not linked yet" %></dd></div>
+      <div><dt>AI WhatsApp</dt><dd><%= @client.linked? ? "Linked #{time_ago_in_words(@client.linked_at)} ago" : "Waiting for first message" %></dd></div>
       <div><dt>Status</dt><dd><%= status_badge(@client.status) %></dd></div>
     </dl>
     <div class="portal-link-panel">
-      <h2>Client link</h2>
-      <p>Send this private link to <%= @client.name %> on WhatsApp. Once opened, the client is linked and can request schedule changes or ask questions.</p>
-      <input readonly value="<%= client_portal_url(@client.portal_token) %>">
+      <h2>WhatsApp AI start</h2>
+      <p>Send this WhatsApp start link to <%= @client.name %>. When the client sends the first message, Sessia links the number and the AI can answer inside the WhatsApp response window.</p>
+      <% if (whatsapp_url = client_whatsapp_ai_start_url(@client)).present? %>
+        <input readonly value="<%= whatsapp_url %>">
+        <%= link_to "Open WhatsApp", whatsapp_url, class: "primary-button full", target: "_blank", rel: "noreferrer" %>
+      <% else %>
+        <input readonly value="Set TWILIO_WHATSAPP_FROM to generate this link">
+      <% end %>
     </div>
     <div class="notes-block">
       <h2>Notes</h2>

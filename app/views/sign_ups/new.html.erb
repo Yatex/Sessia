@@ -8,6 +8,9 @@
 
     <%= render "shared/form_errors", object: @user %>
 
+    <%= render "shared/google_auth_button", origin: "sign_up", label: "Sign up with Google" %>
+    <div class="auth-divider"><span>or</span></div>
+
     <%= form_with model: @user, url: sign_up_path, class: "form-stack" do |form| %>
       <div class="field">
         <%= form.label :name %>

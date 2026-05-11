@@ -1,11 +1,5 @@
 module Admin
   class AnalyticsController < Admin::BaseController
-    PLAN_MRR = {
-      "starter" => 19,
-      "pro" => 39,
-      "studio" => 79
-    }.freeze
-
     def index
       active_subscriptions = Subscription.active_or_trialing
       paying_subscriptions = active_subscriptions.stripe_backed
@@ -33,7 +27,7 @@ module Admin
 
     def estimated_mrr(scope)
       scope.group(:plan_tier).count.sum do |tier, count|
-        PLAN_MRR.fetch(tier.to_s, 0) * count
+        StripeBilling.plan_for(tier)&.monthly_price.to_i * count
       end
     end
   end

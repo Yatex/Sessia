@@ -41,11 +41,14 @@ Copy `.env.example` into your deployment environment or shell and set:
 - `STRIPE_PRICE_ID_STARTER`
 - `STRIPE_PRICE_ID_PRO`
 - `STRIPE_PRICE_ID_STUDIO`
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` for Google sign-in and Calendar sync
+- `GOOGLE_AUTH_REDIRECT_URI` if your deployed Google sign-in callback differs from `APP_HOST/auth/google/callback`
+- `GOOGLE_CALENDAR_REDIRECT_URI` if your deployed Calendar callback differs from `APP_HOST/google-calendar/callback`
 - `SESSIA_AI_SERVICE_URL`
 - `SESSIA_AI_PROVIDER`
 - `SESSIA_AI_MODEL_PROVIDER`
 - `SESSIA_AI_MODEL`
-- `OPENAI_API_KEY` or the model provider key used by `ai-decision-service`
+- `AI_GATEWAY_API_KEY` for Vercel AI Gateway
 - `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_WHATSAPP_FROM` for real WhatsApp delivery
 - `TWILIO_WEBHOOK_URL` and `TWILIO_VERIFY_WEBHOOK_SIGNATURE` for inbound WhatsApp replies
 
@@ -60,7 +63,18 @@ POST /stripe/webhook
 Sessia follows the Attendly-style split:
 
 - Rails owns users, clients, sessions, payment state, AI tasks, alerts, and message execution.
-- `ai-decision-service` uses the Vercel AI SDK to choose one safe action for a task.
+- `ai-decision-service` uses the Vercel AI SDK through Vercel AI Gateway to choose one safe action for a task.
+
+For production AI decisions through your Vercel balance, set:
+
+```bash
+SESSIA_AI_PROVIDER=vercel
+SESSIA_AI_MODEL_PROVIDER=gateway
+AI_GATEWAY_API_KEY=...
+SESSIA_AI_MODEL=gpt-5-mini
+```
+
+`OPENAI_API_KEY` is only needed if you deliberately set `SESSIA_AI_MODEL_PROVIDER=openai` and bypass Vercel AI Gateway.
 
 For local demos:
 

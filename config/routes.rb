@@ -8,6 +8,8 @@ Rails.application.routes.draw do
   get "sign-in", to: "user_sessions#new", as: :sign_in
   post "sign-in", to: "user_sessions#create"
   delete "sign-out", to: "user_sessions#destroy", as: :sign_out
+  get "auth/google", to: "google_auth#connect", as: :google_auth
+  get "auth/google/callback", to: "google_auth#callback", as: :google_auth_callback
 
   get "password-reset", to: "password_resets#new", as: :new_password_reset
   post "password-reset", to: "password_resets#create", as: :password_resets

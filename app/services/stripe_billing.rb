@@ -1,7 +1,11 @@
 # frozen_string_literal: true
 
 class StripeBilling
-  Plan = Struct.new(:tier, :name, :price, :description, :price_env_key, :client_limit, keyword_init: true) do
+  Plan = Struct.new(:tier, :name, :monthly_price, :description, :price_env_key, :client_limit, keyword_init: true) do
+    def price
+      "$#{monthly_price}/mo"
+    end
+
     def client_limit_label
       "Up to #{client_limit} active clients"
     end
@@ -21,7 +25,7 @@ class StripeBilling
     Plan.new(
       tier: "starter",
       name: "Starter",
-      price: "$19/mo",
+      monthly_price: 29,
       description: "For a focused solo practice getting Sessia running.",
       price_env_key: "STRIPE_PRICE_ID_STARTER",
       client_limit: 10
@@ -29,7 +33,7 @@ class StripeBilling
     Plan.new(
       tier: "pro",
       name: "Pro",
-      price: "$39/mo",
+      monthly_price: 49,
       description: "For a busier professional with a deeper active roster.",
       price_env_key: "STRIPE_PRICE_ID_PRO",
       client_limit: 35
@@ -37,7 +41,7 @@ class StripeBilling
     Plan.new(
       tier: "studio",
       name: "Studio",
-      price: "$79/mo",
+      monthly_price: 89,
       description: "For small practices managing a larger client base.",
       price_env_key: "STRIPE_PRICE_ID_STUDIO",
       client_limit: 100
