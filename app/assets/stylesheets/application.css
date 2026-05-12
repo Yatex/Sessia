@@ -676,6 +676,27 @@ textarea {
   color: var(--muted);
 }
 
+.trial-note {
+  display: grid;
+  gap: 4px;
+  margin: 18px 0;
+  border: 1px solid #cfe6dc;
+  border-radius: 14px;
+  background: #edf8f3;
+  padding: 12px 14px;
+  color: #38514d;
+}
+
+.trial-note strong {
+  color: var(--ink);
+}
+
+.trial-note span {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 .auth-links,
 .auth-switch {
   margin-top: 18px;
@@ -2743,6 +2764,27 @@ textarea {
   color: #38514d;
   font-size: 12px;
   text-transform: uppercase;
+}
+
+.trial-banner {
+  margin-bottom: 18px;
+  border: 1px solid #cfe6dc;
+  border-radius: var(--radius);
+  background: #edf8f3;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.trial-banner h2 {
+  margin: 10px 0 6px;
+  font-size: 24px;
+}
+
+.trial-banner p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
 }
 
 .plan-grid {

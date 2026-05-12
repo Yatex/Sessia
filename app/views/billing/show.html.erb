@@ -19,6 +19,19 @@
   </p>
 </section>
 
+<% if @subscription&.provider == "trial" && @subscription.trial_ends_at.present? %>
+  <section class="trial-banner">
+    <div>
+      <span class="status-badge trialing">Free trial active</span>
+      <h2>Your trial is already running</h2>
+      <p>
+        You can use Sessia until <strong><%= @subscription.trial_ends_at.to_date.to_fs(:long) %></strong>.
+        Pick Starter, Pro, or Studio below whenever you want to keep the workspace active after the trial.
+      </p>
+    </div>
+  </section>
+<% end %>
+
 <section class="plan-grid">
   <% @plans.each do |plan| %>
     <% fit_class = plan_fit_class(plan, @active_client_count) %>

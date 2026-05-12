@@ -3,7 +3,12 @@
     <div class="auth-heading">
       <%= link_to "Sessia", root_path, class: "public-brand" %>
       <h1>Create your account</h1>
-      <p>Set up your session workspace in a minute.</p>
+      <p>Set up your session workspace in a minute. Your 14-day free trial starts automatically.</p>
+    </div>
+
+    <div class="trial-note">
+      <strong>Free trial included</strong>
+      <span>No card is required to start. Choose a paid plan later from Subscriptions when you are ready.</span>
     </div>
 
     <%= render "shared/form_errors", object: @user %>

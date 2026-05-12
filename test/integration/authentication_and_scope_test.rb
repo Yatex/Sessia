@@ -1,6 +1,14 @@
 require "test_helper"
 
 class AuthenticationAndScopeTest < ActionDispatch::IntegrationTest
+  test "sign up explains the automatic free trial" do
+    get sign_up_url
+
+    assert_response :success
+    assert_match "Your 14-day free trial starts automatically", response.body
+    assert_match "No card is required to start", response.body
+  end
+
   test "user can sign up and reach the dashboard" do
     post sign_up_url, params: {
       user: {
@@ -17,6 +25,17 @@ class AuthenticationAndScopeTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: /-/
     assert_equal "trial", User.find_by!(email: "newpro@example.com").current_subscription.plan_tier
+  end
+
+  test "subscriptions page shows active trial state" do
+    user = User.create!(name: "Trial Viewer", email: "trial-viewer@example.com", password: "password123")
+    post sign_in_url, params: { email: user.email, password: "password123" }
+
+    get subscription_url
+
+    assert_response :success
+    assert_match "Free trial active", response.body
+    assert_match "Your trial is already running", response.body
   end
 
   test "dashboard is authenticated and scoped to current user" do
