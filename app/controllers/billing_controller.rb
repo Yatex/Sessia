@@ -3,7 +3,7 @@ class BillingController < ApplicationController
 
   def show
     @plans = StripeBilling.plans
-    @subscription = current_user.subscriptions.order(created_at: :desc).first
+    @subscription = current_user.current_subscription || current_user.subscriptions.order(created_at: :desc).first
     @active_client_count = current_user.clients.active.count
     @recommended_plan = StripeBilling.recommended_plan_for(@active_client_count)
   end

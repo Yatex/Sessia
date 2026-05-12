@@ -16,6 +16,7 @@ class AuthenticationAndScopeTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_response :success
     assert_select "h1", text: /-/
+    assert_equal "trial", User.find_by!(email: "newpro@example.com").current_subscription.plan_tier
   end
 
   test "dashboard is authenticated and scoped to current user" do

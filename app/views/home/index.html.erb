@@ -151,6 +151,15 @@
     </div>
 
     <div class="landing-pricing-grid">
+      <% trial_plan = StripeBilling::TRIAL_PLAN %>
+      <article class="landing-price-card trial">
+        <span><%= trial_plan.name %></span>
+        <h3><%= trial_plan.price %></h3>
+        <strong><%= t("plans.trial.limit", count: trial_plan.client_limit) %></strong>
+        <p><%= t("plans.trial.description") %></p>
+        <%= link_to t("landing.pricing.start_trial"), sign_up_path, class: "primary-button full" %>
+      </article>
+
       <% StripeBilling.plans.each do |plan| %>
         <article class="landing-price-card <%= "recommended" if plan.tier == "pro" %>">
           <span><%= plan.name %></span>

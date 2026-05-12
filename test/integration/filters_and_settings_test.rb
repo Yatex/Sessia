@@ -89,4 +89,31 @@ class FiltersAndSettingsTest < ActionDispatch::IntegrationTest
     assert_equal [1, 8 * 60, 11 * 60], [rules.first.weekday, rules.first.start_minute, rules.first.end_minute]
     assert_equal [2, 9 * 60, 10 * 60], [rules.second.weekday, rules.second.start_minute, rules.second.end_minute]
   end
+
+  test "settings owns professional whatsapp configuration" do
+    user = User.create!(name: "WhatsApp Settings", email: "whatsapp-settings@example.com", password: "password123")
+    post sign_in_url, params: { email: user.email, password: "password123" }
+
+    get ai_assistant_url
+    assert_response :success
+    assert_no_match "Owner WhatsApp", response.body
+    assert_no_match "Your WhatsApp number", response.body
+
+    get settings_url
+    assert_response :success
+    assert_match "Owner WhatsApp", response.body
+    assert_match "Your WhatsApp number", response.body
+
+    patch professional_whatsapp_settings_url, params: {
+      ai_setting: {
+        use_professional_whatsapp: "1",
+        professional_whatsapp_phone: "  +598 99 123 456  "
+      }
+    }
+
+    assert_redirected_to settings_url
+    setting = user.reload.ai_setting
+    assert setting.use_professional_whatsapp?
+    assert_equal "+598 99 123 456", setting.professional_whatsapp_phone
+  end
 end

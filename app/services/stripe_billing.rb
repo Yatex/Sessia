@@ -3,6 +3,8 @@
 class StripeBilling
   Plan = Struct.new(:tier, :name, :monthly_price, :description, :price_env_key, :client_limit, keyword_init: true) do
     def price
+      return "Free" if monthly_price.to_i.zero?
+
       "$#{monthly_price}/mo"
     end
 
@@ -20,6 +22,15 @@ class StripeBilling
       error.blank?
     end
   end
+
+  TRIAL_PLAN = Plan.new(
+    tier: "trial",
+    name: "Free trial",
+    monthly_price: 0,
+    description: "Try Sessia with your first clients before choosing a paid plan.",
+    price_env_key: nil,
+    client_limit: 5
+  ).freeze
 
   PLANS = [
     Plan.new(
@@ -53,6 +64,10 @@ class StripeBilling
       PLANS
     end
 
+    def all_plans
+      [TRIAL_PLAN, *PLANS]
+    end
+
     def recommended_plan_for(client_count)
       plans.find { |plan| plan.covers_client_count?(client_count) } || plans.last
     end
@@ -60,6 +75,7 @@ class StripeBilling
     def create_checkout_session(user:, plan_tier:, success_url:, cancel_url:, client_count: nil)
       plan = plan_for(plan_tier)
       return failure("Choose a valid Sessia plan.") unless plan
+      return failure("Free trial is created automatically for new accounts.") if plan.tier == "trial"
 
       client_count = client_count.to_i
       return failure("#{plan.name} supports #{plan.client_limit_label.downcase}; choose a larger plan for #{client_count} active clients.") unless plan.covers_client_count?(client_count)
@@ -127,7 +143,7 @@ class StripeBilling
     end
 
     def plan_for(tier)
-      plans.find { |plan| plan.tier == tier.to_s }
+      all_plans.find { |plan| plan.tier == tier.to_s }
     end
 
     private

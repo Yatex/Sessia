@@ -33,8 +33,6 @@ class AiSettingsController < ApplicationController
   def ai_setting_params
     params.require(:ai_setting).permit(
       *AiSetting::FEATURE_FIELDS,
-      :use_professional_whatsapp,
-      :professional_whatsapp_phone,
       :instructions
     )
   end

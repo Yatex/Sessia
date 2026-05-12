@@ -88,6 +88,9 @@ es:
     settings: "Configuración"
   plans:
     client_limit: "Hasta %{count} clientes activos"
+    trial:
+      limit: "Hasta %{count} clientes activos"
+      description: "Prueba Sessia durante 14 dias. Cada cuenta nueva puede usar el trial una sola vez."
     starter:
       description: "Para una práctica individual enfocada que empieza a ordenar sus sesiones."
     pro:
@@ -137,6 +140,7 @@ es:
     pricing:
       eyebrow: "Planes"
       heading: "El precio crece con tu lista de clientes activos."
+      start_trial: "Empezar trial gratis"
       start_pro: "Empezar con Pro"
       choose: "Elegir %{plan}"
     final:

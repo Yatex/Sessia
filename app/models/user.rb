@@ -30,6 +30,7 @@ class User < ApplicationRecord
   before_validation :normalize_locale
   after_create :create_default_ai_setting
   after_create :create_default_availability_rules
+  after_create :create_free_trial_subscription
 
   validates :name, presence: true
   validates :email, presence: true, uniqueness: { case_sensitive: false },
@@ -97,6 +98,10 @@ class User < ApplicationRecord
 
   def create_default_availability_rules
     Availability::Defaults.ensure_for(self)
+  end
+
+  def create_free_trial_subscription
+    Subscription.create_free_trial_for!(self)
   end
 
   def digest_token(token)

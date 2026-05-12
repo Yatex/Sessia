@@ -51,6 +51,7 @@ Rails.application.routes.draw do
 
   resource :settings, only: %i[show update] do
     patch :availability
+    patch :professional_whatsapp
     post :password_reset
   end
   resource :google_calendar,

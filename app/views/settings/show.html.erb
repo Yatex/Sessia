@@ -38,6 +38,44 @@
   <% end %>
 </section>
 
+<section class="form-panel settings-integration-panel">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Communication</p>
+      <h2>Owner WhatsApp</h2>
+    </div>
+    <% if @ai_setting.use_professional_whatsapp? %>
+      <%= status_badge("connected") %>
+    <% else %>
+      <%= status_badge("not_connected") %>
+    <% end %>
+  </div>
+  <p class="panel-copy">
+    Add the professional WhatsApp number you will use to ask Sessia questions about clients, sessions, payments, and follow-ups.
+  </p>
+
+  <%= render "shared/form_errors", object: @ai_setting %>
+
+  <%= form_with model: @ai_setting, url: professional_whatsapp_settings_path, method: :patch, class: "settings-form", data: { settings_autosave: true } do |form| %>
+    <div class="whatsapp-settings-panel">
+      <label class="toggle-row">
+        <%= form.check_box :use_professional_whatsapp %>
+        <span>
+          <strong>Enable owner WhatsApp questions</strong>
+          <small>Allow messages from this WhatsApp number to be treated as professional commands and questions.</small>
+        </span>
+      </label>
+      <div class="field">
+        <%= form.label :professional_whatsapp_phone, "Your WhatsApp number" %>
+        <%= form.telephone_field :professional_whatsapp_phone, placeholder: "+598 99 123 456", autocomplete: "tel" %>
+      </div>
+    </div>
+    <div class="form-actions">
+      <span class="autosave-status" data-autosave-status>Saved</span>
+    </div>
+  <% end %>
+</section>
+
 <section class="form-panel settings-availability-panel">
   <div class="section-heading">
     <div>

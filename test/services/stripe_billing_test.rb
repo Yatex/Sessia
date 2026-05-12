@@ -21,4 +21,19 @@ class StripeBillingTest < ActiveSupport::TestCase
     assert_not result.success?
     assert_match "supports up to 10 active clients", result.error
   end
+
+  test "checkout rejects free trial because it is automatic" do
+    user = User.create!(name: "Trial Billing Pro", email: "trial-billing@example.com", password: "password123")
+
+    result = StripeBilling.create_checkout_session(
+      user: user,
+      plan_tier: "trial",
+      success_url: "http://example.com/success",
+      cancel_url: "http://example.com/billing",
+      client_count: 1
+    )
+
+    assert_not result.success?
+    assert_match "created automatically", result.error
+  end
 end

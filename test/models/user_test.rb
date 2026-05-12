@@ -48,4 +48,23 @@ class UserTest < ActiveSupport::TestCase
     assert user.valid?
     assert_equal "en", user.locale
   end
+
+  test "creates a one-time free trial subscription for new users" do
+    user = User.create!(
+      name: "Trial User",
+      email: "trial-user@example.com",
+      password: "password123"
+    )
+
+    trial = user.subscriptions.free_trials.first
+    assert trial.present?
+    assert_equal "trial", trial.plan_tier
+    assert_equal "trialing", trial.status
+    assert trial.usable?
+    assert_in_delta 14.days.from_now.to_i, trial.trial_ends_at.to_i, 5
+
+    assert_no_difference -> { user.subscriptions.free_trials.count } do
+      Subscription.create_free_trial_for!(user)
+    end
+  end
 end

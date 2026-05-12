@@ -95,6 +95,9 @@ en:
     settings: "Settings"
   plans:
     client_limit: "Up to %{count} active clients"
+    trial:
+      limit: "Up to %{count} active clients"
+      description: "Try Sessia for 14 days. New accounts can use the free trial once."
     starter:
       description: "For a focused solo practice getting Sessia running."
     pro:
@@ -144,6 +147,7 @@ en:
     pricing:
       eyebrow: "Plans"
       heading: "Pricing grows with your active client list."
+      start_trial: "Start free trial"
       start_pro: "Start with Pro"
       choose: "Choose %{plan}"
     final:

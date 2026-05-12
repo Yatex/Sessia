@@ -25,6 +25,17 @@ class SettingsController < ApplicationController
     render :show, status: :unprocessable_entity
   end
 
+  def professional_whatsapp
+    @ai_setting = current_user.ai_setting || current_user.create_ai_setting!
+
+    if @ai_setting.update(professional_whatsapp_params)
+      redirect_to settings_path, notice: "WhatsApp settings updated."
+    else
+      load_settings_context
+      render :show, status: :unprocessable_entity
+    end
+  end
+
   def password_reset
     token = current_user.generate_password_reset_token!
     PasswordMailer.with(user: current_user, token: token).reset.deliver_later
@@ -37,6 +48,7 @@ class SettingsController < ApplicationController
   def load_settings_context
     Availability::Defaults.ensure_for(current_user)
     @user = current_user
+    @ai_setting = current_user.ai_setting || current_user.create_ai_setting!
     @calendar_connection = current_user.calendar_connection
     @google_calendar_configured = GoogleCalendar::Client.configured?
     @availability_by_weekday = current_user.availability_rules.ordered.to_a.group_by(&:weekday)
@@ -44,6 +56,10 @@ class SettingsController < ApplicationController
 
   def user_params
     params.require(:user).permit(:name, :email, :time_zone, :locale)
+  end
+
+  def professional_whatsapp_params
+    params.require(:ai_setting).permit(:use_professional_whatsapp, :professional_whatsapp_phone)
   end
 
   def update_availability_rules!
