@@ -14,10 +14,6 @@
     <%= form.telephone_field :phone, autocomplete: "tel", placeholder: "+598 99 123 456" %>
     <small class="field-hint"><%= t("clients.form.whatsapp_hint") %></small>
   </div>
-  <div class="detected-field">
-    <span><%= t("clients.form.preferred_channel") %></span>
-    <strong><%= t("clients.form.whatsapp_only") %></strong>
-  </div>
   <div class="field">
     <%= form.label :status %>
     <%= form.select :status, Client.statuses.keys.map { |status| [status_label(status), status] } %>
