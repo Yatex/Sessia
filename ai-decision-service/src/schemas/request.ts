@@ -10,6 +10,7 @@ const professionalSchema = z.object({
   name: nonEmptyStringSchema,
   locale: nonEmptyStringSchema.nullable().optional(),
   time_zone: nonEmptyStringSchema.nullable().optional(),
+  payment_instructions: nonEmptyStringSchema.nullable().optional(),
   instructions: nonEmptyStringSchema.nullable().optional()
 }).passthrough();
 

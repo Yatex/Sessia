@@ -41,6 +41,55 @@ class TwilioWhatsappWebhookTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "attaches inbound whatsapp replies to the latest outbound session context" do
+    user = User.create!(name: "Webhook Pro", email: "twilio-context@example.com", password: "password123")
+    disable_ai_for(user)
+    client = user.clients.create!(name: "Webhook Client", phone: "+598 99 111 235")
+    first_session = user.sessions.create!(
+      client: client,
+      title: "Older Session",
+      start_time: 1.day.from_now,
+      end_time: 1.day.from_now + 1.hour
+    )
+    latest_session = user.sessions.create!(
+      client: client,
+      title: "Latest Outbound Session",
+      start_time: 2.days.from_now,
+      end_time: 2.days.from_now + 1.hour
+    )
+    user.messages.create!(
+      client: client,
+      session: first_session,
+      direction: "outbound",
+      channel: "whatsapp",
+      status: "sent",
+      subject: "Older message",
+      body: "Older session message",
+      sent_at: 2.hours.ago,
+      created_at: 2.hours.ago
+    )
+    user.messages.create!(
+      client: client,
+      session: latest_session,
+      direction: "outbound",
+      channel: "whatsapp",
+      status: "sent",
+      subject: "Latest message",
+      body: "Can you confirm this later session?",
+      sent_at: 5.minutes.ago
+    )
+
+    post twilio_whatsapp_webhook_url, params: {
+      From: "whatsapp:+59899111235",
+      To: "whatsapp:+14155238886",
+      Body: "yes",
+      MessageSid: "SM-webhook-context"
+    }
+
+    assert_response :ok
+    assert_equal latest_session, user.messages.inbound.last.session
+  end
+
   test "rejects invalid twilio signature when verification is required" do
     with_env("TWILIO_AUTH_TOKEN" => "secret", "TWILIO_VERIFY_WEBHOOK_SIGNATURE" => "true") do
       assert_no_difference -> { Message.count } do

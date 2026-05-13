@@ -18,6 +18,8 @@ module Ai
       errors = []
 
       due_scope.find_each do |task|
+        next unless Ai::DeliveryWindow.allows?(task: task, reference_time: now)
+
         processed_task = Ai::TaskProcessor.new(task: task, decision_client: decision_client).call.reload
         processed << processed_task
         errors << "Task ##{task.id}: #{processed_task.error_message}" if processed_task.status_failed? && processed_task.error_message.present?

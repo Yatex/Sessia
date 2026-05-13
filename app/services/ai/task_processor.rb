@@ -11,7 +11,9 @@ module Ai
 
       task.update!(status: "processing", error_message: nil)
 
+      current_stage = "context_building"
       context = Ai::ContextBuilder.new(task: task).call
+      current_stage = "instruction_matching"
       instruction = Ai::InstructionCatalog.for_task(task, ai_setting: task.user.ai_setting || task.user.create_ai_setting!)
 
       if instruction.blank?
@@ -22,8 +24,10 @@ module Ai
         return task
       end
 
+      current_stage = "provider_decision"
       payload = context.fetch(:payload).merge(instruction: instruction.to_h)
       decision = decision_client.decide(payload)
+      current_stage = "action_execution"
       executor_result = Ai::ActionExecutor.new(
         task: task,
         context: context,
@@ -33,14 +37,19 @@ module Ai
 
       finalize!(
         executor_result.status,
-        decision.merge(executor_result.to_h)
+        decision.merge(executor_result.to_h).merge(failure_details_for(executor_result, current_stage))
       )
       task
     rescue StandardError => error
       Rails.logger.warn("Sessia AI task #{task.id} failed: #{error.class}: #{error.message}")
       finalize!("failed", {
         "activity_summary" => "AI task failed.",
-        "reasoning_summary" => error.message
+        "reasoning_summary" => error.message,
+        "failure_details" => {
+          "stage" => defined?(current_stage) ? current_stage : "task_processing",
+          "error_class" => error.class.name,
+          "error_message" => error.message.to_s
+        }
       }, error_message: error.message)
       task
     end
@@ -56,6 +65,17 @@ module Ai
         result_data: result_data,
         error_message: error_message
       )
+    end
+
+    def failure_details_for(executor_result, stage)
+      return {} unless executor_result.status == "failed"
+
+      {
+        "failure_details" => {
+          "stage" => stage,
+          "error_message" => executor_result.error_message.to_s
+        }
+      }
     end
   end
 end

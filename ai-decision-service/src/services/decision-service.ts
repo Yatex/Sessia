@@ -2,7 +2,11 @@ import { buildDecisionPrompt } from "../prompts/build-prompt.js";
 import type { Decision } from "../schemas/decision.js";
 import type { DecideRequest } from "../schemas/request.js";
 import type { DecisionProvider } from "../providers/base-provider.js";
-import { normalizeReplyText, parseDeterministicReply } from "../reply-parser/deterministic-reply-parser.js";
+import {
+  normalizeReplyText,
+  parseContextualConfirmationReply,
+  parseDeterministicReply
+} from "../reply-parser/deterministic-reply-parser.js";
 import { validateDecision } from "./validate-decision.js";
 
 export class DecisionService {
@@ -55,6 +59,9 @@ function maybeResolveDeterministicReply(input: DecideRequest): Decision | null {
   const basicQuestionDecision = maybeAnswerBasicQuestion(input, normalized);
   if (basicQuestionDecision) return basicQuestionDecision;
 
+  const contextualConfirmationDecision = maybeResolveContextualConfirmation(input, body);
+  if (contextualConfirmationDecision) return contextualConfirmationDecision;
+
   switch (parseDeterministicReply(body)) {
     case "confirmed":
       return stateUpdate(input, "mark_session_confirmed", "Client clearly confirmed the session.");
@@ -79,12 +86,22 @@ function maybeAnswerBasicQuestion(input: DecideRequest, normalizedBody: string):
     }), "Answered session time from Sessia context.");
   }
 
-  if (/(price|cost|pay|payment|precio|costo|pago|pagar)/i.test(normalizedBody) && input.session) {
+  if (/(price|cost|pay|payment|precio|costo|pago|pagar|transfer|transferencia|alias|metodo|método)/i.test(normalizedBody) && input.session) {
+    const paymentInstructions = professionalPaymentInstructions(input);
+    const asksHowToPay = /(how.*pay|pay.*how|where.*pay|payment method|transfer|como pago|donde pago|por donde pago|metodo|alias|transferencia)/i.test(normalizedBody);
+    if (asksHowToPay && !paymentInstructions) {
+      return alert(input, `Client is asking how to pay, but no payment instructions are configured: ${latestInboundMessage(input)?.body}`, "Payment-method question needs professional review because no payment instructions are configured.");
+    }
+
     const amount = formatMoney(input.session.price_cents ?? 0, input.session.currency ?? "USD");
     const status = input.session.payment_status ?? "not tracked";
+    const instructions = paymentInstructions ? localize(input, {
+      en: ` You can pay this way: ${paymentInstructions}`,
+      es: ` Puedes pagar asi: ${paymentInstructions}`
+    }) : "";
     return sendIfAllowed(input, localize(input, {
-      en: `The session price is ${amount}. Payment status: ${status.replaceAll("_", " ")}.`,
-      es: `El precio de la sesion es ${amount}. Estado de pago: ${status.replaceAll("_", " ")}.`
+      en: `The session price is ${amount}. Payment status: ${status.replaceAll("_", " ")}.${instructions}`,
+      es: `El precio de la sesion es ${amount}. Estado de pago: ${status.replaceAll("_", " ")}.${instructions}`
     }), "Answered payment question from Sessia context.");
   }
 
@@ -96,6 +113,21 @@ function maybeAnswerBasicQuestion(input: DecideRequest, normalizedBody: string):
   }
 
   return null;
+}
+
+function maybeResolveContextualConfirmation(input: DecideRequest, body: string): Decision | null {
+  if (!lastOutboundAskedForConfirmation(input)) return null;
+
+  switch (parseContextualConfirmationReply(body)) {
+    case "confirmed":
+      return stateUpdate(input, "mark_session_confirmed", "Client replied with a short confirmation to the latest confirmation request.");
+    case "maybe":
+      return stateUpdate(input, "mark_session_maybe", "Client replied maybe to the latest confirmation request.");
+    case "declined":
+      return stateUpdate(input, "mark_session_declined", "Client declined the latest confirmation request.");
+    default:
+      return null;
+  }
 }
 
 function maybeHandleRescheduleRequest(input: DecideRequest, normalizedBody: string): Decision | null {
@@ -260,9 +292,14 @@ function buildPaymentReminder(input: DecideRequest): string | null {
   if (!input.client || !input.session) return null;
 
   const amount = formatMoney(input.session.price_cents ?? 0, input.session.currency ?? "USD");
+  const instructions = professionalPaymentInstructions(input);
+  const instructionSentence = instructions ? localize(input, {
+    en: ` You can pay this way: ${instructions}`,
+    es: ` Puedes pagar asi: ${instructions}`
+  }) : "";
   return localize(input, {
-    en: `Hi ${preferredClientName(input)}, friendly reminder that ${input.session.title} has a pending payment of ${amount}.`,
-    es: `Hola ${preferredClientName(input)}, te recuerdo que ${input.session.title} tiene pendiente el pago de ${amount}.`
+    en: `Hi ${preferredClientName(input)}, friendly reminder that ${input.session.title} has a pending payment of ${amount}.${instructionSentence}`,
+    es: `Hola ${preferredClientName(input)}, te recuerdo que ${input.session.title} tiene pendiente el pago de ${amount}.${instructionSentence}`
   });
 }
 
@@ -308,8 +345,25 @@ function latestInboundMessage(input: DecideRequest): DecideRequest["recent_messa
   return [...input.recent_messages].reverse().find((message) => message.direction === "inbound");
 }
 
+function latestOutboundMessage(input: DecideRequest): DecideRequest["recent_messages"][number] | undefined {
+  return [...input.recent_messages].reverse().find((message) => message.direction === "outbound");
+}
+
+function lastOutboundAskedForConfirmation(input: DecideRequest): boolean {
+  const latestOutbound = latestOutboundMessage(input);
+  if (!latestOutbound) return false;
+
+  const normalized = normalizeReplyText(latestOutbound.body);
+  return /\b(confirm|confirmar|confirmas|confirmame|vas|coming|keep|mantenemos)\b/i.test(normalized);
+}
+
 function preferredClientName(input: DecideRequest): string {
   return input.client?.name?.split(" ")[0] ?? "there";
+}
+
+function professionalPaymentInstructions(input: DecideRequest): string | null {
+  const value = input.professional.payment_instructions;
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
 function localize(input: DecideRequest, options: { en: string; es: string }): string {

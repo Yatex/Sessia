@@ -8,6 +8,7 @@ export function buildRequest(overrides: Partial<DecideRequest> = {}): DecideRequ
       name: "Demo Professional",
       locale: "en",
       time_zone: "America/Montevideo",
+      payment_instructions: "Bank transfer to Sessia Pro alias sessia.demo",
       instructions: "Keep messages concise."
     },
     instruction: {
@@ -60,6 +61,14 @@ export function buildRequest(overrides: Partial<DecideRequest> = {}): DecideRequ
     ],
     task_context: {},
     recent_messages: [
+      {
+        id: "message_0",
+        direction: "outbound",
+        author_role: "assistant",
+        channel: "whatsapp",
+        body: "Hi Ana, can you confirm your Therapy session?",
+        occurred_at: "2026-05-05T11:55:00-03:00"
+      },
       {
         id: "message_1",
         direction: "inbound",

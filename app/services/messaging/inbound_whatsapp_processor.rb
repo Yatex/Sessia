@@ -111,9 +111,33 @@ module Messaging
     end
 
     def related_session(client)
+      recent_outbound_session(client) ||
+        next_upcoming_session(client) ||
+        recent_past_session(client)
+    end
+
+    def recent_outbound_session(client)
+      client.messages
+        .outbound
+        .where.not(session_id: nil)
+        .where("created_at >= ?", 14.days.ago)
+        .includes(:session)
+        .recent_first
+        .map(&:session)
+        .find(&:present?)
+    end
+
+    def next_upcoming_session(client)
       client.sessions
-        .where("end_time >= ?", 7.days.ago)
+        .where("end_time >= ?", Time.current)
         .chronological
+        .first
+    end
+
+    def recent_past_session(client)
+      client.sessions
+        .where(end_time: 7.days.ago..Time.current)
+        .order(end_time: :desc)
         .first
     end
 

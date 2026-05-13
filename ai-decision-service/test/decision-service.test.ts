@@ -11,6 +11,29 @@ test("marks a clear confirmation reply without provider ambiguity", async () => 
   assert.equal(decision.action, "mark_session_confirmed");
 });
 
+test("does not treat bare acknowledgements as confirmations without confirmation context", async () => {
+  const decision = await new DecisionService(new MockDecisionProvider()).decide(buildRequest({
+    recent_messages: [
+      {
+        direction: "outbound",
+        author_role: "assistant",
+        channel: "whatsapp",
+        body: "Here are the payment instructions.",
+        occurred_at: "2026-05-05T11:55:00-03:00"
+      },
+      {
+        direction: "inbound",
+        author_role: "client",
+        channel: "whatsapp",
+        body: "dale",
+        occurred_at: "2026-05-05T12:00:00-03:00"
+      }
+    ]
+  }));
+
+  assert.equal(decision.action, "send_message");
+});
+
 test("marks a clear payment reply", async () => {
   const decision = await new DecisionService(new MockDecisionProvider()).decide(buildRequest({
     recent_messages: [
@@ -25,6 +48,44 @@ test("marks a clear payment reply", async () => {
   }));
 
   assert.equal(decision.action, "mark_payment_reported");
+});
+
+test("answers how to pay from professional payment instructions", async () => {
+  const decision = await new DecisionService(new MockDecisionProvider()).decide(buildRequest({
+    recent_messages: [
+      {
+        direction: "inbound",
+        author_role: "client",
+        channel: "whatsapp",
+        body: "Como pago?",
+        occurred_at: "2026-05-05T12:00:00-03:00"
+      }
+    ]
+  }));
+
+  assert.equal(decision.action, "send_message");
+  assert.match(decision.message_body ?? "", /sessia\.demo/i);
+});
+
+test("escalates how to pay when payment instructions are missing", async () => {
+  const baseRequest = buildRequest();
+  const decision = await new DecisionService(new MockDecisionProvider()).decide(buildRequest({
+    professional: {
+      ...baseRequest.professional,
+      payment_instructions: null
+    },
+    recent_messages: [
+      {
+        direction: "inbound",
+        author_role: "client",
+        channel: "whatsapp",
+        body: "Por donde pago?",
+        occurred_at: "2026-05-05T12:00:00-03:00"
+      }
+    ]
+  }));
+
+  assert.equal(decision.action, "alert_professional");
 });
 
 test("answers a basic time question from session context", async () => {
