@@ -39,6 +39,7 @@ class User < ApplicationRecord
   validates :password, length: { minimum: 8 }, allow_nil: true
   validates :time_zone, presence: true
   validates :locale, presence: true, inclusion: { in: AVAILABLE_LOCALES.keys }
+  validates :payment_instructions, length: { maximum: 1_500 }, allow_blank: true
   validate :time_zone_is_supported
 
   scope :admins, -> { where(role: :admin) }

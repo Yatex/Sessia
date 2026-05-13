@@ -16,17 +16,45 @@
       <%= form.label :title, "Session type or title" %>
       <%= form.text_field :title %>
     </div>
-    <div class="field">
+    <div class="field full-span">
       <%= form.label :start_time, "Start time" %>
-      <%= form.select :start_time,
-        options_for_select(@available_start_options, session_record.start_time&.in_time_zone&.strftime("%Y-%m-%dT%H:%M")),
-        {},
-        data: {
-          session_start_select: true,
-          duration_minutes: (session_record.duration_minutes.to_i.positive? ? session_record.duration_minutes : 50),
-          end_time_target: "#session_end_time"
-        } %>
-      <small class="field-hint">Only working hours without existing sessions or blocked time are shown.</small>
+      <div class="session-time-grid-editor" data-session-time-grid data-duration-minutes="<%= session_record.duration_minutes.to_i.positive? ? session_record.duration_minutes : 50 %>" data-end-time-target="#session_end_time" data-free-label="<%= t("sessions.form.free") %>" data-selected-label="<%= t("sessions.form.selected") %>">
+        <div class="availability-grid-head session-time-grid-head">
+          <span></span>
+          <% @session_picker_days.each do |day| %>
+            <strong>
+              <%= l(day, format: "%a") %>
+              <small><%= day.day %></small>
+            </strong>
+          <% end %>
+        </div>
+
+        <div class="availability-grid-body">
+          <% @session_picker_time_slots.each do |slot_minutes| %>
+            <div class="availability-grid-row session-time-grid-row">
+              <time><%= slot_time_label(slot_minutes) %></time>
+              <% @session_picker_days.each do |day| %>
+                <% slot_start = calendar_slot_time(day, slot_minutes) %>
+                <% value = slot_start.strftime("%Y-%m-%dT%H:%M") %>
+                <% available_slot = @session_picker_slots_by_key.fetch([day, slot_minutes], nil) %>
+                <% selected = @session_start_value == value %>
+                <% selectable = available_slot.present? || selected %>
+                <% if selectable %>
+                  <label class="session-time-cell <%= "selected" if selected %>" title="<%= l(slot_start, format: :long) %>">
+                    <%= radio_button_tag "session[start_time]", value, selected, id: nil, data: { session_start_option: true } %>
+                    <span><%= selected ? t("sessions.form.selected") : t("sessions.form.free") %></span>
+                  </label>
+                <% else %>
+                  <div class="session-time-cell unavailable" aria-label="<%= t("sessions.form.unavailable") %>">
+                    <span><%= t("sessions.form.closed") %></span>
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      <small class="field-hint">Choose a 30-minute start block. Only working hours without existing sessions or blocked time are selectable.</small>
     </div>
     <div class="field">
       <%= form.label :end_time %>
@@ -38,7 +66,7 @@
     </div>
     <div class="field">
       <%= form.label :currency %>
-      <%= form.select :currency, %w[USD EUR UYU GBP BRL ARS].map { |currency| [currency, currency] } %>
+      <%= form.select :currency, Session::CURRENCIES.map { |currency| [currency, currency] } %>
     </div>
     <div class="field full-span">
       <% if @calendar_connection&.connected? %>

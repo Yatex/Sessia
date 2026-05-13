@@ -1,0 +1,53 @@
+<header class="public-nav">
+  <%= link_to root_path, class: "public-brand" do %>
+    <span class="brand-mark">S</span>
+    <strong>Sessia</strong>
+  <% end %>
+  <div class="public-actions">
+    <%= link_to "Terms", terms_path, class: "text-link" %>
+    <%= link_to "Sign up", sign_up_path, class: "primary-button" %>
+  </div>
+</header>
+
+<main class="legal-page">
+  <section class="legal-hero">
+    <p class="eyebrow">Legal</p>
+    <h1>Privacy Policy</h1>
+    <p>Last updated: May 12, 2026</p>
+  </section>
+
+  <section class="legal-content">
+    <h2>1. Information We Collect</h2>
+    <p>We collect account information such as name, email, timezone, language preference, authentication details, and subscription information. Users may also add client names, phone numbers, emails, notes, session details, availability, payment status, and communication records.</p>
+
+    <h2>2. How We Use Information</h2>
+    <p>We use information to provide Sessia, authenticate users, manage sessions and clients, send transactional emails, process subscriptions, synchronize calendar events, support AI-assisted communication, improve reliability, and protect the service.</p>
+
+    <h2>3. Google Calendar Data</h2>
+    <p>If you connect Google Calendar, Sessia requests access needed to create and update session events. We store tokens securely so we can keep enabled sessions synchronized. We do not sell Google user data or use it for advertising.</p>
+
+    <h2>4. AI and Messaging Data</h2>
+    <p>When AI features are enabled, relevant session, client, payment, availability, and message context may be used to generate reminders, confirmations, follow-ups, scheduling suggestions, and answers to basic session questions. AI features are designed to support administrative workflows and escalation to the professional when appropriate.</p>
+
+    <h2>5. Payments</h2>
+    <p>Sessia uses Stripe for subscription billing. We do not store full credit card numbers. Stripe may process billing details according to its own privacy practices. Client session payment tracking inside Sessia is informational unless a future payment integration is enabled.</p>
+
+    <h2>6. Emails and Communications</h2>
+    <p>We use Resend for transactional emails such as password resets and account notices. If WhatsApp messaging is enabled, Twilio or a similar provider may process message delivery and status data.</p>
+
+    <h2>7. Sharing Information</h2>
+    <p>We share information with service providers only as needed to operate Sessia. We may also disclose information if required by law, to protect rights and safety, or to investigate abuse of the service.</p>
+
+    <h2>8. Data Security</h2>
+    <p>We use technical and organizational safeguards intended to protect user data, including authenticated access, scoped records, encrypted tokens where applicable, and environment-based secret configuration. No system can be guaranteed completely secure.</p>
+
+    <h2>9. Data Retention</h2>
+    <p>We keep account and workspace data while your account is active or as needed to provide the service, comply with legal obligations, resolve disputes, and maintain security. You may request deletion of account data where applicable.</p>
+
+    <h2>10. Your Choices</h2>
+    <p>You can update account settings, disconnect Google Calendar, disable AI settings, adjust messaging settings, and manage subscription details from within Sessia. You may contact us to request help with access, correction, or deletion.</p>
+
+    <h2>11. Contact</h2>
+    <p>For privacy questions, contact the Sessia team at <a href="mailto:support@sessia.org">support@sessia.org</a>.</p>
+  </section>
+</main>

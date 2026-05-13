@@ -32,6 +32,11 @@
         <strong data-time-zone-detected-label data-fallback-time-zone="<%= @user.time_zone %>"><%= @user.time_zone %></strong>.
       </small>
     </div>
+    <div class="field full-span">
+      <%= form.label :payment_instructions, t("settings.payment_methods.label") %>
+      <%= form.text_area :payment_instructions, rows: 4, maxlength: 1500, placeholder: t("settings.payment_methods.placeholder") %>
+      <small class="field-hint"><%= t("settings.payment_methods.hint") %></small>
+    </div>
     <div class="form-actions full-span">
       <span class="autosave-status" data-autosave-status>Saved</span>
     </div>
@@ -84,21 +89,21 @@
     </div>
   </div>
   <p class="panel-copy">
-    Drag to mark or unmark hourly blocks where Sessia can offer sessions. New accounts start Monday to Friday, 08:00 to 18:00, but you can open earlier or later hours.
+    Drag to mark or unmark 30-minute blocks where Sessia can offer sessions. New accounts start Monday to Friday, 08:00 to 18:00, but you can open earlier or later hours.
   </p>
 
   <%= form_with url: availability_settings_path, method: :patch, class: "settings-form", data: { settings_autosave: true } do %>
-    <% availability_slots = (0...(24 * 60)).step(60).to_a %>
+    <% availability_slots = (0...(24 * 60)).step(30).to_a %>
     <% selected_cells = {} %>
     <% @availability_by_weekday.each do |weekday, rules| %>
       <% rules.each do |rule| %>
-        <% (rule.start_minute...rule.end_minute).step(60).each do |minute| %>
+        <% (rule.start_minute...rule.end_minute).step(30).each do |minute| %>
           <% selected_cells[[weekday, minute]] = true %>
         <% end %>
       <% end %>
     <% end %>
 
-    <div class="availability-grid-editor" data-availability-grid>
+    <div class="availability-grid-editor" data-availability-grid data-available-label="<%= t("settings.availability.available") %>" data-closed-label="<%= t("settings.availability.closed") %>">
       <div class="availability-grid-head">
         <span></span>
         <% AvailabilityRule::WEEKDAY_LABELS.each do |_weekday, label| %>
@@ -115,7 +120,7 @@
               <% checked = selected_cells[[weekday, minute]] %>
               <label class="availability-cell <%= "selected" if checked %>" title="<%= label %> <%= AvailabilityRule.time_label(minute) %>">
                 <%= check_box_tag "availability_cells[]", value, checked, id: nil, data: { availability_cell: true } %>
-                <span><%= checked ? "Available" : "Closed" %></span>
+                <span><%= checked ? t("settings.availability.available") : t("settings.availability.closed") %></span>
               </label>
             <% end %>
           </div>

@@ -1,6 +1,8 @@
 class SettingsController < ApplicationController
   before_action :authenticate_user!
 
+  AVAILABILITY_CELL_MINUTES = 30
+
   def show
     load_settings_context
   end
@@ -55,7 +57,7 @@ class SettingsController < ApplicationController
   end
 
   def user_params
-    params.require(:user).permit(:name, :email, :time_zone, :locale)
+    params.require(:user).permit(:name, :email, :time_zone, :locale, :payment_instructions)
   end
 
   def professional_whatsapp_params
@@ -116,11 +118,11 @@ class SettingsController < ApplicationController
 
     while index < minutes.length
       start_minute = minutes[index]
-      end_minute = start_minute + 60
+      end_minute = start_minute + AVAILABILITY_CELL_MINUTES
       index += 1
 
       while index < minutes.length && minutes[index] == end_minute
-        end_minute += 60
+        end_minute += AVAILABILITY_CELL_MINUTES
         index += 1
       end
 

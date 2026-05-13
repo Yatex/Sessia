@@ -191,6 +191,12 @@ textarea {
   padding-inline: 20px;
 }
 
+.secondary-button.compact {
+  min-height: 34px;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
 .full {
   width: 100%;
 }
@@ -420,6 +426,20 @@ textarea {
 .landing-pricing,
 .landing-final-cta {
   margin-bottom: 86px;
+}
+
+.public-footer {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  padding: 0 0 40px;
+}
+
+.public-footer a,
+.auth-legal a,
+.legal-content a {
+  color: var(--accent-strong);
+  font-weight: 800;
 }
 
 .section-kicker {
@@ -700,6 +720,63 @@ textarea {
 .auth-links,
 .auth-switch {
   margin-top: 18px;
+}
+
+.auth-legal {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.legal-page {
+  width: min(100% - 36px, 920px);
+  margin: 0 auto;
+  padding: 34px 0 80px;
+}
+
+.legal-hero {
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+  padding: 34px;
+}
+
+.legal-hero h1 {
+  margin: 8px 0;
+  font-size: 46px;
+  line-height: 1.05;
+}
+
+.legal-hero p:last-child {
+  margin: 0;
+  color: var(--muted);
+}
+
+.legal-content {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+  padding: 34px;
+}
+
+.legal-content h2 {
+  margin: 28px 0 8px;
+  font-size: 22px;
+}
+
+.legal-content h2:first-child {
+  margin-top: 0;
+}
+
+.legal-content p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
 }
 
 .auth-links {
@@ -1393,10 +1470,10 @@ textarea {
 
 .week-grid {
   display: grid;
-  grid-template-columns: 92px repeat(7, minmax(154px, 1fr));
-  grid-template-rows: 96px;
-  grid-auto-rows: 112px;
-  min-width: 1180px;
+  grid-template-columns: 76px repeat(7, minmax(128px, 1fr));
+  grid-template-rows: 76px;
+  grid-auto-rows: 74px;
+  min-width: 980px;
 }
 
 .week-grid-corner,
@@ -1419,7 +1496,7 @@ textarea {
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.12em;
-  padding: 18px 14px;
+  padding: 14px 12px;
   text-transform: uppercase;
 }
 
@@ -1433,7 +1510,7 @@ textarea {
   min-width: 0;
   background: #ffffff;
   color: var(--ink);
-  padding: 14px 16px;
+  padding: 12px 14px;
 }
 
 .week-grid-day.today {
@@ -1450,7 +1527,7 @@ textarea {
 
 .week-grid-day strong {
   color: var(--ink);
-  font-size: 26px;
+  font-size: 22px;
   line-height: 1;
 }
 
@@ -1471,21 +1548,21 @@ textarea {
   align-items: flex-start;
   background: #f5f9f8;
   color: var(--ink);
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 800;
-  padding: 20px 14px;
+  padding: 13px 12px;
 }
 
 .calendar-slot {
   position: relative;
   display: grid;
   align-content: start;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   overflow: hidden;
   background: #ffffff;
   color: var(--ink);
-  padding: 11px 12px;
+  padding: 7px 9px;
   text-decoration: none;
 }
 
@@ -1527,6 +1604,14 @@ textarea {
   box-shadow: inset 0 0 0 2px rgba(15, 23, 42, 0.08);
 }
 
+.slot-open-link {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
 .calendar-slot.confirmed {
   border-left-color: #17845f;
   background: #edf8f3;
@@ -1554,23 +1639,24 @@ textarea {
   min-width: 0;
   overflow: hidden;
   color: var(--ink);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.calendar-slot > span {
+.calendar-slot > span,
+.slot-open-link > span {
   display: -webkit-box;
   min-width: 0;
   overflow: hidden;
   color: #536b67;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 750;
   line-height: 1.25;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
 }
 
 .calendar-slot em,
@@ -1595,6 +1681,29 @@ textarea {
   color: var(--muted);
 }
 
+.slot-mark-paid-form {
+  margin: 0;
+}
+
+.slot-mark-paid {
+  width: fit-content;
+  min-height: 20px;
+  border: 1px solid #bfe9d8;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #166f53;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 950;
+  line-height: 1;
+  padding: 3px 7px;
+  text-transform: uppercase;
+}
+
+.slot-mark-paid:hover {
+  background: #edf8f3;
+}
+
 .calendar-slot b {
   position: absolute;
   right: 8px;
@@ -1610,18 +1719,27 @@ textarea {
   font-weight: 900;
 }
 
-.paid-session-icon {
+.session-payment-icon {
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  width: 22px;
-  height: 22px;
-  border: 1px solid #bfe9d8;
+  width: 20px;
+  height: 20px;
   border-radius: 999px;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.session-payment-icon.paid {
+  border: 1px solid #bfe9d8;
   background: #edf8f3;
   color: #166f53;
-  font-size: 12px;
-  font-weight: 950;
+}
+
+.session-payment-icon.unpaid {
+  border: 1px solid #f5c8d0;
+  background: #fff0f3;
+  color: var(--red);
 }
 
 .month-calendar {
@@ -2060,6 +2178,13 @@ textarea {
 
 .data-table tr:last-child td {
   border-bottom: 0;
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .payment-position {
@@ -2530,7 +2655,7 @@ textarea {
 .availability-grid-row {
   display: grid;
   grid-template-columns: 70px repeat(7, minmax(78px, 1fr));
-  gap: 7px;
+  gap: 5px;
   min-width: 760px;
 }
 
@@ -2549,7 +2674,7 @@ textarea {
 
 .availability-grid-body {
   display: grid;
-  gap: 7px;
+  gap: 5px;
 }
 
 .availability-grid-row time {
@@ -2562,7 +2687,7 @@ textarea {
 .availability-cell {
   display: grid;
   place-items: center;
-  min-height: 34px;
+  min-height: 28px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
@@ -2598,6 +2723,81 @@ textarea {
 
 .availability-cell.selected span {
   color: var(--accent-strong);
+}
+
+.session-time-grid-editor {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f5f9f8;
+  padding: 14px;
+}
+
+.session-time-grid-head strong {
+  display: grid;
+  gap: 2px;
+}
+
+.session-time-grid-head small {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.session-time-grid-row {
+  min-width: 760px;
+}
+
+.session-time-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 32px;
+  border: 1px solid #cfe6dc;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--accent-strong);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.session-time-cell:hover {
+  border-color: var(--accent);
+}
+
+.session-time-cell.selected {
+  border-color: var(--accent);
+  background: #dff2ee;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.session-time-cell.unavailable {
+  border-style: dashed;
+  border-color: var(--line);
+  background: #f8fbfa;
+  color: #a9b9b5;
+  cursor: default;
+}
+
+.session-time-cell input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.session-time-cell span {
+  overflow: hidden;
+  max-width: 100%;
+  padding: 0 4px;
+  color: currentColor;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .blocked-time-list {

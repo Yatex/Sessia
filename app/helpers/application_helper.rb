@@ -27,12 +27,12 @@ module ApplicationHelper
 
   def status_badge(value)
     normalized = value.to_s.dasherize
-    content_tag(:span, value.to_s.humanize, class: "status-badge #{normalized}")
+    content_tag(:span, status_label(value), class: "status-badge #{normalized}")
   end
 
   def payment_status_badge(value)
     normalized = value.to_s.dasherize
-    label = value.to_s == "pending" ? "Unpaid" : value.to_s.humanize
+    label = value.to_s == "pending" ? status_label("unpaid") : status_label(value)
     content_tag(:span, label, class: "status-badge payment-status #{normalized}")
   end
 
@@ -80,17 +80,18 @@ module ApplicationHelper
     "pending"
   end
 
-  def paid_session_icon(session_record)
-    return unless session_record.payment_paid?
+  def session_payment_icon(session_record)
+    paid = session_record.payment_paid?
+    label = paid ? t("statuses.paid") : t("statuses.unpaid")
 
-    content_tag(:span, "$", class: "paid-session-icon", title: "Paid", aria: { label: "Paid session" })
+    content_tag(:span, paid ? "$" : "!", class: "session-payment-icon #{paid ? "paid" : "unpaid"}", title: label, aria: { label: label })
   end
 
   def confirmation_signal_label(session_record)
-    return "Cancelled" if session_record.cancelled?
-    return "No show" if session_record.no_show?
+    return status_label("cancelled") if session_record.cancelled?
+    return status_label("no_show") if session_record.no_show?
 
-    session_record.confirmation_status.humanize
+    status_label(session_record.confirmation_status)
   end
 
   def payment_signal_tone(session_record)
@@ -102,9 +103,9 @@ module ApplicationHelper
   end
 
   def payment_signal_label(session_record)
-    return "Unpaid" if session_record.payment_pending?
+    return status_label("unpaid") if session_record.payment_pending?
 
-    session_record.payment_status.humanize
+    status_label(session_record.payment_status)
   end
 
   def unpaid_payment_count(session_records)
@@ -168,5 +169,13 @@ module ApplicationHelper
       params: { locale: target_locale },
       class: "language-switcher",
       form_class: "language-switcher-form"
+  end
+
+  def topbar_title
+    t("topbar.#{controller_name}", default: controller_name.tr("_", " ").humanize)
+  end
+
+  def status_label(value)
+    t("statuses.#{value}", default: value.to_s.humanize)
   end
 end

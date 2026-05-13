@@ -47,6 +47,7 @@ module Ai
         name: user.name,
         locale: user.locale,
         time_zone: user.time_zone,
+        payment_instructions: user.payment_instructions.presence,
         instructions: ai_setting&.instructions.presence
       }.compact
     end

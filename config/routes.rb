@@ -2,6 +2,8 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   root "home#index"
+  get "terms", to: "home#terms", as: :terms
+  get "privacy", to: "home#privacy", as: :privacy
 
   get "sign-up", to: "sign_ups#new", as: :sign_up
   post "sign-up", to: "sign_ups#create"
@@ -22,6 +24,7 @@ Rails.application.routes.draw do
   delete "dashboard/schedule-blocks/:block_id", to: "dashboard#destroy_schedule_block", as: :destroy_dashboard_schedule_block
   resources :clients
   resources :sessions do
+    patch :mark_paid, on: :member
     post :sync_google_calendar, on: :member
   end
   resource :ai_assistant, controller: :ai_settings, only: %i[show update], path: "ai-assistant" do

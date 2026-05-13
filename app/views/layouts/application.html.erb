@@ -13,6 +13,7 @@
   </head>
 
   <body class="<%= authenticated? ? "app-body" : "public-body" %>">
+    <%= public_language_switcher %>
     <% if authenticated? %>
       <div class="app-shell">
         <aside class="sidebar">
@@ -20,7 +21,7 @@
             <span class="brand-mark">S</span>
             <span>
               <strong>Sessia</strong>
-              <small>Session OS</small>
+              <small><%= t("app.session_os") %></small>
             </span>
           <% end %>
 
@@ -38,8 +39,8 @@
 
           <div class="sidebar-footer">
             <div class="sidebar-status-card">
-              <strong>WhatsApp AI</strong>
-              <small><%= current_user.ai_setting&.use_professional_whatsapp? ? "Professional number configured" : "Provider not connected" %></small>
+              <strong><%= t("app.whatsapp_ai") %></strong>
+              <small><%= current_user.ai_setting&.use_professional_whatsapp? ? t("app.professional_number_configured") : t("app.provider_not_connected") %></small>
             </div>
           </div>
         </aside>
@@ -48,10 +49,10 @@
           <header class="app-topbar">
             <div>
               <p><%= current_user.name %></p>
-              <strong><%= controller_name.tr("_", " ").humanize %></strong>
+              <strong><%= topbar_title %></strong>
             </div>
             <div class="topbar-actions">
-              <%= link_to "New session", new_session_path, class: "secondary-button" %>
+              <%= link_to t("actions.new_session"), new_session_path, class: "secondary-button" %>
               <details class="profile-menu">
                 <summary aria-label="Open profile menu">
                   <span><%= current_user.name.first.upcase %></span>
@@ -64,7 +65,7 @@
                   <%= link_to t("navigation.settings"), settings_path %>
                   <%= link_to t("navigation.ai_assistant"), ai_assistant_path %>
                   <%= link_to t("navigation.subscriptions"), subscription_path %>
-                  <%= button_to "Sign out", sign_out_path, method: :delete %>
+                  <%= button_to t("auth.sign_out"), sign_out_path, method: :delete %>
                 </div>
               </details>
             </div>
@@ -77,7 +78,6 @@
         </div>
       </div>
     <% else %>
-      <%= public_language_switcher %>
       <%= render "shared/flash" %>
       <%= yield %>
     <% end %>

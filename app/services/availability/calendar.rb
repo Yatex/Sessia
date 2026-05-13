@@ -11,7 +11,7 @@ module Availability
     end
 
     DEFAULT_DURATION_MINUTES = 60
-    DEFAULT_STEP_MINUTES = 60
+    DEFAULT_STEP_MINUTES = 30
 
     def initialize(user)
       @user = user

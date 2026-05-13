@@ -51,7 +51,8 @@ class FiltersAndSettingsTest < ActionDispatch::IntegrationTest
         name: "Settings Pro Updated",
         email: user.email,
         locale: "es",
-        time_zone: "America/Montevideo"
+        time_zone: "America/Montevideo",
+        payment_instructions: "Transferencia bancaria o Mercado Pago alias sessia.pro"
       }
     }
 
@@ -59,6 +60,7 @@ class FiltersAndSettingsTest < ActionDispatch::IntegrationTest
     user.reload
     assert_equal "Settings Pro Updated", user.name
     assert_equal "es", user.locale
+    assert_equal "Transferencia bancaria o Mercado Pago alias sessia.pro", user.payment_instructions
     assert_nil user.password_reset_token_digest
 
     post password_reset_settings_url
@@ -77,9 +79,13 @@ class FiltersAndSettingsTest < ActionDispatch::IntegrationTest
     patch availability_settings_url, params: {
       availability_cells: [
         "1|08:00",
+        "1|08:30",
         "1|09:00",
+        "1|09:30",
         "1|10:00",
-        "2|09:00"
+        "1|10:30",
+        "2|09:00",
+        "2|09:30"
       ]
     }
 
@@ -115,5 +121,36 @@ class FiltersAndSettingsTest < ActionDispatch::IntegrationTest
     setting = user.reload.ai_setting
     assert setting.use_professional_whatsapp?
     assert_equal "+598 99 123 456", setting.professional_whatsapp_phone
+  end
+
+  test "session form offers CLP and owner can mark a session paid" do
+    user = User.create!(name: "Payments Pro", email: "mark-paid@example.com", password: "password123")
+    client = user.clients.create!(name: "Client Paid", email: "client-paid@example.com", phone: "+598 99 333 333")
+    session_record = user.sessions.create!(
+      client: client,
+      title: "Payment check",
+      start_time: Time.zone.parse("2026-05-08 09:00"),
+      end_time: Time.zone.parse("2026-05-08 10:00"),
+      price_cents: 25_000,
+      currency: "CLP",
+      payment_status: "pending"
+    )
+
+    post sign_in_url, params: { email: user.email, password: "password123" }
+
+    get new_session_url
+    assert_response :success
+    assert_match "CLP", response.body
+
+    patch mark_paid_session_url(session_record)
+    assert_redirected_to payments_url
+
+    session_record.reload
+    assert session_record.payment_paid?
+    payment_record = session_record.payment_records.last
+    assert_equal "paid", payment_record.status
+    assert_equal 25_000, payment_record.amount_cents
+    assert_equal "CLP", payment_record.currency
+    assert_equal client, payment_record.client
   end
 end

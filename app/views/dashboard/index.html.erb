@@ -1,51 +1,51 @@
 <section class="calendar-header">
   <div>
-    <p class="eyebrow">Agenda</p>
+    <p class="eyebrow"><%= t("dashboard.eyebrow") %></p>
     <h1><%= @period_title %></h1>
   </div>
 
   <div class="calendar-actions">
-    <div class="segmented-control" aria-label="Calendar view">
-      <%= link_to "Week", dashboard_path(view: "week", date: @selected_date.iso8601), class: @view_mode == "week" ? "active" : nil %>
-      <%= link_to "Month", dashboard_path(view: "month", date: @selected_date.iso8601), class: @view_mode == "month" ? "active" : nil %>
+    <div class="segmented-control" aria-label="<%= t("dashboard.calendar_view") %>">
+      <%= link_to t("dashboard.views.week"), dashboard_path(view: "week", date: @selected_date.iso8601), class: @view_mode == "week" ? "active" : nil %>
+      <%= link_to t("dashboard.views.month"), dashboard_path(view: "month", date: @selected_date.iso8601), class: @view_mode == "month" ? "active" : nil %>
     </div>
-    <%= link_to "Previous", dashboard_path(view: @view_mode, date: @previous_date.iso8601), class: "secondary-button" %>
-    <%= link_to "Today", dashboard_path(view: @view_mode, date: Date.current.iso8601), class: "secondary-button" %>
-    <%= link_to "Next", dashboard_path(view: @view_mode, date: @next_date.iso8601), class: "secondary-button" %>
+    <%= link_to t("dashboard.previous"), dashboard_path(view: @view_mode, date: @previous_date.iso8601), class: "secondary-button" %>
+    <%= link_to t("dashboard.today"), dashboard_path(view: @view_mode, date: Date.current.iso8601), class: "secondary-button" %>
+    <%= link_to t("dashboard.next"), dashboard_path(view: @view_mode, date: @next_date.iso8601), class: "secondary-button" %>
     <details class="agenda-block-menu">
-      <summary class="secondary-button">Block time</summary>
+      <summary class="secondary-button"><%= t("dashboard.block_time.action") %></summary>
       <div class="agenda-block-panel">
         <div class="section-heading compact">
           <div>
-            <p class="eyebrow">Agenda</p>
-            <h2>Blocked time</h2>
+            <p class="eyebrow"><%= t("dashboard.eyebrow") %></p>
+            <h2><%= t("dashboard.block_time.heading") %></h2>
           </div>
         </div>
         <p class="panel-copy">
-          Block time from the agenda. If a session is inside the block, Sessia cancels it and queues the AI to rebook with the client.
+          <%= t("dashboard.block_time.copy") %>
         </p>
 
         <%= form_with model: @schedule_block, url: dashboard_schedule_block_path, class: "form-stack" do |form| %>
           <%= hidden_field_tag :view, @view_mode %>
           <%= hidden_field_tag :date, @selected_date.iso8601 %>
           <div class="field">
-            <%= form.label :title %>
-            <%= form.text_field :title, placeholder: "Lunch, appointment, travel" %>
+            <%= form.label :title, t("dashboard.block_time.title") %>
+            <%= form.text_field :title, placeholder: t("dashboard.block_time.title_placeholder") %>
           </div>
           <div class="field">
-            <%= form.label :starts_at, "Starts" %>
+            <%= form.label :starts_at, t("dashboard.block_time.starts") %>
             <%= form.datetime_local_field :starts_at %>
           </div>
           <div class="field">
-            <%= form.label :ends_at, "Ends" %>
+            <%= form.label :ends_at, t("dashboard.block_time.ends") %>
             <%= form.datetime_local_field :ends_at %>
           </div>
           <div class="field">
-            <%= form.label :notes %>
+            <%= form.label :notes, t("dashboard.block_time.notes") %>
             <%= form.text_area :notes, rows: 3 %>
           </div>
           <div class="form-actions">
-            <%= form.submit "Block time", class: "primary-button" %>
+            <%= form.submit t("dashboard.block_time.submit"), class: "primary-button" %>
           </div>
         <% end %>
 
@@ -57,21 +57,21 @@
                   <strong><%= block.title %></strong>
                   <span><%= l(block.starts_at, format: :short) %> - <%= l(block.ends_at, format: :short) %></span>
                 </div>
-                <%= button_to "Remove", destroy_dashboard_schedule_block_path(block, view: @view_mode, date: @selected_date.iso8601), method: :delete, class: "ghost-button" %>
+                <%= button_to t("actions.remove"), destroy_dashboard_schedule_block_path(block, view: @view_mode, date: @selected_date.iso8601), method: :delete, class: "ghost-button" %>
               </article>
             <% end %>
           </div>
         <% end %>
       </div>
     </details>
-    <%= link_to "New session", new_session_path, class: "primary-button" %>
+    <%= link_to t("actions.new_session"), new_session_path, class: "primary-button" %>
   </div>
 </section>
 
 <% if @view_mode == "month" %>
   <section class="month-calendar">
-    <% Date::DAYNAMES.rotate(1).each do |day_name| %>
-      <div class="month-weekday"><%= day_name.first(3) %></div>
+    <% I18n.t("date.abbr_day_names").rotate(1).each do |day_name| %>
+      <div class="month-weekday"><%= day_name %></div>
     <% end %>
 
     <% @calendar_days.each do |day| %>
@@ -80,33 +80,33 @@
         <header>
           <span><%= day.day %></span>
           <% if day == Date.current %>
-            <strong>Today</strong>
+            <strong><%= t("dashboard.today") %></strong>
           <% end %>
         </header>
 
         <div class="month-day-stats">
-          <span><%= pluralize(day_sessions.size, "session") %></span>
-          <span><%= pluralize(@free_slots_by_day.fetch(day), "free slot") %></span>
+          <span><%= t("dashboard.counts.sessions", count: day_sessions.size) %></span>
+          <span><%= t("dashboard.counts.free_slots", count: @free_slots_by_day.fetch(day)) %></span>
         </div>
 
-        <div class="month-signal-summary" aria-label="Daily confirmation and payment summary">
-          <span class="signal-count good"><%= confirmed_session_count(day_sessions) %> confirmed</span>
-          <span class="signal-count danger"><%= unpaid_payment_count(day_sessions) %> unpaid</span>
+        <div class="month-signal-summary" aria-label="<%= t("dashboard.daily_summary") %>">
+          <span class="signal-count good"><%= t("dashboard.counts.confirmed", count: confirmed_session_count(day_sessions)) %></span>
+          <span class="signal-count danger"><%= t("dashboard.counts.unpaid", count: unpaid_payment_count(day_sessions)) %></span>
         </div>
       <% end %>
     <% end %>
   </section>
 <% else %>
-  <section class="week-scheduler" aria-label="Weekly agenda by hourly slots">
+  <section class="week-scheduler" aria-label="<%= t("dashboard.weekly_agenda") %>">
     <div class="week-grid">
-      <div class="week-grid-corner">Time</div>
+      <div class="week-grid-corner"><%= t("dashboard.time") %></div>
 
       <% @calendar_days.each do |day| %>
         <% day_sessions = @sessions_by_day.fetch(day, []) %>
         <div class="week-grid-day <%= "today" if day == Date.current %>">
-          <span><%= day.strftime("%a") %></span>
+          <span><%= l(day, format: "%a") %></span>
           <strong><%= day.day %></strong>
-          <small><%= pluralize(day_sessions.size, "session") %></small>
+          <small><%= t("dashboard.counts.sessions", count: day_sessions.size) %></small>
         </div>
       <% end %>
 
@@ -119,27 +119,31 @@
 
           <% if slot_sessions.any? %>
             <% session_record = slot_sessions.first %>
-            <%= link_to session_path(session_record), class: "calendar-slot occupied #{slot_session_tone(session_record)}" do %>
-              <div class="slot-main-line">
-                <strong><%= session_record.client.name %></strong>
-                <%= paid_session_icon(session_record) %>
-              </div>
-              <span><%= session_record.title %></span>
-              <em><%= session_price(session_record) %></em>
-              <small class="slot-time-range"><%= compact_session_time_range(session_record) %></small>
+            <div class="calendar-slot occupied <%= slot_session_tone(session_record) %>">
+              <%= link_to session_path(session_record), class: "slot-open-link" do %>
+                <div class="slot-main-line">
+                  <strong><%= session_record.client.name %></strong>
+                  <%= session_payment_icon(session_record) %>
+                </div>
+                <span><%= session_record.title %></span>
+                <small class="slot-time-range"><%= compact_session_time_range(session_record) %></small>
+              <% end %>
               <% if slot_sessions.size > 1 %>
                 <b>+<%= slot_sessions.size - 1 %></b>
               <% end %>
-            <% end %>
+              <% unless session_record.payment_paid? %>
+                <%= button_to t("payments.mark_paid_short"), mark_paid_session_path(session_record), method: :patch, class: "slot-mark-paid", form: { class: "slot-mark-paid-form" } %>
+              <% end %>
+            </div>
           <% else %>
             <% available_slot = @available_slots_by_key.fetch([day, slot_minutes], nil) %>
             <% if available_slot %>
               <%= link_to new_session_path(start_at: available_slot.starts_at.iso8601), class: "calendar-slot empty" do %>
-                <span>Free</span>
+                <span><%= t("dashboard.free") %></span>
               <% end %>
             <% else %>
-              <div class="calendar-slot unavailable" aria-label="Unavailable time">
-                <span>Unavailable</span>
+              <div class="calendar-slot unavailable" aria-label="<%= t("dashboard.unavailable_time") %>">
+                <span><%= t("dashboard.unavailable") %></span>
               </div>
             <% end %>
           <% end %>
@@ -149,9 +153,9 @@
   </section>
 <% end %>
 
-<section class="calendar-legend" aria-label="Calendar legend">
-  <span><i class="slot-confirmed"></i> Confirmed</span>
-  <span><i class="slot-pending"></i> Pending</span>
-  <span><i class="slot-cancelled"></i> Cancelled</span>
-  <span><i class="slot-paid">$</i> Paid</span>
+<section class="calendar-legend" aria-label="<%= t("dashboard.legend") %>">
+  <span><i class="slot-confirmed"></i> <%= t("statuses.confirmed") %></span>
+  <span><i class="slot-pending"></i> <%= t("statuses.pending") %></span>
+  <span><i class="slot-cancelled"></i> <%= t("statuses.cancelled") %></span>
+  <span><i class="slot-paid">$</i> <%= t("statuses.paid") %></span>
 </section>

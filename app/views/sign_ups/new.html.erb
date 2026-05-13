@@ -45,6 +45,13 @@
       <%= form.submit "Create account", class: "primary-button full" %>
     <% end %>
 
+    <p class="auth-legal">
+      By creating an account, you agree to Sessia's
+      <%= link_to "Terms", terms_path, target: "_blank", rel: "noopener" %>
+      and
+      <%= link_to "Privacy Policy", privacy_path, target: "_blank", rel: "noopener" %>.
+    </p>
+
     <p class="auth-switch">Already have an account? <%= link_to "Sign in", sign_in_path %></p>
   </section>
 </main>

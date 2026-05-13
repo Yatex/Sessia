@@ -49,7 +49,7 @@ module Ai
         key: "payment_reminder",
         name: "Send payment reminder",
         trigger_event: "payment_due",
-        description: "Remind the client about a pending session payment. Do not mention payment links unless they are present in the context.",
+        description: "Remind the client about a pending session payment. If professional.payment_instructions is present, use it to explain how to pay. Do not invent payment methods or links.",
         allowed_actions: %w[send_message schedule_follow_up do_nothing]
       ),
       "blocked_time_rebooking" => Instruction.new(
@@ -100,7 +100,7 @@ module Ai
         key: "answer_client_reply",
         name: "Answer client reply",
         trigger_event: "client_replied",
-        description: "Classify and answer the latest client WhatsApp-style reply using only Sessia context. Offer available schedule options when the client asks to move a session, reschedule when they choose one, and escalate sensitive topics or uncertainty.",
+        description: "Classify and answer the latest client WhatsApp-style reply using only Sessia context. Offer available schedule options when the client asks to move a session, reschedule when they choose one, answer payment questions from professional.payment_instructions when present, and escalate sensitive topics or uncertainty.",
         allowed_actions: allowed_actions
       )
     end

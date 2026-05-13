@@ -73,12 +73,14 @@
     ].join("");
   }
 
-  function syncSessionEndTime(select) {
-    var target = document.querySelector(select.dataset.endTimeTarget);
-    if (!target || !select.value) return;
+  function syncSessionEndTime(source) {
+    var grid = source.closest("[data-session-time-grid]");
+    var targetSelector = source.dataset.endTimeTarget || (grid && grid.dataset.endTimeTarget);
+    var target = document.querySelector(targetSelector);
+    if (!target || !source.value) return;
 
-    var duration = parseInt(select.dataset.durationMinutes || "50", 10);
-    var start = new Date(select.value);
+    var duration = parseInt(source.dataset.durationMinutes || (grid && grid.dataset.durationMinutes) || "50", 10);
+    var start = new Date(source.value);
     if (Number.isNaN(start.getTime())) return;
 
     start.setMinutes(start.getMinutes() + duration);
@@ -93,16 +95,41 @@
         syncSessionEndTime(select);
       });
     });
+
+    document.querySelectorAll("[data-session-start-option]").forEach(function (option) {
+      if (option.dataset.sessionTimeBound === "true") return;
+      option.dataset.sessionTimeBound = "true";
+      option.addEventListener("change", function () {
+        var grid = option.closest("[data-session-time-grid]");
+        if (grid) {
+          grid.querySelectorAll(".session-time-cell.selected").forEach(function (cell) {
+            cell.classList.remove("selected");
+            var label = cell.querySelector("span");
+            if (label) label.textContent = grid.dataset.freeLabel || "Free";
+          });
+        }
+
+        var cell = option.closest(".session-time-cell");
+        if (cell) {
+          cell.classList.add("selected");
+          var selectedLabel = cell.querySelector("span");
+          if (selectedLabel) selectedLabel.textContent = (grid && grid.dataset.selectedLabel) || "Selected";
+        }
+
+        syncSessionEndTime(option);
+      });
+    });
   }
 
   function setAvailabilityCell(cell, selected) {
     var input = cell.querySelector("[data-availability-cell]");
     if (!input) return;
+    var grid = cell.closest("[data-availability-grid]");
 
     input.checked = selected;
     cell.classList.toggle("selected", selected);
     var label = cell.querySelector("span");
-    if (label) label.textContent = selected ? "Available" : "Closed";
+    if (label) label.textContent = selected ? ((grid && grid.dataset.availableLabel) || "Available") : ((grid && grid.dataset.closedLabel) || "Closed");
     input.dispatchEvent(new Event("change", { bubbles: true }));
   }
 

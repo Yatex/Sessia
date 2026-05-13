@@ -1,8 +1,11 @@
 class SessionsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_session, only: %i[show edit update destroy sync_google_calendar]
+  before_action :set_session, only: %i[show edit update destroy mark_paid sync_google_calendar]
   before_action :load_clients, only: %i[new create edit update]
   before_action :load_calendar_connection, only: %i[show new create edit update]
+
+  SESSION_PICKER_DAYS = 7
+  SESSION_PICKER_SLOT_MINUTES = 30
 
   def index
     @filters = session_filter_params
@@ -65,6 +68,11 @@ class SessionsController < ApplicationController
     redirect_to sessions_path, notice: "Session removed."
   end
 
+  def mark_paid
+    @session.mark_paid!
+    redirect_back fallback_location: payments_path, notice: t("payments.mark_paid_notice")
+  end
+
   def sync_google_calendar
     if GoogleCalendar::SyncSession.new(@session).call
       redirect_to @session, notice: "Session synced to Google Calendar."
@@ -89,6 +97,7 @@ class SessionsController < ApplicationController
 
   def load_available_start_options
     duration = @session&.duration_minutes.to_i.positive? ? @session.duration_minutes : 60
+    availability_calendar = Availability::Calendar.new(current_user)
     slots = Availability::FreeSlotFinder.new(current_user).call(
       from: Time.current.beginning_of_day,
       days: 45,
@@ -102,6 +111,20 @@ class SessionsController < ApplicationController
     if current_value.present? && @available_start_options.none? { |_label, value| value == current_value }
       @available_start_options.unshift(["Current time - #{@session.start_time.in_time_zone.strftime("%a %b %-d, %H:%M")}", current_value])
     end
+
+    @session_start_value = current_value
+    @session_picker_days = session_picker_days
+    @session_picker_slots_by_key = availability_calendar.slot_availability_for(
+      @session_picker_days,
+      slot_minutes: SESSION_PICKER_SLOT_MINUTES,
+      duration_minutes: duration,
+      exclude_session: @session&.persisted? ? @session : nil
+    )
+    selected_slot_minute = @session&.start_time ? floor_to_picker_slot(minutes_into_day(@session.start_time)) : nil
+    @session_picker_time_slots = (
+      availability_calendar.working_slot_minutes_for(@session_picker_days, slot_minutes: SESSION_PICKER_SLOT_MINUTES) +
+      Array(selected_slot_minute)
+    ).compact.uniq.sort
   end
 
   def session_params
@@ -202,5 +225,19 @@ class SessionsController < ApplicationController
 
   def datetime_local_value(time)
     time&.in_time_zone&.strftime("%Y-%m-%dT%H:%M")
+  end
+
+  def session_picker_days
+    base = (@session&.start_time || Time.current).to_date.beginning_of_week(:monday)
+    (base...(base + SESSION_PICKER_DAYS.days)).to_a
+  end
+
+  def floor_to_picker_slot(minutes)
+    (minutes / SESSION_PICKER_SLOT_MINUTES) * SESSION_PICKER_SLOT_MINUTES
+  end
+
+  def minutes_into_day(time)
+    local = time.in_time_zone
+    local.hour * 60 + local.min
   end
 end

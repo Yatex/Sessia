@@ -9,6 +9,7 @@ class Session < ApplicationRecord
   has_many :ai_alerts, dependent: :nullify
 
   RECURRENCE_FREQUENCIES = %w[none weekly monthly].freeze
+  CURRENCIES = %w[USD EUR UYU GBP BRL ARS CLP].freeze
   RECURRENCE_WEEKDAYS = [
     ["Sunday", 0],
     ["Monday", 1],
@@ -48,7 +49,7 @@ class Session < ApplicationRecord
   validates :title, presence: true, length: { maximum: 140 }
   validates :start_time, :end_time, presence: true
   validates :price_cents, numericality: { greater_than_or_equal_to: 0, only_integer: true }
-  validates :currency, presence: true, length: { is: 3 }
+  validates :currency, presence: true, inclusion: { in: CURRENCIES }
   validates :recurrence_frequency, inclusion: { in: RECURRENCE_FREQUENCIES }
   validate :end_time_after_start_time
   validate :client_belongs_to_user
@@ -104,6 +105,27 @@ class Session < ApplicationRecord
 
   def generated_occurrence?
     parent_session_id.present?
+  end
+
+  def mark_paid!(paid_at: Time.current)
+    transaction do
+      update!(payment_status: :paid)
+
+      payment_record = payment_records.order(created_at: :desc).first ||
+        payment_records.build(user: user, client: client)
+
+      payment_record.assign_attributes(
+        user: user,
+        client: client,
+        amount_cents: price_cents.to_i,
+        currency: currency,
+        status: :paid,
+        due_on: start_time&.to_date,
+        paid_at: paid_at
+      )
+      payment_record.save!
+      payment_record
+    end
   end
 
   private

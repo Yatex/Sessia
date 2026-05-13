@@ -112,7 +112,14 @@
             <td><%= l(session_record.start_time, format: :long) %></td>
             <td><%= session_price(session_record) %></td>
             <td><%= payment_status_badge(session_record.payment_status) %></td>
-            <td><%= link_to "Open", session_path(session_record), class: "text-link" %></td>
+            <td>
+              <div class="table-actions">
+                <% unless session_record.payment_paid? %>
+                  <%= button_to t("payments.mark_paid"), mark_paid_session_path(session_record), method: :patch, class: "secondary-button compact" %>
+                <% end %>
+                <%= link_to "Open", session_path(session_record), class: "text-link" %>
+              </div>
+            </td>
           </tr>
         <% end %>
       </tbody>

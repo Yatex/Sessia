@@ -33,6 +33,7 @@ en:
       default: "%Y-%m-%d"
       short: "%b %-d"
       long: "%B %-d, %Y"
+      month_year: "%B %Y"
     day_names:
       - Sunday
       - Monday
@@ -84,6 +85,38 @@ en:
       long: "%B %-d, %Y %H:%M"
       short_time: "%-I:%M %p"
   app_name: "Sessia"
+  app:
+    session_os: "Session OS"
+    whatsapp_ai: "WhatsApp AI"
+    professional_number_configured: "Professional number configured"
+    provider_not_connected: "Provider not connected"
+  actions:
+    new_session: "New session"
+    remove: "Remove"
+  auth:
+    sign_out: "Sign out"
+  statuses:
+    confirmed: "Confirmed"
+    pending: "Pending"
+    cancelled: "Cancelled"
+    paid: "Paid"
+    unpaid: "Unpaid"
+    no_show: "No show"
+    active: "Active"
+    trialing: "Trialing"
+    completed: "Completed"
+    overdue: "Overdue"
+    not_connected: "Not connected"
+    connected: "Connected"
+  topbar:
+    dashboard: "Agenda"
+    sessions: "Sessions"
+    clients: "Clients"
+    payments: "Payments"
+    reports: "Analytics"
+    settings: "Settings"
+    ai_settings: "AI Assistant"
+    billing: "Subscriptions"
   navigation:
     agenda: "Agenda"
     sessions: "Sessions"
@@ -153,3 +186,66 @@ en:
     final:
       eyebrow: "Ready before the first client message"
       heading: "Set your availability, add your clients, and let Sessia keep the week organized."
+  dashboard:
+    eyebrow: "Agenda"
+    calendar_view: "Calendar view"
+    previous: "Previous"
+    today: "Today"
+    next: "Next"
+    daily_summary: "Daily confirmation and payment summary"
+    weekly_agenda: "Weekly agenda by hourly slots"
+    time: "Time"
+    free: "Free"
+    unavailable: "Unavailable"
+    unavailable_time: "Unavailable time"
+    legend: "Calendar legend"
+    paid_session: "Paid session"
+    views:
+      week: "Week"
+      month: "Month"
+    counts:
+      sessions:
+        one: "1 session"
+        other: "%{count} sessions"
+      free_slots:
+        one: "1 free slot"
+        other: "%{count} free slots"
+      confirmed:
+        one: "1 confirmed"
+        other: "%{count} confirmed"
+      unpaid:
+        one: "1 unpaid"
+        other: "%{count} unpaid"
+    block_time:
+      action: "Block time"
+      heading: "Blocked time"
+      copy: "Block time from the agenda. If a session is inside the block, Sessia cancels it and queues the AI to rebook with the client."
+      title: "Title"
+      title_placeholder: "Lunch, appointment, travel"
+      starts: "Starts"
+      ends: "Ends"
+      notes: "Notes"
+      submit: "Block time"
+      saved: "Blocked time saved."
+      removed: "Blocked time removed."
+      affected:
+        one: "1 session cancelled and queued for AI rebooking."
+        other: "%{count} sessions cancelled and queued for AI rebooking."
+  sessions:
+    form:
+      free: "Free"
+      selected: "Selected"
+      unavailable: "Unavailable"
+      closed: "Closed"
+  settings:
+    payment_methods:
+      label: "Accepted payment methods"
+      placeholder: "Example: Bank transfer to..., Mercado Pago alias..., cash after the session."
+      hint: "Sessia uses this when a client asks the AI how to pay."
+    availability:
+      available: "Available"
+      closed: "Closed"
+  payments:
+    mark_paid: "Mark paid"
+    mark_paid_short: "Mark"
+    mark_paid_notice: "Session marked as paid."

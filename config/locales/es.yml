@@ -4,6 +4,7 @@ es:
       default: "%d/%m/%Y"
       short: "%-d %b"
       long: "%-d de %B de %Y"
+      month_year: "%B de %Y"
     day_names:
       - domingo
       - lunes
@@ -55,6 +56,38 @@ es:
       long: "%-d de %B de %Y %H:%M"
       short_time: "%H:%M"
   app_name: "Sessia"
+  app:
+    session_os: "Sistema de sesiones"
+    whatsapp_ai: "IA por WhatsApp"
+    professional_number_configured: "Número profesional configurado"
+    provider_not_connected: "Proveedor no conectado"
+  actions:
+    new_session: "Nueva sesión"
+    remove: "Quitar"
+  auth:
+    sign_out: "Cerrar sesión"
+  statuses:
+    confirmed: "Confirmada"
+    pending: "Pendiente"
+    cancelled: "Cancelada"
+    paid: "Pagada"
+    unpaid: "Sin pagar"
+    no_show: "No asistió"
+    active: "Activa"
+    trialing: "En prueba"
+    completed: "Completada"
+    overdue: "Vencida"
+    not_connected: "No conectado"
+    connected: "Conectado"
+  topbar:
+    dashboard: "Agenda"
+    sessions: "Sesiones"
+    clients: "Clientes"
+    payments: "Pagos"
+    reports: "Analítica"
+    settings: "Configuración"
+    ai_settings: "Asistente IA"
+    billing: "Suscripciones"
   errors:
     format: "%{attribute} %{message}"
     messages:
@@ -146,3 +179,66 @@ es:
     final:
       eyebrow: "Listo antes del primer mensaje del cliente"
       heading: "Configura tu disponibilidad, agrega tus clientes y deja que Sessia mantenga la semana ordenada."
+  dashboard:
+    eyebrow: "Agenda"
+    calendar_view: "Vista de calendario"
+    previous: "Anterior"
+    today: "Hoy"
+    next: "Siguiente"
+    daily_summary: "Resumen diario de confirmación y pagos"
+    weekly_agenda: "Agenda semanal por bloques horarios"
+    time: "Hora"
+    free: "Libre"
+    unavailable: "No disponible"
+    unavailable_time: "Horario no disponible"
+    legend: "Leyenda del calendario"
+    paid_session: "Sesión pagada"
+    views:
+      week: "Semana"
+      month: "Mes"
+    counts:
+      sessions:
+        one: "1 sesión"
+        other: "%{count} sesiones"
+      free_slots:
+        one: "1 horario libre"
+        other: "%{count} horarios libres"
+      confirmed:
+        one: "1 confirmada"
+        other: "%{count} confirmadas"
+      unpaid:
+        one: "1 sin pagar"
+        other: "%{count} sin pagar"
+    block_time:
+      action: "Bloquear horario"
+      heading: "Horarios bloqueados"
+      copy: "Bloquea horarios desde la agenda. Si una sesión cae dentro del bloqueo, Sessia la cancela y deja la IA lista para reagendar con el cliente."
+      title: "Título"
+      title_placeholder: "Almuerzo, turno, viaje"
+      starts: "Empieza"
+      ends: "Termina"
+      notes: "Notas"
+      submit: "Bloquear horario"
+      saved: "Horario bloqueado guardado."
+      removed: "Horario bloqueado eliminado."
+      affected:
+        one: "1 sesión cancelada y enviada a la IA para reagendar."
+        other: "%{count} sesiones canceladas y enviadas a la IA para reagendar."
+  sessions:
+    form:
+      free: "Libre"
+      selected: "Elegido"
+      unavailable: "No disponible"
+      closed: "Cerrado"
+  settings:
+    payment_methods:
+      label: "Métodos de pago aceptados"
+      placeholder: "Ejemplo: transferencia a..., alias de Mercado Pago..., efectivo después de la sesión."
+      hint: "Sessia usa esto cuando un cliente le pregunta a la IA cómo pagar."
+    availability:
+      available: "Disponible"
+      closed: "Cerrado"
+  payments:
+    mark_paid: "Marcar pagada"
+    mark_paid_short: "Marcar"
+    mark_paid_notice: "Sesión marcada como pagada."

@@ -1,7 +1,7 @@
 class DashboardController < ApplicationController
   before_action :authenticate_user!
 
-  SLOT_MINUTES = 60
+  SLOT_MINUTES = 30
 
   def index
     @view_mode = params[:view] == "month" ? "month" : "week"
@@ -33,8 +33,8 @@ class DashboardController < ApplicationController
   def schedule_block
     result = Availability::Blocker.new(user: current_user, attributes: schedule_block_params).call
     affected_count = result.affected_sessions.size
-    notice = "Blocked time saved."
-    notice = "#{notice} #{affected_count} session#{'s' unless affected_count == 1} cancelled and queued for AI rebooking." if affected_count.positive?
+    notice = t("dashboard.block_time.saved")
+    notice = "#{notice} #{t("dashboard.block_time.affected", count: affected_count)}" if affected_count.positive?
 
     redirect_to dashboard_path(view: params[:view].presence || "week", date: params[:date].presence || Date.current.iso8601), notice: notice
   rescue ActiveRecord::RecordInvalid => error
@@ -46,7 +46,7 @@ class DashboardController < ApplicationController
     block = current_user.schedule_blocks.find(params[:block_id])
     block.cancel!
 
-    redirect_to dashboard_path(view: params[:view].presence || "week", date: params[:date].presence || Date.current.iso8601), notice: "Blocked time removed."
+    redirect_to dashboard_path(view: params[:view].presence || "week", date: params[:date].presence || Date.current.iso8601), notice: t("dashboard.block_time.removed")
   end
 
   private
@@ -54,7 +54,7 @@ class DashboardController < ApplicationController
   def prepare_week_view
     @week_start = @selected_date.beginning_of_week(:monday)
     @calendar_days = (@week_start..(@week_start + 6.days)).to_a
-    @period_title = "#{@week_start.strftime("%b %-d")} - #{(@week_start + 6.days).strftime("%b %-d")}"
+    @period_title = "#{I18n.l(@week_start, format: :short)} - #{I18n.l(@week_start + 6.days, format: :short)}"
     @previous_date = @week_start - 7.days
     @next_date = @week_start + 7.days
     @availability_calendar = Availability::Calendar.new(current_user)
@@ -69,7 +69,7 @@ class DashboardController < ApplicationController
     @calendar_start = @month_start.beginning_of_week(:monday)
     @calendar_end = @month_start.end_of_month.end_of_week(:monday)
     @calendar_days = (@calendar_start..@calendar_end).to_a
-    @period_title = @month_start.strftime("%B %Y")
+    @period_title = I18n.l(@month_start, format: :month_year)
     @previous_date = @month_start.prev_month
     @next_date = @month_start.next_month
     @availability_calendar = Availability::Calendar.new(current_user)
