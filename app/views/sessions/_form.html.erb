@@ -27,22 +27,24 @@
       <%= form.label :currency %>
       <%= form.select :currency, Session::CURRENCIES.map { |currency| [currency, currency] } %>
     </div>
-    <div class="field full-span">
-      <% if @calendar_connection&.connected? %>
-        <label class="toggle-row compact">
-          <%= form.check_box :sync_to_google_calendar %>
-          <span>
-            <strong><%= t("sessions.form.google_calendar.add") %></strong>
-            <small><%= t("sessions.form.google_calendar.copy") %></small>
-          </span>
-        </label>
-      <% else %>
-        <div class="detected-field">
-          <span><%= t("sessions.form.google_calendar.not_connected") %></span>
-          <%= link_to t("sessions.form.google_calendar.connect"), settings_path, class: "text-link" %>
-        </div>
-      <% end %>
-    </div>
+    <% if google_calendar_feature_enabled? %>
+      <div class="field full-span">
+        <% if @calendar_connection&.connected? %>
+          <label class="toggle-row compact">
+            <%= form.check_box :sync_to_google_calendar %>
+            <span>
+              <strong><%= t("sessions.form.google_calendar.add") %></strong>
+              <small><%= t("sessions.form.google_calendar.copy") %></small>
+            </span>
+          </label>
+        <% else %>
+          <div class="detected-field">
+            <span><%= t("sessions.form.google_calendar.not_connected") %></span>
+            <%= link_to t("sessions.form.google_calendar.connect"), settings_path, class: "text-link" %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
     <div class="field full-span">
       <%= form.label :notes %>
       <%= form.text_area :notes, rows: 7 %>

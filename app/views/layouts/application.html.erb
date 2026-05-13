@@ -30,7 +30,7 @@
               <%= link_to label, path, class: nav_link_class(path) %>
             <% end %>
             <% if current_user.admin? %>
-              <span class="sidebar-section-label">Admin</span>
+              <span class="sidebar-section-label">Platform</span>
               <% admin_nav_items.each do |label, path| %>
                 <%= link_to label, path, class: nav_link_class(path) %>
               <% end %>

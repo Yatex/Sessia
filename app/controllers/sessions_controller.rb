@@ -32,7 +32,7 @@ class SessionsController < ApplicationController
       title: "Session",
       payment_status: "pending",
       currency: "USD",
-      sync_to_google_calendar: @calendar_connection&.sync_sessions? || false
+      sync_to_google_calendar: google_calendar_feature_enabled? && (@calendar_connection&.sync_sessions? || false)
     )
     load_available_start_options
   end
@@ -74,6 +74,11 @@ class SessionsController < ApplicationController
   end
 
   def sync_google_calendar
+    unless google_calendar_feature_enabled?
+      redirect_to @session, alert: "Google Calendar sync is temporarily unavailable."
+      return
+    end
+
     if GoogleCalendar::SyncSession.new(@session).call
       redirect_to @session, notice: "Session synced to Google Calendar."
     else
@@ -157,7 +162,7 @@ class SessionsController < ApplicationController
 
   def after_session_saved(session_record)
     RecurringSessionGenerator.new(session_record).generate!
-    sync_sessions_to_google_calendar(session_record) if session_record.sync_to_google_calendar?
+    sync_sessions_to_google_calendar(session_record) if google_calendar_feature_enabled? && session_record.sync_to_google_calendar?
   end
 
   def sync_sessions_to_google_calendar(session_record)
@@ -260,5 +265,9 @@ class SessionsController < ApplicationController
   def minutes_into_day(time)
     local = time.in_time_zone
     local.hour * 60 + local.min
+  end
+
+  def google_calendar_feature_enabled?
+    ActiveModel::Type::Boolean.new.cast(ENV["GOOGLE_CALENDAR_UI_ENABLED"])
   end
 end

@@ -8,8 +8,8 @@ module ApplicationHelper
   ].freeze
 
   ADMIN_NAV_ITEMS = [
-    ["Admin analytics", :admin_analytics_path],
-    ["Admin users", :admin_users_path],
+    ["Platform analytics", :admin_analytics_path],
+    ["Users", :admin_users_path],
     ["AI messages", :admin_ai_messages_path]
   ].freeze
 
@@ -19,6 +19,10 @@ module ApplicationHelper
 
   def admin_nav_items
     ADMIN_NAV_ITEMS.map { |label, helper| [label, public_send(helper)] }
+  end
+
+  def google_calendar_feature_enabled?
+    ActiveModel::Type::Boolean.new.cast(ENV["GOOGLE_CALENDAR_UI_ENABLED"])
   end
 
   def nav_link_class(path)

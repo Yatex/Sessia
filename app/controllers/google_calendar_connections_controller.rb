@@ -1,5 +1,6 @@
 class GoogleCalendarConnectionsController < ApplicationController
   before_action :authenticate_user!
+  before_action :ensure_google_calendar_feature_enabled!
   before_action :set_calendar_connection, only: %i[update sync disconnect]
   before_action :require_connected_calendar, only: :sync
 
@@ -98,5 +99,11 @@ class GoogleCalendarConnectionsController < ApplicationController
 
   def calendar_connection_params
     params.require(:calendar_connection).permit(:sync_sessions)
+  end
+
+  def ensure_google_calendar_feature_enabled!
+    return if ActiveModel::Type::Boolean.new.cast(ENV["GOOGLE_CALENDAR_UI_ENABLED"])
+
+    redirect_to settings_path, alert: "Google Calendar connection is temporarily unavailable."
   end
 end

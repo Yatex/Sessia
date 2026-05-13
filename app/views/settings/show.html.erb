@@ -134,68 +134,70 @@
   <% end %>
 </section>
 
-<section class="form-panel settings-integration-panel">
-  <div class="section-heading">
-    <div>
-      <p class="eyebrow"><%= t("settings.integrations") %></p>
-      <h2>Google Calendar</h2>
+<% if google_calendar_feature_enabled? %>
+  <section class="form-panel settings-integration-panel">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow"><%= t("settings.integrations") %></p>
+        <h2>Google Calendar</h2>
+      </div>
+      <% if @calendar_connection&.connected? %>
+        <%= status_badge("connected") %>
+      <% else %>
+        <%= status_badge("not_connected") %>
+      <% end %>
     </div>
+
     <% if @calendar_connection&.connected? %>
-      <%= status_badge("connected") %>
+      <div class="integration-status">
+        <div>
+          <span><%= t("settings.google.connected_account") %></span>
+          <strong><%= @calendar_connection.provider_account_email.presence || "Google Calendar" %></strong>
+        </div>
+        <div>
+          <span><%= t("settings.google.calendar") %></span>
+          <strong><%= @calendar_connection.calendar_id %></strong>
+        </div>
+        <div>
+          <span><%= t("settings.google.last_sync") %></span>
+          <strong><%= @calendar_connection.last_synced_at ? l(@calendar_connection.last_synced_at, format: :short) : t("settings.google.not_synced") %></strong>
+        </div>
+      </div>
+
+      <%= form_with model: @calendar_connection, url: settings_google_calendar_path, method: :patch, class: "settings-form", data: { settings_autosave: true } do |form| %>
+        <label class="toggle-row">
+          <%= form.check_box :sync_sessions %>
+          <span>
+            <strong><%= t("settings.google.auto_add") %></strong>
+            <small><%= t("settings.google.auto_add_copy") %></small>
+          </span>
+        </label>
+        <div class="form-actions">
+          <span class="autosave-status" data-autosave-status><%= t("settings.saved") %></span>
+        </div>
+      <% end %>
+
+      <div class="integration-actions">
+        <%= button_to t("settings.google.sync_upcoming"), sync_google_calendar_path, method: :post, class: "secondary-button" %>
+        <%= button_to t("settings.google.disconnect"), disconnect_google_calendar_path, method: :delete, class: "ghost-button" %>
+      </div>
+      <% if @calendar_connection.error_message.present? %>
+        <p class="field-hint calendar-error"><%= @calendar_connection.error_message %></p>
+      <% end %>
     <% else %>
-      <%= status_badge("not_connected") %>
-    <% end %>
-  </div>
-
-  <% if @calendar_connection&.connected? %>
-    <div class="integration-status">
-      <div>
-        <span><%= t("settings.google.connected_account") %></span>
-        <strong><%= @calendar_connection.provider_account_email.presence || "Google Calendar" %></strong>
-      </div>
-      <div>
-        <span><%= t("settings.google.calendar") %></span>
-        <strong><%= @calendar_connection.calendar_id %></strong>
-      </div>
-      <div>
-        <span><%= t("settings.google.last_sync") %></span>
-        <strong><%= @calendar_connection.last_synced_at ? l(@calendar_connection.last_synced_at, format: :short) : t("settings.google.not_synced") %></strong>
-      </div>
-    </div>
-
-    <%= form_with model: @calendar_connection, url: settings_google_calendar_path, method: :patch, class: "settings-form", data: { settings_autosave: true } do |form| %>
-      <label class="toggle-row">
-        <%= form.check_box :sync_sessions %>
-        <span>
-          <strong><%= t("settings.google.auto_add") %></strong>
-          <small><%= t("settings.google.auto_add_copy") %></small>
-        </span>
-      </label>
-      <div class="form-actions">
-        <span class="autosave-status" data-autosave-status><%= t("settings.saved") %></span>
-      </div>
-    <% end %>
-
-    <div class="integration-actions">
-      <%= button_to t("settings.google.sync_upcoming"), sync_google_calendar_path, method: :post, class: "secondary-button" %>
-      <%= button_to t("settings.google.disconnect"), disconnect_google_calendar_path, method: :delete, class: "ghost-button" %>
-    </div>
-    <% if @calendar_connection.error_message.present? %>
-      <p class="field-hint calendar-error"><%= @calendar_connection.error_message %></p>
-    <% end %>
-  <% else %>
-    <p class="panel-copy">
-      <%= t("settings.google.connect_copy") %>
-    </p>
-    <% if @google_calendar_configured %>
-      <%= link_to t("settings.google.connect"), connect_google_calendar_path, class: "primary-button" %>
-    <% else %>
-      <p class="field-hint calendar-error">
-        <%= t("settings.google.env_missing") %>
+      <p class="panel-copy">
+        <%= t("settings.google.connect_copy") %>
       </p>
+      <% if @google_calendar_configured %>
+        <%= link_to t("settings.google.connect"), connect_google_calendar_path, class: "primary-button" %>
+      <% else %>
+        <p class="field-hint calendar-error">
+          <%= t("settings.google.env_missing") %>
+        </p>
+      <% end %>
     <% end %>
-  <% end %>
-</section>
+  </section>
+<% end %>
 
 <section class="form-panel settings-security-panel">
   <div class="section-heading">
