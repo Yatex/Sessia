@@ -28,7 +28,7 @@ class SessionsController < ApplicationController
     @session = current_user.sessions.new(
       client_id: client_id,
       start_time: start_time,
-      end_time: start_time + 50.minutes,
+      end_time: start_time + 60.minutes,
       title: "Session",
       payment_status: "pending",
       currency: "USD",
@@ -106,21 +106,24 @@ class SessionsController < ApplicationController
       exclude_session: @session&.persisted? ? @session : nil
     )
     @available_start_options = slots.map { |slot| [slot.label, slot.value] }
-    current_value = datetime_local_value(@session&.start_time)
+    @session_picker_start_time = floor_time_to_picker_slot(@session&.start_time)
+    @session_picker_end_time = ceil_time_to_picker_slot(@session&.end_time)
+    current_value = datetime_local_value(@session_picker_start_time || @session&.start_time)
 
     if current_value.present? && @available_start_options.none? { |_label, value| value == current_value }
       @available_start_options.unshift(["Current time - #{@session.start_time.in_time_zone.strftime("%a %b %-d, %H:%M")}", current_value])
     end
 
     @session_start_value = current_value
+    @session_end_value = datetime_local_value(@session_picker_end_time || @session&.end_time)
     @session_picker_days = session_picker_days
     @session_picker_slots_by_key = availability_calendar.slot_availability_for(
       @session_picker_days,
       slot_minutes: SESSION_PICKER_SLOT_MINUTES,
-      duration_minutes: duration,
+      duration_minutes: SESSION_PICKER_SLOT_MINUTES,
       exclude_session: @session&.persisted? ? @session : nil
     )
-    selected_slot_minute = @session&.start_time ? floor_to_picker_slot(minutes_into_day(@session.start_time)) : nil
+    selected_slot_minute = @session_picker_start_time ? minutes_into_day(@session_picker_start_time) : nil
     @session_picker_time_slots = (
       availability_calendar.working_slot_minutes_for(@session_picker_days, slot_minutes: SESSION_PICKER_SLOT_MINUTES) +
       Array(selected_slot_minute)
@@ -234,6 +237,24 @@ class SessionsController < ApplicationController
 
   def floor_to_picker_slot(minutes)
     (minutes / SESSION_PICKER_SLOT_MINUTES) * SESSION_PICKER_SLOT_MINUTES
+  end
+
+  def ceil_to_picker_slot(minutes)
+    ((minutes + SESSION_PICKER_SLOT_MINUTES - 1) / SESSION_PICKER_SLOT_MINUTES) * SESSION_PICKER_SLOT_MINUTES
+  end
+
+  def floor_time_to_picker_slot(time)
+    return if time.blank?
+
+    local = time.in_time_zone
+    local.beginning_of_day + floor_to_picker_slot(minutes_into_day(local)).minutes
+  end
+
+  def ceil_time_to_picker_slot(time)
+    return if time.blank?
+
+    local = time.in_time_zone
+    local.beginning_of_day + ceil_to_picker_slot(minutes_into_day(local)).minutes
   end
 
   def minutes_into_day(time)

@@ -1,30 +1,30 @@
 <section class="page-header">
   <div>
-    <p class="eyebrow">Clients</p>
-    <h1>Client workspace</h1>
+    <p class="eyebrow"><%= t("clients.index.eyebrow") %></p>
+    <h1><%= t("clients.index.title") %></h1>
   </div>
-  <%= link_to "New client", new_client_path, class: "primary-button" %>
+  <%= link_to t("clients.index.new_client"), new_client_path, class: "primary-button" %>
 </section>
 
 <section class="filter-panel">
   <%= form_with url: clients_path, method: :get, local: true, class: "filter-form" do %>
     <div class="filter-grid">
       <div class="field">
-        <%= label_tag :query, "Search" %>
-        <%= text_field_tag :query, @filters[:query], placeholder: "Name, email, or WhatsApp" %>
+        <%= label_tag :query, t("clients.index.filters.search") %>
+        <%= text_field_tag :query, @filters[:query], placeholder: t("clients.index.filters.search_placeholder") %>
       </div>
       <div class="field">
-        <%= label_tag :status, "Status" %>
-        <%= select_tag :status, options_for_select([["All statuses", ""]] + Client.statuses.keys.map { |status| [status.humanize, status] }, @filters[:status]) %>
+        <%= label_tag :status, t("clients.index.filters.status") %>
+        <%= select_tag :status, options_for_select([[t("clients.index.filters.all_statuses"), ""]] + Client.statuses.keys.map { |status| [status_label(status), status] }, @filters[:status]) %>
       </div>
       <div class="field">
-        <%= label_tag :linked, "AI WhatsApp" %>
-        <%= select_tag :linked, options_for_select([["All clients", ""], ["Linked", "linked"], ["Not linked", "unlinked"]], @filters[:linked]) %>
+        <%= label_tag :linked, t("clients.index.filters.ai_whatsapp") %>
+        <%= select_tag :linked, options_for_select([[t("clients.index.filters.all_clients"), ""], [t("clients.index.filters.linked"), "linked"], [t("clients.index.filters.not_linked"), "unlinked"]], @filters[:linked]) %>
       </div>
     </div>
     <div class="filter-actions">
-      <%= link_to "Reset", clients_path, class: "secondary-button" %>
-      <%= submit_tag "Apply filters", class: "primary-button" %>
+      <%= link_to t("filters.reset"), clients_path, class: "secondary-button" %>
+      <%= submit_tag t("filters.apply"), class: "primary-button" %>
     </div>
   <% end %>
 </section>
@@ -34,11 +34,11 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Contact</th>
-          <th>Preferred channel</th>
-          <th>AI WhatsApp</th>
-          <th>Status</th>
+          <th><%= t("clients.index.table.name") %></th>
+          <th><%= t("clients.index.table.contact") %></th>
+          <th><%= t("clients.index.table.preferred_channel") %></th>
+          <th><%= t("clients.index.table.ai_whatsapp") %></th>
+          <th><%= t("clients.index.table.status") %></th>
           <th></th>
         </tr>
       </thead>
@@ -50,16 +50,16 @@
             <td><%= client.preferred_contact_channel.humanize %></td>
             <td><%= client.linked? ? status_badge("linked") : status_badge("not_linked") %></td>
             <td><%= status_badge(client.status) %></td>
-            <td><%= link_to "Open", client_path(client), class: "text-link" %></td>
+            <td><%= link_to t("actions.open"), client_path(client), class: "text-link" %></td>
           </tr>
         <% end %>
       </tbody>
     </table>
   <% else %>
     <div class="empty-state">
-      <h2>No clients found</h2>
-      <p>Adjust the filters or create a new client to start scheduling sessions.</p>
-      <%= link_to "Create client", new_client_path, class: "primary-button" %>
+      <h2><%= t("clients.index.empty_title") %></h2>
+      <p><%= t("clients.index.empty_body") %></p>
+      <%= link_to t("clients.index.create_client"), new_client_path, class: "primary-button" %>
     </div>
   <% end %>
 </section>

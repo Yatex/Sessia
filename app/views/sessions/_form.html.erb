@@ -2,66 +2,25 @@
 
 <% if @clients.empty? %>
   <div class="empty-state compact">
-    <h2>Create a client first</h2>
-    <p>Sessions belong to clients so your agenda stays private and organized.</p>
-    <%= link_to "New client", new_client_path, class: "primary-button" %>
+    <h2><%= t("sessions.form.no_clients_title") %></h2>
+    <p><%= t("sessions.form.no_clients_body") %></p>
+    <%= link_to t("clients.index.new_client"), new_client_path, class: "primary-button" %>
   </div>
 <% else %>
   <%= form_with model: session_record, class: "form-grid" do |form| %>
+    <%= form.hidden_field :start_time, value: @session_start_value, data: { session_start_field: true } %>
+    <%= form.hidden_field :end_time, value: @session_end_value, data: { session_end_time: true } %>
+    <%= form.hidden_field :recurrence_frequency, value: (session_record.recurring? ? "weekly" : "none"), data: { recurrence_frequency_field: true } %>
     <div class="field">
-      <%= form.label :client_id, "Client" %>
-      <%= form.select :client_id, @clients.map { |client| [client.name, client.id] }, include_blank: "Choose client" %>
+      <%= form.label :client_id, t("sessions.form.client") %>
+      <%= form.select :client_id, @clients.map { |client| [client.name, client.id] }, include_blank: t("sessions.form.choose_client") %>
     </div>
     <div class="field">
-      <%= form.label :title, "Session type or title" %>
+      <%= form.label :title, t("sessions.form.title") %>
       <%= form.text_field :title %>
     </div>
-    <div class="field full-span">
-      <%= form.label :start_time, "Start time" %>
-      <div class="session-time-grid-editor" data-session-time-grid data-duration-minutes="<%= session_record.duration_minutes.to_i.positive? ? session_record.duration_minutes : 50 %>" data-end-time-target="#session_end_time" data-free-label="<%= t("sessions.form.free") %>" data-selected-label="<%= t("sessions.form.selected") %>">
-        <div class="availability-grid-head session-time-grid-head">
-          <span></span>
-          <% @session_picker_days.each do |day| %>
-            <strong>
-              <%= l(day, format: "%a") %>
-              <small><%= day.day %></small>
-            </strong>
-          <% end %>
-        </div>
-
-        <div class="availability-grid-body">
-          <% @session_picker_time_slots.each do |slot_minutes| %>
-            <div class="availability-grid-row session-time-grid-row">
-              <time><%= slot_time_label(slot_minutes) %></time>
-              <% @session_picker_days.each do |day| %>
-                <% slot_start = calendar_slot_time(day, slot_minutes) %>
-                <% value = slot_start.strftime("%Y-%m-%dT%H:%M") %>
-                <% available_slot = @session_picker_slots_by_key.fetch([day, slot_minutes], nil) %>
-                <% selected = @session_start_value == value %>
-                <% selectable = available_slot.present? || selected %>
-                <% if selectable %>
-                  <label class="session-time-cell <%= "selected" if selected %>" title="<%= l(slot_start, format: :long) %>">
-                    <%= radio_button_tag "session[start_time]", value, selected, id: nil, data: { session_start_option: true } %>
-                    <span><%= selected ? t("sessions.form.selected") : t("sessions.form.free") %></span>
-                  </label>
-                <% else %>
-                  <div class="session-time-cell unavailable" aria-label="<%= t("sessions.form.unavailable") %>">
-                    <span><%= t("sessions.form.closed") %></span>
-                  </div>
-                <% end %>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      </div>
-      <small class="field-hint">Choose a 30-minute start block. Only working hours without existing sessions or blocked time are selectable.</small>
-    </div>
     <div class="field">
-      <%= form.label :end_time %>
-      <%= form.datetime_local_field :end_time, data: { session_end_time: true } %>
-    </div>
-    <div class="field">
-      <%= form.label :price, "Session price" %>
+      <%= form.label :price, t("sessions.form.price") %>
       <%= form.number_field :price, min: 0, step: "0.01", inputmode: "decimal" %>
     </div>
     <div class="field">
@@ -73,43 +32,77 @@
         <label class="toggle-row compact">
           <%= form.check_box :sync_to_google_calendar %>
           <span>
-            <strong>Add this session to Google Calendar</strong>
-            <small>Creates or updates an event on your connected Google Calendar.</small>
+            <strong><%= t("sessions.form.google_calendar.add") %></strong>
+            <small><%= t("sessions.form.google_calendar.copy") %></small>
           </span>
         </label>
       <% else %>
         <div class="detected-field">
-          <span>Google Calendar is not connected.</span>
-          <%= link_to "Connect in Settings", settings_path, class: "text-link" %>
+          <span><%= t("sessions.form.google_calendar.not_connected") %></span>
+          <%= link_to t("sessions.form.google_calendar.connect"), settings_path, class: "text-link" %>
         </div>
       <% end %>
-    </div>
-    <div class="field full-span">
-      <div class="recurrence-panel">
-        <div class="field">
-          <%= form.label :recurrence_frequency, "Recurrent" %>
-          <%= form.select :recurrence_frequency, [["No", "none"], ["Weekly", "weekly"], ["Monthly", "monthly"]] %>
-        </div>
-        <div class="field full-span">
-          <%= form.label :recurrence_days, "Repeat on days" %>
-          <div class="weekday-picker">
-            <%= form.collection_check_boxes :recurrence_days, Session::RECURRENCE_WEEKDAYS, :last, :first do |box| %>
-              <%= box.label do %>
-                <%= box.check_box %>
-                <span><%= box.text.first(3) %></span>
-              <% end %>
-            <% end %>
-          </div>
-          <p class="field-hint">Used for weekly sessions. Monthly sessions repeat on the same day of the month.</p>
-        </div>
-      </div>
     </div>
     <div class="field full-span">
       <%= form.label :notes %>
       <%= form.text_area :notes, rows: 7 %>
     </div>
+    <div class="field full-span">
+      <div class="session-scheduler-panel">
+        <div class="session-scheduler-heading">
+          <div>
+            <%= form.label :start_time, t("sessions.form.blocks") %>
+            <small class="field-hint"><%= t("sessions.form.blocks_hint") %></small>
+          </div>
+          <label class="toggle-row compact recurrence-toggle">
+            <%= check_box_tag :session_recurrent, "1", session_record.recurring?, data: { recurrence_checkbox: true } %>
+            <span>
+              <strong><%= t("sessions.form.recurrent") %></strong>
+              <small><%= t("sessions.form.recurrent_hint") %></small>
+            </span>
+          </label>
+        </div>
+        <div class="session-time-grid-editor" data-session-time-grid data-start-time-target="#session_start_time" data-end-time-target="#session_end_time" data-free-label="<%= t("sessions.form.free") %>" data-selected-label="<%= t("sessions.form.selected") %>">
+          <div class="availability-grid-head session-time-grid-head">
+            <span></span>
+            <% @session_picker_days.each do |day| %>
+              <strong>
+                <%= l(day, format: "%a") %>
+                <small><%= day.day %></small>
+              </strong>
+            <% end %>
+          </div>
+
+          <div class="availability-grid-body">
+            <% @session_picker_time_slots.each do |slot_minutes| %>
+              <div class="availability-grid-row session-time-grid-row">
+                <time><%= slot_time_label(slot_minutes) %></time>
+                <% @session_picker_days.each do |day| %>
+                  <% slot_start = calendar_slot_time(day, slot_minutes) %>
+                  <% value = slot_start.strftime("%Y-%m-%dT%H:%M") %>
+                  <% block_end_value = (slot_start + SessionsController::SESSION_PICKER_SLOT_MINUTES.minutes).strftime("%Y-%m-%dT%H:%M") %>
+                  <% available_slot = @session_picker_slots_by_key.fetch([day, slot_minutes], nil) %>
+                  <% selected = @session_picker_start_time.present? && @session_picker_end_time.present? && slot_start >= @session_picker_start_time && slot_start < @session_picker_end_time && slot_start.to_date == @session_picker_start_time.to_date %>
+                  <% selectable = available_slot.present? || selected %>
+                  <% if selectable %>
+                    <label class="session-time-cell <%= "selected" if selected %>" title="<%= l(slot_start, format: :long) %>">
+                      <%= check_box_tag "session_time_blocks[]", value, selected, id: nil, data: { session_block_option: true, start_time: value, end_time: block_end_value, day_key: day.iso8601 } %>
+                      <span><%= selected ? t("sessions.form.selected") : t("sessions.form.free") %></span>
+                    </label>
+                  <% else %>
+                    <div class="session-time-cell unavailable" aria-label="<%= t("sessions.form.unavailable") %>">
+                      <span><%= t("sessions.form.closed") %></span>
+                    </div>
+                  <% end %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="form-actions full-span">
-      <%= link_to "Cancel", sessions_path, class: "secondary-button" %>
+      <%= link_to t("actions.cancel"), sessions_path, class: "secondary-button" %>
       <%= form.submit class: "primary-button" %>
     </div>
   <% end %>

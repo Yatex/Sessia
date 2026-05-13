@@ -1,38 +1,38 @@
 <section class="page-header">
   <div>
-    <p class="eyebrow">Analytics</p>
-    <h1>This month</h1>
+    <p class="eyebrow"><%= t("analytics.eyebrow") %></p>
+    <h1><%= t("analytics.title") %></h1>
   </div>
 </section>
 
 <section class="summary-grid">
   <div class="metric-panel">
-    <span>Scheduled sessions</span>
+    <span><%= t("analytics.scheduled") %></span>
     <strong><%= @scheduled_count %></strong>
   </div>
   <div class="metric-panel">
-    <span>Completed sessions</span>
+    <span><%= t("analytics.completed") %></span>
     <strong><%= @completed_count %></strong>
   </div>
   <div class="metric-panel">
-    <span>Cancelled sessions</span>
+    <span><%= t("analytics.cancelled") %></span>
     <strong><%= @cancelled_count %></strong>
   </div>
   <div class="metric-panel attention">
-    <span>Payment attention</span>
+    <span><%= t("analytics.payment_attention") %></span>
     <strong><%= @payment_pending_count %></strong>
   </div>
   <div class="metric-panel">
-    <span>Paid revenue</span>
+    <span><%= t("analytics.paid_revenue") %></span>
     <strong><%= money_from_cents(@paid_revenue_cents) %></strong>
   </div>
   <div class="metric-panel attention">
-    <span>Unpaid revenue</span>
+    <span><%= t("analytics.unpaid_revenue") %></span>
     <strong><%= money_from_cents(@unpaid_revenue_cents) %></strong>
   </div>
 </section>
 
 <section class="report-band">
-  <h2>Practice rhythm</h2>
-  <p><%= pluralize(@active_client_count, "active client") %> with monthly utilization, revenue, cancellation, and payment attention signals ready for the demo profile.</p>
+  <h2><%= t("analytics.rhythm_title") %></h2>
+  <p><%= t("analytics.rhythm_body", count: @active_client_count) %></p>
 </section>

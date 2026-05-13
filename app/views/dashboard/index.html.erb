@@ -119,20 +119,28 @@
 
           <% if slot_sessions.any? %>
             <% session_record = slot_sessions.first %>
-            <div class="calendar-slot occupied <%= slot_session_tone(session_record) %>">
-              <%= link_to session_path(session_record), class: "slot-open-link" do %>
-                <div class="slot-main-line">
-                  <strong><%= session_record.client.name %></strong>
-                  <%= session_payment_icon(session_record) %>
-                </div>
-                <span><%= session_record.title %></span>
-                <small class="slot-time-range"><%= compact_session_time_range(session_record) %></small>
-              <% end %>
-              <% if slot_sessions.size > 1 %>
-                <b>+<%= slot_sessions.size - 1 %></b>
-              <% end %>
-              <% unless session_record.payment_paid? %>
-                <%= button_to t("payments.mark_paid_short"), mark_paid_session_path(session_record), method: :patch, class: "slot-mark-paid", form: { class: "slot-mark-paid-form" } %>
+            <% slot_end = slot_start + DashboardController::SLOT_MINUTES.minutes %>
+            <% starts_in_slot = session_record.start_time >= slot_start && session_record.start_time < slot_end %>
+            <% continues_after_slot = session_record.end_time > slot_end %>
+            <div class="calendar-slot occupied <%= slot_session_tone(session_record) %> <%= "session-continuation" unless starts_in_slot %> <%= "session-continues" if continues_after_slot %>">
+              <% if starts_in_slot %>
+                <%= link_to session_path(session_record), class: "slot-open-link" do %>
+                  <div class="slot-main-line">
+                    <strong><%= session_record.client.name %></strong>
+                    <%= session_payment_icon(session_record) %>
+                  </div>
+                  <span><%= session_record.title %></span>
+                <% end %>
+                <% if slot_sessions.size > 1 %>
+                  <b>+<%= slot_sessions.size - 1 %></b>
+                <% end %>
+                <% unless session_record.payment_paid? %>
+                  <%= button_to t("payments.mark_paid_short"), mark_paid_session_path(session_record), method: :patch, class: "slot-mark-paid", form: { class: "slot-mark-paid-form" } %>
+                <% end %>
+              <% else %>
+                <%= link_to session_path(session_record), class: "slot-continuation-link", aria: { label: session_record.title } do %>
+                  <span class="visually-hidden"><%= session_record.title %></span>
+                <% end %>
               <% end %>
             </div>
           <% else %>

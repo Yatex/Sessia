@@ -1,48 +1,48 @@
 <section class="page-header">
   <div>
-    <p class="eyebrow">Client</p>
+    <p class="eyebrow"><%= t("clients.show.eyebrow") %></p>
     <h1><%= @client.name %></h1>
   </div>
   <div class="header-actions">
-    <%= link_to "Edit client", edit_client_path(@client), class: "secondary-button" %>
-    <%= link_to "New session", new_session_path(client_id: @client.id), class: "primary-button" %>
+    <%= link_to t("clients.show.edit"), edit_client_path(@client), class: "secondary-button" %>
+    <%= link_to t("actions.new_session"), new_session_path(client_id: @client.id), class: "primary-button" %>
   </div>
 </section>
 
 <section class="detail-layout">
   <aside class="detail-panel">
     <dl class="detail-list">
-      <div><dt>Email</dt><dd><%= @client.email.presence || "Not set" %></dd></div>
+      <div><dt><%= t("clients.show.email") %></dt><dd><%= @client.email.presence || t("common.not_set") %></dd></div>
       <div><dt>WhatsApp</dt><dd><%= @client.phone %></dd></div>
-      <div><dt>Contact</dt><dd><%= @client.preferred_contact_channel.humanize %></dd></div>
-      <div><dt>AI WhatsApp</dt><dd><%= @client.linked? ? "Linked #{time_ago_in_words(@client.linked_at)} ago" : "Waiting for first message" %></dd></div>
-      <div><dt>Status</dt><dd><%= status_badge(@client.status) %></dd></div>
+      <div><dt><%= t("clients.show.contact") %></dt><dd><%= @client.preferred_contact_channel.humanize %></dd></div>
+      <div><dt><%= t("clients.show.ai_whatsapp") %></dt><dd><%= @client.linked? ? t("clients.show.linked_ago", time: time_ago_in_words(@client.linked_at)) : t("clients.show.waiting_message") %></dd></div>
+      <div><dt><%= t("clients.show.status") %></dt><dd><%= status_badge(@client.status) %></dd></div>
     </dl>
     <div class="portal-link-panel">
-      <h2>WhatsApp AI start</h2>
-      <p>Send this WhatsApp start link to <%= @client.name %>. When the client sends the first message, Sessia links the number and the AI can answer inside the WhatsApp response window.</p>
+      <h2><%= t("clients.show.whatsapp_start") %></h2>
+      <p><%= t("clients.show.whatsapp_start_copy", name: @client.name) %></p>
       <% if (whatsapp_url = client_whatsapp_ai_start_url(@client)).present? %>
         <input readonly value="<%= whatsapp_url %>">
-        <%= link_to "Open WhatsApp", whatsapp_url, class: "primary-button full", target: "_blank", rel: "noreferrer" %>
+        <%= link_to t("clients.show.open_whatsapp"), whatsapp_url, class: "primary-button full", target: "_blank", rel: "noreferrer" %>
       <% else %>
-        <input readonly value="Set TWILIO_WHATSAPP_FROM to generate this link">
+        <input readonly value="<%= t("clients.show.whatsapp_env_missing") %>">
       <% end %>
     </div>
     <div class="notes-block">
-      <h2>Notes</h2>
-      <%= simple_format(@client.notes.presence || "No notes yet.") %>
+      <h2><%= t("clients.show.notes") %></h2>
+      <%= simple_format(@client.notes.presence || t("common.no_notes")) %>
     </div>
   </aside>
 
   <section class="table-panel">
     <div class="section-heading">
-      <h2>Recent sessions</h2>
-      <%= link_to "Schedule", new_session_path(client_id: @client.id), class: "text-link" %>
+      <h2><%= t("clients.show.recent_sessions") %></h2>
+      <%= link_to t("clients.show.schedule"), new_session_path(client_id: @client.id), class: "text-link" %>
     </div>
     <% if @sessions.any? %>
       <table class="data-table">
         <thead>
-          <tr><th>Date</th><th>Title</th><th>Price</th><th>Confirmation</th><th>Payment</th><th></th></tr>
+          <tr><th><%= t("payments.sessions.date") %></th><th><%= t("sessions.index.table.title") %></th><th><%= t("sessions.index.table.price") %></th><th><%= t("sessions.index.table.confirmation") %></th><th><%= t("sessions.index.table.payment") %></th><th></th></tr>
         </thead>
         <tbody>
           <% @sessions.each do |session_record| %>
@@ -52,15 +52,15 @@
               <td><%= session_price(session_record) %></td>
               <td><%= status_badge(session_record.confirmation_status) %></td>
               <td><%= payment_status_badge(session_record.payment_status) %></td>
-              <td><%= link_to "Open", session_path(session_record), class: "text-link" %></td>
+              <td><%= link_to t("actions.open"), session_path(session_record), class: "text-link" %></td>
             </tr>
           <% end %>
         </tbody>
       </table>
     <% else %>
       <div class="empty-state compact">
-        <h2>No sessions yet</h2>
-        <p>Schedule a first session with <%= @client.name %>.</p>
+        <h2><%= t("clients.show.no_sessions_title") %></h2>
+        <p><%= t("clients.show.no_sessions_body", name: @client.name) %></p>
       </div>
     <% end %>
   </section>

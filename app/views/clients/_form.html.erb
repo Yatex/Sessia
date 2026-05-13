@@ -10,24 +10,24 @@
     <%= form.email_field :email, autocomplete: "email" %>
   </div>
   <div class="field">
-    <%= form.label :phone, "WhatsApp phone" %>
+    <%= form.label :phone, t("clients.form.whatsapp_phone") %>
     <%= form.telephone_field :phone, autocomplete: "tel", placeholder: "+598 99 123 456" %>
-    <small class="field-hint">Clients communicate with Sessia only through WhatsApp.</small>
+    <small class="field-hint"><%= t("clients.form.whatsapp_hint") %></small>
   </div>
   <div class="detected-field">
-    <span>Preferred channel</span>
-    <strong>WhatsApp only</strong>
+    <span><%= t("clients.form.preferred_channel") %></span>
+    <strong><%= t("clients.form.whatsapp_only") %></strong>
   </div>
   <div class="field">
     <%= form.label :status %>
-    <%= form.select :status, Client.statuses.keys.map { |status| [status.humanize, status] } %>
+    <%= form.select :status, Client.statuses.keys.map { |status| [status_label(status), status] } %>
   </div>
   <div class="field full-span">
     <%= form.label :notes %>
     <%= form.text_area :notes, rows: 7 %>
   </div>
   <div class="form-actions full-span">
-    <%= link_to "Cancel", clients_path, class: "secondary-button" %>
+    <%= link_to t("actions.cancel"), clients_path, class: "secondary-button" %>
     <%= form.submit class: "primary-button" %>
   </div>
 <% end %>

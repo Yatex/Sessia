@@ -1,32 +1,31 @@
 <section class="page-header">
   <div>
-    <p class="eyebrow">Subscriptions</p>
-    <h1>Plan and subscription</h1>
+    <p class="eyebrow"><%= t("subscriptions.eyebrow") %></p>
+    <h1><%= t("subscriptions.title") %></h1>
   </div>
   <% if current_user.stripe_customer_id.present? %>
-    <%= button_to "Manage in Stripe", portal_subscription_path, method: :post, class: "secondary-button" %>
+    <%= button_to t("subscriptions.manage_stripe"), portal_subscription_path, method: :post, class: "secondary-button" %>
   <% end %>
 </section>
 
 <section class="billing-status">
   <div>
-    <span>Current state</span>
-    <strong><%= @subscription&.status&.humanize || "No subscription yet" %></strong>
+    <span><%= t("subscriptions.current_state") %></span>
+    <strong><%= @subscription&.status ? status_label(@subscription.status) : t("subscriptions.no_subscription") %></strong>
   </div>
   <p>
-    <%= @subscription&.period_label || "Choose a plan to create a Stripe Checkout subscription for Sessia." %>
-    <strong class="client-count-inline"><%= pluralize(@active_client_count, "active client") %></strong>
+    <%= @subscription&.period_label || t("subscriptions.choose_plan_copy") %>
+    <strong class="client-count-inline"><%= t("subscriptions.active_clients", count: @active_client_count) %></strong>
   </p>
 </section>
 
 <% if @subscription&.provider == "trial" && @subscription.trial_ends_at.present? %>
   <section class="trial-banner">
     <div>
-      <span class="status-badge trialing">Free trial active</span>
-      <h2>Your trial is already running</h2>
+      <span class="status-badge trialing"><%= t("subscriptions.trial.active") %></span>
+      <h2><%= t("subscriptions.trial.title") %></h2>
       <p>
-        You can use Sessia until <strong><%= @subscription.trial_ends_at.to_date.to_fs(:long) %></strong>.
-        Pick Starter, Pro, or Studio below whenever you want to keep the workspace active after the trial.
+        <%= t("subscriptions.trial.copy_html", date: @subscription.trial_ends_at.to_date.to_fs(:long)).html_safe %>
       </p>
     </div>
   </section>
@@ -41,19 +40,19 @@
       <strong class="plan-limit"><%= plan.client_limit_label %></strong>
       <p><%= plan.description %></p>
       <% if @recommended_plan&.tier == plan.tier %>
-        <em class="plan-fit">Recommended for your client count</em>
+        <em class="plan-fit"><%= t("subscriptions.plan_fit.recommended") %></em>
       <% elsif fit_class == "over-limit" %>
-        <em class="plan-fit">Too small for your current client count</em>
+        <em class="plan-fit"><%= t("subscriptions.plan_fit.over_limit") %></em>
       <% else %>
-        <em class="plan-fit">Available upgrade capacity</em>
+        <em class="plan-fit"><%= t("subscriptions.plan_fit.available") %></em>
       <% end %>
 
       <% if fit_class == "over-limit" %>
-        <button class="secondary-button full" disabled>Needs larger plan</button>
+        <button class="secondary-button full" disabled><%= t("subscriptions.needs_larger") %></button>
       <% elsif plan_configured?(plan) %>
-        <%= button_to "Choose #{plan.name}", checkout_subscription_path(plan: plan.tier), method: :post, class: "primary-button full" %>
+        <%= button_to t("subscriptions.choose", plan: plan.name), checkout_subscription_path(plan: plan.tier), method: :post, class: "primary-button full" %>
       <% else %>
-        <button class="secondary-button full" disabled>Set <%= plan.price_env_key %></button>
+        <button class="secondary-button full" disabled><%= t("subscriptions.set_env", env: plan.price_env_key) %></button>
       <% end %>
     </article>
   <% end %>

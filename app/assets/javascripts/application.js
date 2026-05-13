@@ -87,6 +87,97 @@
     target.value = datetimeLocalValue(start);
   }
 
+  function parseLocalDate(value) {
+    var date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function setSessionBlockCell(cell, selected, grid) {
+    var input = cell.querySelector("[data-session-block-option]");
+    if (!input) return;
+
+    input.checked = selected;
+    cell.classList.toggle("selected", selected);
+    var label = cell.querySelector("span");
+    if (label) label.textContent = selected ? (grid.dataset.selectedLabel || "Selected") : (grid.dataset.freeLabel || "Free");
+  }
+
+  function cellsForSessionDay(grid, dayKey) {
+    return Array.prototype.slice.call(grid.querySelectorAll("[data-session-block-option]"))
+      .filter(function (input) { return input.dataset.dayKey === dayKey; })
+      .map(function (input) { return input.closest(".session-time-cell"); })
+      .filter(Boolean)
+      .sort(function (a, b) {
+        return a.querySelector("[data-session-block-option]").dataset.startTime.localeCompare(
+          b.querySelector("[data-session-block-option]").dataset.startTime
+        );
+      });
+  }
+
+  function selectionHasThirtyMinuteContinuity(cells) {
+    for (var index = 1; index < cells.length; index += 1) {
+      var previous = parseLocalDate(cells[index - 1].querySelector("[data-session-block-option]").dataset.startTime);
+      var current = parseLocalDate(cells[index].querySelector("[data-session-block-option]").dataset.startTime);
+      if (!previous || !current) return false;
+      if ((current.getTime() - previous.getTime()) !== 30 * 60 * 1000) return false;
+    }
+
+    return true;
+  }
+
+  function syncSessionBlockSelection(changedInput) {
+    var grid = changedInput.closest("[data-session-time-grid]");
+    if (!grid) return;
+
+    var dayKey = changedInput.dataset.dayKey;
+    var sameDayCells = cellsForSessionDay(grid, dayKey);
+
+    grid.querySelectorAll("[data-session-block-option]").forEach(function (input) {
+      if (input.dataset.dayKey !== dayKey) setSessionBlockCell(input.closest(".session-time-cell"), false, grid);
+    });
+
+    var selectedCells = sameDayCells.filter(function (cell) {
+      return cell.querySelector("[data-session-block-option]").checked;
+    });
+
+    if (selectedCells.length === 0) {
+      setSessionBlockCell(changedInput.closest(".session-time-cell"), true, grid);
+      selectedCells = [changedInput.closest(".session-time-cell")];
+    }
+
+    var selectedStarts = selectedCells.map(function (cell) {
+      return cell.querySelector("[data-session-block-option]").dataset.startTime;
+    }).sort();
+    var firstStart = selectedStarts[0];
+    var lastStart = selectedStarts[selectedStarts.length - 1];
+
+    var rangeCells = sameDayCells.filter(function (cell) {
+      var start = cell.querySelector("[data-session-block-option]").dataset.startTime;
+      return start >= firstStart && start <= lastStart;
+    });
+
+    if (!selectionHasThirtyMinuteContinuity(rangeCells)) {
+      rangeCells = [changedInput.closest(".session-time-cell")];
+    }
+
+    sameDayCells.forEach(function (cell) {
+      setSessionBlockCell(cell, rangeCells.indexOf(cell) >= 0, grid);
+    });
+
+    var selectedRange = rangeCells.sort(function (a, b) {
+      return a.querySelector("[data-session-block-option]").dataset.startTime.localeCompare(
+        b.querySelector("[data-session-block-option]").dataset.startTime
+      );
+    });
+    var firstInput = selectedRange[0] && selectedRange[0].querySelector("[data-session-block-option]");
+    var lastInput = selectedRange[selectedRange.length - 1] && selectedRange[selectedRange.length - 1].querySelector("[data-session-block-option]");
+    var startTarget = document.querySelector(grid.dataset.startTimeTarget);
+    var endTarget = document.querySelector(grid.dataset.endTimeTarget);
+
+    if (startTarget && firstInput) startTarget.value = firstInput.dataset.startTime;
+    if (endTarget && lastInput) endTarget.value = lastInput.dataset.endTime;
+  }
+
   function bindSessionTimeSelects() {
     document.querySelectorAll("[data-session-start-select]").forEach(function (select) {
       if (select.dataset.sessionTimeBound === "true") return;
@@ -118,6 +209,35 @@
 
         syncSessionEndTime(option);
       });
+    });
+
+    document.querySelectorAll("[data-session-block-option]").forEach(function (option) {
+      if (option.dataset.sessionBlockBound === "true") return;
+      option.dataset.sessionBlockBound = "true";
+
+      var grid = option.closest("[data-session-time-grid]");
+      var cell = option.closest(".session-time-cell");
+      if (grid && cell) setSessionBlockCell(cell, option.checked, grid);
+
+      option.addEventListener("change", function () {
+        syncSessionBlockSelection(option);
+      });
+    });
+  }
+
+  function bindRecurrenceCheckboxes() {
+    document.querySelectorAll("[data-recurrence-checkbox]").forEach(function (checkbox) {
+      if (checkbox.dataset.recurrenceBound === "true") return;
+      checkbox.dataset.recurrenceBound = "true";
+
+      var form = checkbox.closest("form");
+      var field = form && form.querySelector("[data-recurrence-frequency-field]");
+      var sync = function () {
+        if (field) field.value = checkbox.checked ? "weekly" : "none";
+      };
+
+      sync();
+      checkbox.addEventListener("change", sync);
     });
   }
 
@@ -249,6 +369,7 @@
   document.addEventListener("DOMContentLoaded", applyDetectedTimeZone);
   document.addEventListener("DOMContentLoaded", dismissFlashes);
   document.addEventListener("DOMContentLoaded", bindSessionTimeSelects);
+  document.addEventListener("DOMContentLoaded", bindRecurrenceCheckboxes);
   document.addEventListener("DOMContentLoaded", bindAvailabilityGrids);
   document.addEventListener("DOMContentLoaded", bindSettingsAutosave);
   document.addEventListener("DOMContentLoaded", bindDismissibleDetails);
@@ -256,6 +377,7 @@
     applyDetectedTimeZone();
     dismissFlashes();
     bindSessionTimeSelects();
+    bindRecurrenceCheckboxes();
     bindAvailabilityGrids();
     bindSettingsAutosave();
     bindDismissibleDetails();
