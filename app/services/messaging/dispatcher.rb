@@ -41,7 +41,13 @@ module Messaging
       message
     rescue StandardError => error
       if message&.persisted?
-        message.update(status: "failed", error_message: error.message)
+        metadata_updates = {}
+        metadata_updates["provider"] = error.provider_metadata if error.respond_to?(:provider_metadata)
+        message.update(
+          status: "failed",
+          error_message: error.message,
+          metadata: metadata_updates.present? ? message.metadata.merge(metadata_updates) : message.metadata
+        )
       end
 
       raise

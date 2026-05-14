@@ -28,6 +28,28 @@ class MessagingDispatcherTest < ActiveSupport::TestCase
     end
   end
 
+  class FailingProvider
+    def configured?
+      true
+    end
+
+    def deliver(to:, body:, template: nil)
+      raise Messaging::TwilioWhatsappProvider::DeliveryError.new(
+        "Twilio WhatsApp send failed: The Content Variables parameter is invalid.",
+        provider_metadata: {
+          name: "twilio_whatsapp",
+          status: "failed",
+          error_code: 21656,
+          template: template,
+          request: {
+            content_sid: template&.dig("content_sid"),
+            content_variables: template&.dig("variables").to_json
+          }
+        }
+      )
+    end
+  end
+
   test "queues outbound whatsapp message when provider is not configured" do
     user = User.create!(name: "Messaging Pro", email: "messaging@example.com", password: "password123")
     client = user.clients.create!(name: "Client", phone: "+598 99 111 226")
@@ -113,5 +135,40 @@ class MessagingDispatcherTest < ActiveSupport::TestCase
     assert_nil provider.deliveries.first[:template]
     assert_nil message.metadata["whatsapp_template"]
     assert_equal "Thanks, here is the payment reminder.", provider.deliveries.first[:body]
+  end
+
+  test "stores provider diagnostics when template delivery fails" do
+    user = User.create!(name: "Messaging Pro", email: "messaging-failure@example.com", password: "password123", locale: "en")
+    client = user.clients.create!(name: "Client", phone: "+598 99 111 229")
+    session = user.sessions.create!(
+      client: client,
+      title: "Coaching",
+      start_time: Time.zone.local(2026, 5, 12, 10, 0),
+      end_time: Time.zone.local(2026, 5, 12, 11, 0)
+    )
+    task = user.ai_tasks.create!(
+      client: client,
+      session: session,
+      trigger_event: "before_session",
+      automation_key: "confirm_session",
+      scheduled_for: Time.current
+    )
+
+    assert_raises(Messaging::TwilioWhatsappProvider::DeliveryError) do
+      Messaging::Dispatcher.new(provider: FailingProvider.new).deliver(
+        user: user,
+        client: client,
+        session: session,
+        ai_task: task,
+        body: "Please confirm.",
+        metadata: { "source" => "ai" }
+      )
+    end
+
+    message = user.messages.outbound.last
+    assert_equal "failed", message.status
+    assert_equal "session_confirmation_en", message.metadata.dig("provider", "template", "name")
+    assert_equal "21656", message.metadata.dig("provider", "error_code").to_s
+    assert_match "Content Variables", message.error_message
   end
 end

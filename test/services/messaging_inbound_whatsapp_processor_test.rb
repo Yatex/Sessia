@@ -48,6 +48,35 @@ class MessagingInboundWhatsappProcessorTest < ActiveSupport::TestCase
     assert_equal [result.message], FakeAiProcessor.messages
   end
 
+  test "links client but skips AI for the whatsapp connection starter message" do
+    user = User.create!(name: "WhatsApp Pro", email: "inbound-connect@example.com", password: "password123")
+    client = user.clients.create!(name: "Tamara", phone: "+598 99 111 224")
+    session_record = user.sessions.create!(
+      client: client,
+      title: "Session",
+      start_time: 1.day.from_now,
+      end_time: 1.day.from_now + 1.hour,
+      confirmation_status: "pending"
+    )
+
+    result = Messaging::InboundWhatsappProcessor.new(
+      params: {
+        "From" => "whatsapp:+59899111224",
+        "To" => "whatsapp:+14155238886",
+        "Body" => "Hola Sessia, soy Tamara. Quiero conectar mis sesiones por WhatsApp.",
+        "MessageSid" => "SM-inbound-connect-1"
+      },
+      ai_processor: FakeAiProcessor
+    ).call
+
+    assert result.accepted?
+    assert client.reload.linked?
+    assert_empty FakeAiProcessor.messages
+    assert_equal "pending", session_record.reload.confirmation_status
+    assert_equal "client_connected", result.message.metadata["event"]
+    assert_equal "skipped_connection_message", result.message.metadata["ai_processing"]
+  end
+
   test "does not duplicate twilio retry for the same message sid" do
     user = User.create!(name: "WhatsApp Pro", email: "inbound-dedupe@example.com", password: "password123")
     user.ai_setting.update!(answer_basic_questions: false, confirm_sessions: false, escalate_important_conversations: false)

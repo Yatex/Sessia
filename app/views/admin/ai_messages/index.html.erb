@@ -88,6 +88,7 @@
       <tbody>
         <% @tasks.each do |task| %>
           <% latest_message = task.latest_outbound_message %>
+          <% debug_payload = ai_message_debug_payload(latest_message) %>
           <tr>
             <td>
               <div class="stacked-cell">
@@ -117,6 +118,16 @@
                     <span class="admin-error-text"><%= truncate(latest_message.error_message, length: 140) %></span>
                   <% elsif latest_message.metadata.dig("provider", "status").present? %>
                     <span>Provider: <%= latest_message.metadata.dig("provider", "status").humanize %></span>
+                  <% end %>
+                  <% if debug_payload.present? %>
+                    <% likely_cause = ai_message_likely_cause(latest_message) %>
+                    <% if likely_cause.present? %>
+                      <span class="admin-error-hint"><%= likely_cause %></span>
+                    <% end %>
+                    <details class="admin-debug-details">
+                      <summary>Delivery debug</summary>
+                      <pre><%= pretty_json(debug_payload) %></pre>
+                    </details>
                   <% end %>
                 <% else %>
                   <span>No outbound message was created for this task.</span>
@@ -151,10 +162,22 @@
         </thead>
         <tbody>
           <% @failed_messages.each do |message| %>
+            <% debug_payload = ai_message_debug_payload(message) %>
             <tr>
               <td><%= message.user.email %></td>
               <td><%= message.client&.name || "-" %></td>
-              <td><small><%= truncate(message.error_message.presence || message.metadata.dig("provider", "error_message").presence || "Unknown provider failure", length: 180) %></small></td>
+              <td>
+                <small><%= truncate(message.error_message.presence || message.metadata.dig("provider", "error_message").presence || "Unknown provider failure", length: 180) %></small>
+                <% if ai_message_likely_cause(message).present? %>
+                  <small class="admin-error-hint"><%= ai_message_likely_cause(message) %></small>
+                <% end %>
+                <% if debug_payload.present? %>
+                  <details class="admin-debug-details compact">
+                    <summary>Delivery debug</summary>
+                    <pre><%= pretty_json(debug_payload) %></pre>
+                  </details>
+                <% end %>
+              </td>
               <td><%= l(message.updated_at.in_time_zone(current_user.time_zone), format: :short) %></td>
             </tr>
           <% end %>

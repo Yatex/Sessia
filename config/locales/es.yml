@@ -396,7 +396,7 @@ es:
     eyebrow: "Pagos"
     title: "Información de pagos"
     mark_paid: "Marcar pagada"
-    mark_paid_short: "Marcar"
+    mark_paid_short: "Marcar pagada"
     mark_paid_notice: "Sesión marcada como pagada."
     classes:
       one: "1 clase"

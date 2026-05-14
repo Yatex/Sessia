@@ -102,11 +102,9 @@
       <div class="week-grid-corner"><%= t("dashboard.time") %></div>
 
       <% @calendar_days.each do |day| %>
-        <% day_sessions = @sessions_by_day.fetch(day, []) %>
         <div class="week-grid-day <%= "today" if day == Date.current %>">
           <span><%= l(day, format: "%a") %></span>
           <strong><%= day.day %></strong>
-          <small><%= t("dashboard.counts.sessions", count: day_sessions.size) %></small>
         </div>
       <% end %>
 

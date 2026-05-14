@@ -30,6 +30,10 @@ test("parser avoids false positives for qualified replies", () => {
   assert.equal(parseDeterministicReply("si pero llego tarde"), "ambiguous");
   assert.equal(parseDeterministicReply("no se si puedo ir"), "maybe");
   assert.equal(parseDeterministicReply("no me gusta ese horario"), "ambiguous");
+  assert.equal(
+    parseDeterministicReply("Hola Sessia, soy Tamara. Quiero conectar mis sesiones por WhatsApp."),
+    "ambiguous"
+  );
 });
 
 test("parser classifies clear payment reports", () => {

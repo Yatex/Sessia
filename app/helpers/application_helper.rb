@@ -179,6 +179,56 @@ module ApplicationHelper
     t("topbar.#{controller_name}", default: controller_name.tr("_", " ").humanize)
   end
 
+  def ai_message_debug_payload(message)
+    return {} if message.blank?
+
+    provider = message.metadata.to_h["provider"].is_a?(Hash) ? message.metadata["provider"] : {}
+    template = message.metadata.to_h["whatsapp_template"].is_a?(Hash) ? message.metadata["whatsapp_template"] : provider["template"]
+    request = provider["request"].is_a?(Hash) ? provider["request"] : {}
+
+    {
+      template_name: template&.dig("name"),
+      content_sid: template&.dig("content_sid") || request["content_sid"],
+      content_variables: template&.dig("variables") || parse_json_object(request["content_variables"]),
+      provider_status: provider["status"],
+      provider_http_status: provider["http_status"],
+      provider_error_code: provider["error_code"],
+      provider_more_info: provider["more_info"],
+      provider_error_message: provider["error_message"],
+      stored_error: message.error_message
+    }.compact
+  end
+
+  def ai_message_likely_cause(message)
+    payload = ai_message_debug_payload(message)
+    error_text = [payload[:provider_error_message], payload[:stored_error]].compact.join(" ").downcase
+    return if error_text.blank?
+
+    if error_text.include?("content variables")
+      "Likely template mismatch: the Twilio ContentSid does not accept the variables Sessia sent. Check that the approved template uses the same variable numbers shown below."
+    elsif error_text.include?("content sid")
+      "Likely template configuration issue: check that this ContentSid exists in the same Twilio account and is approved for WhatsApp."
+    elsif error_text.include?("outside") && error_text.include?("window")
+      "Likely WhatsApp conversation-window issue: proactive messages need an approved template outside the 24-hour response window."
+    end
+  end
+
+  def pretty_json(value)
+    JSON.pretty_generate(value)
+  rescue JSON::GeneratorError
+    value.to_s
+  end
+
+  def parse_json_object(value)
+    return value if value.is_a?(Hash)
+    return if value.blank?
+
+    parsed = JSON.parse(value.to_s)
+    parsed if parsed.is_a?(Hash)
+  rescue JSON::ParserError
+    nil
+  end
+
   def status_label(value)
     t("statuses.#{value}", default: value.to_s.humanize)
   end

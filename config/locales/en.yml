@@ -403,7 +403,7 @@ en:
     eyebrow: "Payments"
     title: "Payment information"
     mark_paid: "Mark paid"
-    mark_paid_short: "Mark"
+    mark_paid_short: "Mark as paid"
     mark_paid_notice: "Session marked as paid."
     classes:
       one: "1 class"

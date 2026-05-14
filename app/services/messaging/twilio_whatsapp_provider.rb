@@ -7,6 +7,15 @@ module Messaging
   class TwilioWhatsappProvider
     TWILIO_BASE_URL = "https://api.twilio.com/2010-04-01".freeze
 
+    class DeliveryError < StandardError
+      attr_reader :provider_metadata
+
+      def initialize(message, provider_metadata: {})
+        @provider_metadata = provider_metadata.compact
+        super(message)
+      end
+    end
+
     def initialize(
       account_sid: ENV["TWILIO_ACCOUNT_SID"],
       auth_token: ENV["TWILIO_AUTH_TOKEN"],
@@ -35,7 +44,7 @@ module Messaging
       }
       if template.present?
         form_data["ContentSid"] = template.fetch("content_sid")
-        form_data["ContentVariables"] = JSON.generate(template.fetch("variables", {}).to_h.transform_keys(&:to_s))
+        form_data["ContentVariables"] = JSON.generate(template_variables(template))
       else
         form_data["Body"] = body
       end
@@ -46,7 +55,15 @@ module Messaging
       parsed = JSON.parse(response.body)
 
       unless response.code.to_i.between?(200, 299)
-        raise "Twilio WhatsApp send failed: #{parsed["message"].presence || response.body}"
+        raise DeliveryError.new(
+          "Twilio WhatsApp send failed: #{parsed["message"].presence || response.body}",
+          provider_metadata: provider_error_metadata(
+            parsed: parsed,
+            response: response,
+            template: template,
+            form_data: form_data
+          )
+        )
       end
 
       {
@@ -68,5 +85,33 @@ module Messaging
       ENV["TWILIO_STATUS_CALLBACK_URL"].presence
     end
 
+    def template_variables(template)
+      template.fetch("variables", {})
+        .to_h
+        .transform_keys(&:to_s)
+        .transform_values { |value| value.to_s.squish }
+    end
+
+    def provider_error_metadata(parsed:, response:, template:, form_data:)
+      {
+        name: "twilio_whatsapp",
+        status: "failed",
+        http_status: response.code.to_i,
+        error_code: parsed["code"].presence || parsed["error_code"].presence,
+        error_message: parsed["message"].presence,
+        more_info: parsed["more_info"].presence,
+        template: template_debug(template),
+        request: {
+          content_sid: form_data["ContentSid"].presence,
+          content_variables: form_data["ContentVariables"].presence
+        }.compact
+      }
+    end
+
+    def template_debug(template)
+      return if template.blank?
+
+      template.to_h.slice("name", "content_sid", "variables")
+    end
   end
 end

@@ -19,7 +19,7 @@ module Messaging
       return Result.new(status: :ignored, client: client, reason: "Inbound message has no body.") if message_body.blank?
 
       message, was_new = persist_message(client)
-      process_with_ai(message) if was_new
+      handle_new_message(message) if was_new
 
       Result.new(status: :accepted, message: message, client: client)
     end
@@ -108,6 +108,37 @@ module Messaging
       ai_processor.new(message: message).call
     rescue StandardError => error
       Rails.logger.warn("Inbound WhatsApp AI processing skipped for message #{message.id}: #{error.class}: #{error.message}")
+    end
+
+    def handle_new_message(message)
+      if client_connection_message?(message.body)
+        mark_connection_message!(message)
+      else
+        process_with_ai(message)
+      end
+    end
+
+    def client_connection_message?(body)
+      normalized = normalize_text(body)
+      return false if normalized.blank?
+
+      normalized.include?("sessia") &&
+        normalized.match?(/\b(connect my sessions|want to connect my sessions|conectar mis sesiones|conectar mis clases)\b/)
+    end
+
+    def mark_connection_message!(message)
+      metadata = message.metadata.to_h.deep_dup
+      message.update!(
+        subject: "WhatsApp connected",
+        metadata: metadata.merge(
+          "event" => "client_connected",
+          "ai_processing" => "skipped_connection_message"
+        )
+      )
+    end
+
+    def normalize_text(value)
+      I18n.transliterate(value.to_s.downcase).squish
     end
 
     def related_session(client)

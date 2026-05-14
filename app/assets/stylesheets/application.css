@@ -2358,6 +2358,41 @@ textarea {
   color: var(--red) !important;
 }
 
+.admin-error-hint {
+  color: #9d5664 !important;
+  font-weight: 700;
+}
+
+.admin-debug-details {
+  margin-top: 6px;
+  max-width: 620px;
+}
+
+.admin-debug-details summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.admin-debug-details pre {
+  overflow: auto;
+  max-height: 220px;
+  margin: 6px 0 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbfa;
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.admin-debug-details.compact pre {
+  max-width: 420px;
+}
+
 .empty-state {
   display: grid;
   justify-items: center;
