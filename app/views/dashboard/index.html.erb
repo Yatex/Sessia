@@ -165,3 +165,40 @@
   <span><i class="slot-cancelled"></i> <%= t("statuses.cancelled") %></span>
   <span><i class="slot-paid">$</i> <%= t("statuses.paid") %></span>
 </section>
+
+<section class="table-panel">
+  <div class="section-heading">
+    <h2>Payments</h2>
+    <%= link_to t("navigation.payments"), payments_path, class: "text-link" %>
+  </div>
+  <div class="integration-status">
+    <div>
+      <span>Unpaid sessions</span>
+      <strong><%= @payment_dashboard[:unpaid_sessions] %></strong>
+    </div>
+    <div>
+      <span>Paid this month</span>
+      <strong><%= @payment_dashboard[:paid_this_month] %></strong>
+    </div>
+    <div>
+      <span>Overdue charges</span>
+      <strong><%= @payment_dashboard[:overdue_charges] %></strong>
+    </div>
+  </div>
+  <% if @payment_dashboard[:recent_payments].any? || @payment_dashboard[:clients_with_pending_balance].any? %>
+    <div class="two-column-list">
+      <div>
+        <strong>Recent payments</strong>
+        <% @payment_dashboard[:recent_payments].each do |payment| %>
+          <p><%= payment.client.name %> · <%= money_from_cents(payment.amount_cents, payment.currency) %></p>
+        <% end %>
+      </div>
+      <div>
+        <strong>Clients with pending balance</strong>
+        <% @payment_dashboard[:clients_with_pending_balance].each do |client| %>
+          <p><%= link_to client.name, client_path(client), class: "text-link" %></p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</section>

@@ -27,6 +27,24 @@
       <%= form.label :currency %>
       <%= form.select :currency, Session::CURRENCIES.map { |currency| [currency, currency] } %>
     </div>
+    <div class="field full-span">
+      <label class="toggle-row compact">
+        <%= form.check_box :payment_required_before_session %>
+        <span>
+          <strong>Payment required before session</strong>
+          <small>Use this when the client should pay before the appointment date.</small>
+        </span>
+      </label>
+    </div>
+    <div class="field full-span">
+      <label class="toggle-row compact">
+        <%= check_box_tag "session[generate_payment_link]", "1", false %>
+        <span>
+          <strong>Generate Mercado Pago payment link</strong>
+          <small>Create a session charge and Checkout Pro link after saving.</small>
+        </span>
+      </label>
+    </div>
     <% if google_calendar_feature_enabled? %>
       <div class="field full-span">
         <% if @calendar_connection&.connected? %>

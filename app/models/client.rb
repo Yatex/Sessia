@@ -7,9 +7,13 @@ class Client < ApplicationRecord
   belongs_to :user
   has_many :sessions, dependent: :restrict_with_error
   has_many :payment_records, dependent: :nullify
+  has_many :charges, dependent: :restrict_with_error
+  has_many :payments, dependent: :restrict_with_error
+  has_many :credit_ledger_entries, dependent: :restrict_with_error
   has_many :messages, dependent: :nullify
   has_many :ai_tasks, dependent: :nullify
   has_many :ai_alerts, dependent: :nullify
+  has_one :billing_profile, class_name: "ClientBillingProfile", dependent: :destroy
 
   enum status: {
     active: 0,
@@ -38,6 +42,10 @@ class Client < ApplicationRecord
 
   def mark_linked!
     update_column(:linked_at, Time.current) unless linked?
+  end
+
+  def credit_balance_cents
+    credit_ledger_entries.sum(:amount_cents)
   end
 
   private

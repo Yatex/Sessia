@@ -38,6 +38,8 @@ const sessionSchema = z.object({
   status: nonEmptyStringSchema.nullable().optional(),
   confirmation_status: nonEmptyStringSchema.nullable().optional(),
   payment_status: nonEmptyStringSchema.nullable().optional(),
+  payment_link: nonEmptyStringSchema.nullable().optional(),
+  due_date: z.string().date().nullable().optional(),
   price_cents: z.number().int().nonnegative().optional(),
   currency: nonEmptyStringSchema.nullable().optional(),
   notes: nonEmptyStringSchema.nullable().optional()
@@ -50,6 +52,16 @@ const paymentRecordSchema = z.object({
   currency: nonEmptyStringSchema.nullable().optional(),
   due_on: z.string().date().nullable().optional(),
   paid_at: isoDatetimeSchema.nullable().optional()
+}).passthrough();
+
+const billingContextSchema = z.object({
+  current_balance_cents: z.number().int().optional(),
+  credit_balance_cents: z.number().int().optional(),
+  unpaid_sessions: z.array(z.record(z.unknown())).optional(),
+  overdue_charges: z.array(z.record(z.unknown())).optional(),
+  next_session_payment_status: nonEmptyStringSchema.nullable().optional(),
+  payment_link_for_next_unpaid_session: nonEmptyStringSchema.nullable().optional(),
+  last_payment_status: nonEmptyStringSchema.nullable().optional()
 }).passthrough();
 
 const availabilityOptionSchema = z.object({
@@ -76,6 +88,7 @@ export const decideRequestSchema = z.object({
   client: clientSchema.nullable().optional(),
   session: sessionSchema.nullable().optional(),
   payment_record: paymentRecordSchema.nullable().optional(),
+  billing_context: billingContextSchema.nullable().optional(),
   recent_messages: z.array(recentMessageSchema).max(80).default([]),
   availability_options: z.array(availabilityOptionSchema).max(20).default([]),
   task_context: z.record(z.unknown()).default({}),

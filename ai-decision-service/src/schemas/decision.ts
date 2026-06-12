@@ -5,7 +5,6 @@ export const decisionActionValues = [
   "mark_session_confirmed",
   "mark_session_maybe",
   "mark_session_declined",
-  "mark_payment_reported",
   "reschedule_session",
   "create_client_note",
   "alert_professional",

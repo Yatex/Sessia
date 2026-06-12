@@ -2,14 +2,16 @@ class Session < ApplicationRecord
   belongs_to :user
   belongs_to :client
   belongs_to :parent_session, class_name: "Session", optional: true
+  belongs_to :charge, optional: true
   has_many :generated_sessions, class_name: "Session", foreign_key: :parent_session_id, dependent: :destroy, inverse_of: :parent_session
   has_many :payment_records, dependent: :nullify
+  has_one :session_charge, class_name: "Charge", dependent: :nullify, inverse_of: :session
   has_many :messages, dependent: :nullify
   has_many :ai_tasks, dependent: :nullify
   has_many :ai_alerts, dependent: :nullify
 
   RECURRENCE_FREQUENCIES = %w[none weekly monthly].freeze
-  CURRENCIES = %w[USD EUR UYU GBP BRL ARS CLP].freeze
+  CURRENCIES = %w[ARS UYU USD EUR GBP BRL CLP].freeze
   RECURRENCE_WEEKDAYS = [
     ["Sunday", 0],
     ["Monday", 1],
@@ -40,7 +42,10 @@ class Session < ApplicationRecord
     pending: 1,
     paid: 2,
     overdue: 3,
-    cancelled: 4
+    cancelled: 4,
+    partially_paid: 5,
+    waived: 6,
+    refunded: 7
   }, _prefix: :payment
 
   before_validation :normalize_currency
@@ -92,7 +97,7 @@ class Session < ApplicationRecord
   end
 
   def payment_attention?
-    payment_pending? || payment_overdue?
+    payment_pending? || payment_overdue? || payment_partially_paid?
   end
 
   def needs_follow_up?
@@ -107,31 +112,29 @@ class Session < ApplicationRecord
     parent_session_id.present?
   end
 
+  def main_charge
+    charge || session_charge
+  end
+
   def mark_paid!(paid_at: Time.current)
-    transaction do
-      update!(payment_status: :paid)
-
-      payment_record = payment_records.order(created_at: :desc).first ||
-        payment_records.build(user: user, client: client)
-
-      payment_record.assign_attributes(
-        user: user,
-        client: client,
-        amount_cents: price_cents.to_i,
-        currency: currency,
-        status: :paid,
-        due_on: start_time&.to_date,
-        paid_at: paid_at
-      )
-      payment_record.save!
-      payment_record
+    target_charge = main_charge || Billing::CreateSessionChargeService.new(self).call
+    if target_charge.blank?
+      return update!(payment_status: :paid)
     end
+
+    Billing::RecordManualPaymentService.new(
+      charge: target_charge,
+      amount_cents: target_charge.amount_cents,
+      paid_at: paid_at,
+      method: "manual",
+      note: "Marked paid by professional."
+    ).call
   end
 
   private
 
   def normalize_currency
-    self.currency = currency.to_s.strip.upcase.presence || "USD"
+    self.currency = currency.to_s.strip.upcase.presence || "ARS"
   end
 
   def normalize_recurrence

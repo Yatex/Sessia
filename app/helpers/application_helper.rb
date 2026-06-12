@@ -99,8 +99,9 @@ module ApplicationHelper
   end
 
   def payment_signal_tone(session_record)
-    return "neutral" if session_record.payment_cancelled? || session_record.payment_not_tracked?
+    return "neutral" if session_record.payment_cancelled? || session_record.payment_not_tracked? || session_record.payment_waived? || session_record.payment_refunded?
     return "good" if session_record.payment_paid?
+    return "warning" if session_record.payment_partially_paid?
     return "danger" if session_record.payment_pending? || session_record.payment_overdue?
 
     "neutral"

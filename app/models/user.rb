@@ -16,6 +16,12 @@ class User < ApplicationRecord
   has_many :clients, dependent: :destroy
   has_many :sessions, dependent: :destroy
   has_many :payment_records, dependent: :destroy
+  has_many :payment_accounts, dependent: :destroy
+  has_many :charges, dependent: :destroy
+  has_many :payments, dependent: :destroy
+  has_many :client_billing_profiles, dependent: :destroy
+  has_many :credit_ledger_entries, dependent: :destroy
+  has_many :audit_logs, dependent: :destroy
   has_many :subscriptions, dependent: :destroy
   has_many :messages, dependent: :destroy
   has_many :ai_tasks, dependent: :destroy
@@ -24,6 +30,10 @@ class User < ApplicationRecord
   has_many :schedule_blocks, dependent: :destroy
   has_one :ai_setting, dependent: :destroy
   has_one :calendar_connection, dependent: :destroy
+
+  def mercado_pago_account
+    payment_accounts.find_by(provider: PaymentAccount::PROVIDER_MERCADO_PAGO)
+  end
 
   before_validation :normalize_email
   before_validation :normalize_time_zone

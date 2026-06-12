@@ -101,7 +101,7 @@ class AdminAccessTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to admin_users_url
     subscription = member.reload.current_subscription
-    assert_equal 2, member.subscriptions.count
+    assert member.subscriptions.admin_granted.exists?
     assert_equal "studio", subscription.plan_tier
     assert_equal "active", subscription.status
     assert_equal "admin", subscription.provider

@@ -103,7 +103,7 @@ module Ai
 
     def payment_tasks(user)
       user.sessions.includes(:client)
-        .where(payment_status: %i[pending overdue])
+        .where(payment_status: %i[pending overdue partially_paid])
         .where("price_cents > 0")
         .where(start_time: 7.days.ago(now)..14.days.from_now(now))
         .filter_map do |session_record|

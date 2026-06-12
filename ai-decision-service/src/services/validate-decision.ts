@@ -6,8 +6,7 @@ import type { DecideRequest } from "../schemas/request.js";
 const STATE_UPDATE_ACTIONS = [
   "mark_session_confirmed",
   "mark_session_maybe",
-  "mark_session_declined",
-  "mark_payment_reported"
+  "mark_session_declined"
 ];
 
 export function validateDecision(decision: unknown, request: DecideRequest): Decision {

@@ -34,7 +34,7 @@ test("does not treat bare acknowledgements as confirmations without confirmation
   assert.equal(decision.action, "send_message");
 });
 
-test("marks a clear payment reply", async () => {
+test("answers a clear payment reply without mutating payment state", async () => {
   const decision = await new DecisionService(new MockDecisionProvider()).decide(buildRequest({
     recent_messages: [
       {
@@ -47,7 +47,8 @@ test("marks a clear payment reply", async () => {
     ]
   }));
 
-  assert.equal(decision.action, "mark_payment_reported");
+  assert.equal(decision.action, "send_message");
+  assert.match(decision.message_body ?? "", /no veo|do not see/i);
 });
 
 test("answers how to pay from professional payment instructions", async () => {
@@ -64,7 +65,7 @@ test("answers how to pay from professional payment instructions", async () => {
   }));
 
   assert.equal(decision.action, "send_message");
-  assert.match(decision.message_body ?? "", /sessia\.demo/i);
+  assert.match(decision.message_body ?? "", /mercadopago|link de pago|payment link/i);
 });
 
 test("escalates how to pay when payment instructions are missing", async () => {

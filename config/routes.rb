@@ -22,9 +22,16 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#index", as: :dashboard
   post "dashboard/schedule-block", to: "dashboard#schedule_block", as: :dashboard_schedule_block
   delete "dashboard/schedule-blocks/:block_id", to: "dashboard#destroy_schedule_block", as: :destroy_dashboard_schedule_block
-  resources :clients
+  resources :clients do
+    resource :billing_profile, only: :update, controller: :client_billing_profiles
+  end
   resources :sessions do
     patch :mark_paid, on: :member
+    post :generate_payment_link, on: :member
+    post :regenerate_payment_link, on: :member
+    post :record_manual_payment, on: :member
+    patch :waive_payment, on: :member
+    patch :cancel_charge, on: :member
     post :sync_google_calendar, on: :member
   end
   resource :ai_assistant, controller: :ai_settings, only: %i[show update], path: "ai-assistant" do
@@ -57,6 +64,13 @@ Rails.application.routes.draw do
     patch :professional_whatsapp
     post :password_reset
   end
+  namespace :payment_accounts do
+    resource :mercado_pago, only: [], path: "mercado-pago", controller: "mercado_pago" do
+      get :connect
+      get :callback
+      delete :disconnect
+    end
+  end
   resource :google_calendar,
            controller: :google_calendar_connections,
            only: [],
@@ -72,5 +86,6 @@ Rails.application.routes.draw do
   post "client-link/:token/messages", to: "client_portal_messages#create", as: :client_portal_messages
 
   post "stripe/webhook", to: "stripe_webhooks#create", as: :stripe_webhook
+  post "webhooks/mercado_pago", to: "webhooks/mercado_pago#create", as: :mercado_pago_webhook
   post "webhooks/twilio/whatsapp", to: "twilio_whatsapp_webhooks#create", as: :twilio_whatsapp_webhook
 end

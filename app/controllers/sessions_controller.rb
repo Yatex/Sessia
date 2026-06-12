@@ -1,6 +1,9 @@
 class SessionsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_session, only: %i[show edit update destroy mark_paid sync_google_calendar]
+  before_action :set_session, only: %i[
+    show edit update destroy mark_paid generate_payment_link regenerate_payment_link
+    record_manual_payment waive_payment cancel_charge sync_google_calendar
+  ]
   before_action :load_clients, only: %i[new create edit update]
   before_action :load_calendar_connection, only: %i[show new create edit update]
 
@@ -25,13 +28,16 @@ class SessionsController < ApplicationController
   def new
     start_time = parsed_start_time || default_available_start_time || Time.current.beginning_of_hour + 1.hour
     client_id = current_user.clients.where(id: params[:client_id]).pick(:id) if params[:client_id].present?
+    billing_profile = current_user.client_billing_profiles.find_by(client_id: client_id) if client_id.present?
     @session = current_user.sessions.new(
       client_id: client_id,
       start_time: start_time,
       end_time: start_time + 60.minutes,
       title: "Session",
       payment_status: "pending",
-      currency: "USD",
+      price_cents: billing_profile&.default_session_price_cents.to_i,
+      currency: billing_profile&.currency.presence || "ARS",
+      payment_required_before_session: billing_profile&.payment_required_before_session || false,
       sync_to_google_calendar: google_calendar_feature_enabled? && (@calendar_connection&.sync_sessions? || false)
     )
     load_available_start_options
@@ -71,6 +77,70 @@ class SessionsController < ApplicationController
   def mark_paid
     @session.mark_paid!
     redirect_back fallback_location: payments_path, notice: t("payments.mark_paid_notice")
+  end
+
+  def generate_payment_link
+    charge = Billing::CreateSessionChargeService.new(@session).call
+    if charge.blank?
+      redirect_to @session, alert: "Add a session price before generating a payment link."
+      return
+    end
+
+    result = create_payment_preference(charge)
+    redirect_to @session, result.success? ? { notice: "Mercado Pago payment link is ready." } : { alert: result.error_message }
+  end
+
+  def regenerate_payment_link
+    charge = @session.main_charge || Billing::CreateSessionChargeService.new(@session).call
+    if charge.blank?
+      redirect_to @session, alert: "Add a session price before generating a payment link."
+      return
+    end
+
+    result = create_payment_preference(charge, regenerate: true)
+    redirect_to @session, result.success? ? { notice: "Mercado Pago payment link regenerated." } : { alert: result.error_message }
+  end
+
+  def record_manual_payment
+    charge = @session.main_charge || Billing::CreateSessionChargeService.new(@session).call
+    if charge.blank?
+      redirect_to @session, alert: "Add a session price before recording a payment."
+      return
+    end
+
+    Billing::RecordManualPaymentService.new(
+      charge: charge,
+      amount_cents: price_to_cents(params[:amount]),
+      paid_at: parse_payment_date(params[:paid_on]),
+      method: params[:method],
+      note: params[:note],
+      actor: current_user
+    ).call
+    redirect_to @session, notice: "Manual payment recorded."
+  rescue ArgumentError, ActiveRecord::RecordInvalid => error
+    redirect_to @session, alert: error.message
+  end
+
+  def waive_payment
+    charge = @session.main_charge
+    if charge.present?
+      charge.update!(status: "forgiven", cancelled_at: Time.current)
+      charge.sync_session_payment_status!
+      AuditLog.record!(user: current_user, actor: current_user, event: "charge_forgiven", auditable: charge)
+    else
+      @session.update!(payment_status: "waived")
+    end
+    redirect_to @session, notice: "Session payment waived."
+  end
+
+  def cancel_charge
+    charge = @session.main_charge
+    if charge.present?
+      charge.update!(status: "cancelled", cancelled_at: Time.current)
+      charge.sync_session_payment_status!
+      AuditLog.record!(user: current_user, actor: current_user, event: "charge_cancelled", auditable: charge)
+    end
+    redirect_to @session, notice: "Charge cancelled."
   end
 
   def sync_google_calendar
@@ -143,6 +213,7 @@ class SessionsController < ApplicationController
       :end_time,
       :price,
       :currency,
+      :payment_required_before_session,
       :status,
       :confirmation_status,
       :payment_status,
@@ -161,8 +232,48 @@ class SessionsController < ApplicationController
   end
 
   def after_session_saved(session_record)
+    apply_client_billing_defaults(session_record)
+    charge = Billing::CreateSessionChargeService.new(session_record).call
+    create_payment_preference(charge) if charge.present? && generate_payment_link_requested?
     RecurringSessionGenerator.new(session_record).generate!
     sync_sessions_to_google_calendar(session_record) if google_calendar_feature_enabled? && session_record.sync_to_google_calendar?
+  end
+
+  def apply_client_billing_defaults(session_record)
+    profile = session_record.client&.billing_profile
+    return if profile.blank?
+
+    attributes = {}
+    attributes[:price_cents] = profile.default_session_price_cents if session_record.price_cents.to_i.zero? && profile.default_session_price_cents.to_i.positive?
+    attributes[:currency] = profile.currency if session_record.currency.blank?
+    attributes[:payment_required_before_session] = profile.payment_required_before_session if session_record.payment_required_before_session.nil?
+    session_record.update!(attributes) if attributes.present?
+  end
+
+  def generate_payment_link_requested?
+    ActiveModel::Type::Boolean.new.cast(params.dig(:session, :generate_payment_link))
+  end
+
+  def create_payment_preference(charge, regenerate: false)
+    MercadoPago::CreatePreferenceService.new(
+      charge: charge,
+      success_url: session_url(@session, mp_result: "success"),
+      failure_url: session_url(@session, mp_result: "failure"),
+      pending_url: session_url(@session, mp_result: "pending"),
+      regenerate: regenerate
+    ).call
+  end
+
+  def price_to_cents(value)
+    (BigDecimal(value.to_s.tr(",", ".")) * 100).round
+  rescue ArgumentError
+    0
+  end
+
+  def parse_payment_date(value)
+    Date.iso8601(value.to_s).in_time_zone
+  rescue ArgumentError
+    Time.current
   end
 
   def sync_sessions_to_google_calendar(session_record)

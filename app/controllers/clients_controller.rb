@@ -20,6 +20,7 @@ class ClientsController < ApplicationController
 
   def show
     @sessions = @client.sessions.chronological.limit(12)
+    @billing_profile = @client.billing_profile || @client.build_billing_profile(user: current_user)
   end
 
   def new

@@ -49,7 +49,7 @@ module Ai
         key: "payment_reminder",
         name: "Send payment reminder",
         trigger_event: "payment_due",
-        description: "Remind the client about a pending session payment. If professional.payment_instructions is present, use it to explain how to pay. Do not invent payment methods or links.",
+        description: "Remind the client about a pending session payment. Use read-only billing context or professional.payment_instructions. Do not mark payments paid or invent payment methods.",
         allowed_actions: %w[send_message schedule_follow_up do_nothing]
       ),
       "blocked_time_rebooking" => Instruction.new(
@@ -89,7 +89,6 @@ module Ai
       allowed_actions << "send_message" if ai_setting.answer_basic_questions?
       allowed_actions << "alert_professional" if ai_setting.escalate_important_conversations?
       allowed_actions.concat(%w[mark_session_confirmed mark_session_maybe mark_session_declined]) if ai_setting.confirm_sessions?
-      allowed_actions << "mark_payment_reported" if ai_setting.payment_reminders?
       allowed_actions << "reschedule_session" if ai_setting.answer_basic_questions?
       allowed_actions << "schedule_follow_up" if ai_setting.follow_up_no_response?
       allowed_actions.uniq!
@@ -100,7 +99,7 @@ module Ai
         key: "answer_client_reply",
         name: "Answer client reply",
         trigger_event: "client_replied",
-        description: "Classify and answer the latest client WhatsApp-style reply using only Sessia context. Offer available schedule options when the client asks to move a session, reschedule when they choose one, answer payment questions from professional.payment_instructions when present, and escalate sensitive topics or uncertainty.",
+        description: "Classify and answer the latest client WhatsApp-style reply using only Sessia context. Offer available schedule options when the client asks to move a session, reschedule when they choose one, answer payment questions from read-only billing context or professional.payment_instructions, and escalate sensitive topics or uncertainty. Never update payment records.",
         allowed_actions: allowed_actions
       )
     end

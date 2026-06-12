@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_05_13_090000) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_06_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -73,6 +73,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_13_090000) do
     t.index ["user_id"], name: "index_ai_tasks_on_user_id"
   end
 
+  create_table "audit_logs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "actor_id"
+    t.string "event", null: false
+    t.string "auditable_type"
+    t.bigint "auditable_id"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_audit_logs_on_actor_id"
+    t.index ["auditable_type", "auditable_id"], name: "index_audit_logs_on_auditable_type_and_auditable_id"
+    t.index ["user_id", "event", "created_at"], name: "index_audit_logs_on_user_id_and_event_and_created_at"
+    t.index ["user_id"], name: "index_audit_logs_on_user_id"
+  end
+
   create_table "availability_rules", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.integer "weekday", null: false
@@ -105,6 +120,52 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_13_090000) do
     t.index ["user_id"], name: "index_calendar_connections_on_user_id"
   end
 
+  create_table "charges", force: :cascade do |t|
+    t.bigint "client_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "session_id"
+    t.integer "amount_cents", null: false
+    t.string "currency", default: "ARS", null: false
+    t.string "concept", null: false
+    t.text "description"
+    t.date "due_date"
+    t.integer "status", default: 0, null: false
+    t.integer "generated_by", default: 0, null: false
+    t.string "external_reference", null: false
+    t.string "mercado_pago_preference_id"
+    t.text "mercado_pago_init_point"
+    t.text "mercado_pago_sandbox_init_point"
+    t.text "payment_url"
+    t.datetime "paid_at"
+    t.datetime "cancelled_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["client_id"], name: "index_charges_on_client_id"
+    t.index ["external_reference"], name: "index_charges_on_external_reference", unique: true
+    t.index ["mercado_pago_preference_id"], name: "index_charges_on_mercado_pago_preference_id"
+    t.index ["session_id"], name: "index_charges_on_session_id", unique: true, where: "(session_id IS NOT NULL)"
+    t.index ["user_id", "due_date"], name: "index_charges_on_user_id_and_due_date"
+    t.index ["user_id", "status"], name: "index_charges_on_user_id_and_status"
+    t.index ["user_id"], name: "index_charges_on_user_id"
+  end
+
+  create_table "client_billing_profiles", force: :cascade do |t|
+    t.bigint "client_id", null: false
+    t.bigint "user_id", null: false
+    t.integer "default_session_price_cents", default: 0, null: false
+    t.string "currency", default: "ARS", null: false
+    t.boolean "payment_required_before_session", default: false, null: false
+    t.integer "default_due_timing", default: 0, null: false
+    t.integer "custom_due_days_before"
+    t.boolean "active", default: true, null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["client_id"], name: "index_client_billing_profiles_on_client_id", unique: true
+    t.index ["user_id", "active"], name: "index_client_billing_profiles_on_user_id_and_active"
+    t.index ["user_id"], name: "index_client_billing_profiles_on_user_id"
+  end
+
   create_table "clients", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "name", null: false
@@ -124,6 +185,29 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_13_090000) do
     t.index ["user_id", "email"], name: "index_clients_on_user_id_and_email"
     t.index ["user_id", "status"], name: "index_clients_on_user_id_and_status"
     t.index ["user_id"], name: "index_clients_on_user_id"
+  end
+
+  create_table "credit_ledger_entries", force: :cascade do |t|
+    t.bigint "client_id", null: false
+    t.bigint "user_id", null: false
+    t.integer "amount_cents", null: false
+    t.string "currency", default: "ARS", null: false
+    t.integer "entry_type", null: false
+    t.string "reason"
+    t.bigint "related_payment_id"
+    t.bigint "related_charge_id"
+    t.bigint "related_session_id"
+    t.bigint "created_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["client_id", "created_at"], name: "index_credit_ledger_entries_on_client_id_and_created_at"
+    t.index ["client_id"], name: "index_credit_ledger_entries_on_client_id"
+    t.index ["created_by_id"], name: "index_credit_ledger_entries_on_created_by_id"
+    t.index ["related_charge_id"], name: "index_credit_ledger_entries_on_related_charge_id"
+    t.index ["related_payment_id"], name: "index_credit_ledger_entries_on_related_payment_id"
+    t.index ["related_session_id"], name: "index_credit_ledger_entries_on_related_session_id"
+    t.index ["user_id", "created_at"], name: "index_credit_ledger_entries_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_credit_ledger_entries_on_user_id"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -153,6 +237,24 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_13_090000) do
     t.index ["user_id"], name: "index_messages_on_user_id"
   end
 
+  create_table "payment_accounts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "provider", default: "mercado_pago", null: false
+    t.string "provider_user_id"
+    t.text "access_token_ciphertext"
+    t.text "refresh_token_ciphertext"
+    t.datetime "token_expires_at"
+    t.integer "status", default: 0, null: false
+    t.datetime "connected_at"
+    t.text "last_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["provider", "provider_user_id"], name: "index_payment_accounts_on_provider_and_provider_user_id"
+    t.index ["status"], name: "index_payment_accounts_on_status"
+    t.index ["user_id", "provider"], name: "index_payment_accounts_on_user_id_and_provider", unique: true
+    t.index ["user_id"], name: "index_payment_accounts_on_user_id"
+  end
+
   create_table "payment_records", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "client_id"
@@ -170,6 +272,28 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_13_090000) do
     t.index ["user_id", "due_on"], name: "index_payment_records_on_user_id_and_due_on"
     t.index ["user_id", "status"], name: "index_payment_records_on_user_id_and_status"
     t.index ["user_id"], name: "index_payment_records_on_user_id"
+  end
+
+  create_table "payments", force: :cascade do |t|
+    t.bigint "charge_id", null: false
+    t.bigint "client_id", null: false
+    t.bigint "user_id", null: false
+    t.string "provider", default: "mercado_pago", null: false
+    t.string "provider_payment_id"
+    t.integer "amount_cents", default: 0, null: false
+    t.string "currency", default: "ARS", null: false
+    t.integer "status", default: 0, null: false
+    t.string "status_detail"
+    t.datetime "paid_at"
+    t.jsonb "raw_payload", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["charge_id", "status"], name: "index_payments_on_charge_id_and_status"
+    t.index ["charge_id"], name: "index_payments_on_charge_id"
+    t.index ["client_id"], name: "index_payments_on_client_id"
+    t.index ["provider", "provider_payment_id"], name: "index_payments_on_provider_and_provider_payment_id", unique: true, where: "(provider_payment_id IS NOT NULL)"
+    t.index ["user_id", "status"], name: "index_payments_on_user_id_and_status"
+    t.index ["user_id"], name: "index_payments_on_user_id"
   end
 
   create_table "schedule_blocks", force: :cascade do |t|
@@ -201,7 +325,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_13_090000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "price_cents", default: 0, null: false
-    t.string "currency", default: "USD", null: false
+    t.string "currency", default: "ARS", null: false
     t.bigint "parent_session_id"
     t.string "recurrence_frequency", default: "none", null: false
     t.integer "recurrence_days", default: [], null: false, array: true
@@ -211,6 +335,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_13_090000) do
     t.string "google_calendar_event_id"
     t.datetime "google_calendar_synced_at"
     t.text "google_calendar_sync_error"
+    t.bigint "charge_id"
+    t.boolean "payment_required_before_session", default: false, null: false
+    t.index ["charge_id"], name: "index_sessions_on_charge_id"
     t.index ["client_id", "start_time"], name: "index_sessions_on_client_id_and_start_time"
     t.index ["client_id"], name: "index_sessions_on_client_id"
     t.index ["parent_session_id"], name: "index_sessions_on_parent_session_id"
@@ -275,17 +402,35 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_13_090000) do
   add_foreign_key "ai_tasks", "clients"
   add_foreign_key "ai_tasks", "sessions"
   add_foreign_key "ai_tasks", "users"
+  add_foreign_key "audit_logs", "users"
+  add_foreign_key "audit_logs", "users", column: "actor_id"
   add_foreign_key "availability_rules", "users"
   add_foreign_key "calendar_connections", "users"
+  add_foreign_key "charges", "clients"
+  add_foreign_key "charges", "sessions"
+  add_foreign_key "charges", "users"
+  add_foreign_key "client_billing_profiles", "clients"
+  add_foreign_key "client_billing_profiles", "users"
   add_foreign_key "clients", "users"
+  add_foreign_key "credit_ledger_entries", "charges", column: "related_charge_id"
+  add_foreign_key "credit_ledger_entries", "clients"
+  add_foreign_key "credit_ledger_entries", "payments", column: "related_payment_id"
+  add_foreign_key "credit_ledger_entries", "sessions", column: "related_session_id"
+  add_foreign_key "credit_ledger_entries", "users"
+  add_foreign_key "credit_ledger_entries", "users", column: "created_by_id"
   add_foreign_key "messages", "ai_tasks"
   add_foreign_key "messages", "clients"
   add_foreign_key "messages", "sessions"
   add_foreign_key "messages", "users"
+  add_foreign_key "payment_accounts", "users"
   add_foreign_key "payment_records", "clients"
   add_foreign_key "payment_records", "sessions"
   add_foreign_key "payment_records", "users"
+  add_foreign_key "payments", "charges"
+  add_foreign_key "payments", "clients"
+  add_foreign_key "payments", "users"
   add_foreign_key "schedule_blocks", "users"
+  add_foreign_key "sessions", "charges"
   add_foreign_key "sessions", "clients"
   add_foreign_key "sessions", "sessions", column: "parent_session_id"
   add_foreign_key "sessions", "users"

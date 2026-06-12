@@ -21,7 +21,6 @@ export function buildRequest(overrides: Partial<DecideRequest> = {}): DecideRequ
         "mark_session_confirmed",
         "mark_session_maybe",
         "mark_session_declined",
-        "mark_payment_reported",
         "reschedule_session",
         "create_client_note",
         "alert_professional",
@@ -41,10 +40,20 @@ export function buildRequest(overrides: Partial<DecideRequest> = {}): DecideRequ
       status: "scheduled",
       confirmation_status: "pending",
       payment_status: "pending",
+      payment_link: "https://www.mercadopago.com/test-session",
       price_cents: 8500,
       currency: "USD"
     },
     payment_record: null,
+    billing_context: {
+      current_balance_cents: 8500,
+      credit_balance_cents: 0,
+      unpaid_sessions: [],
+      overdue_charges: [],
+      next_session_payment_status: "pending",
+      payment_link_for_next_unpaid_session: "https://www.mercadopago.com/test-session",
+      last_payment_status: null
+    },
     availability_options: [
       {
         id: "1",

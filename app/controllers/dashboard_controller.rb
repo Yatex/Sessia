@@ -24,10 +24,17 @@ class DashboardController < ApplicationController
       total: summary_sessions.size,
       confirmed: summary_sessions.count(&:confirmation_confirmed?),
       pending_confirmations: summary_sessions.count(&:confirmation_pending?),
-      pending_payments: summary_sessions.count { |session_record| session_record.payment_pending? || session_record.payment_overdue? },
+      pending_payments: summary_sessions.count { |session_record| session_record.payment_pending? || session_record.payment_overdue? || session_record.payment_partially_paid? },
       needs_follow_up: summary_sessions.count(&:needs_follow_up?)
     }
     @schedule_blocks = current_user.schedule_blocks.active.upcoming.chronological.limit(12)
+    @payment_dashboard = {
+      unpaid_sessions: current_user.sessions.where(payment_status: %i[pending overdue partially_paid]).count,
+      paid_this_month: current_user.sessions.where(payment_status: :paid, start_time: Time.current.beginning_of_month..Time.current.end_of_month).count,
+      overdue_charges: current_user.charges.overdue.count,
+      recent_payments: current_user.payments.approved.includes(:client).recent.limit(4),
+      clients_with_pending_balance: current_user.charges.unpaid.includes(:client).map(&:client).uniq.first(5)
+    }
   end
 
   def schedule_block

@@ -51,9 +51,10 @@ class RecurringSessionGenerator
       end_time: starts_at + session.duration_minutes.minutes,
       status: "scheduled",
       confirmation_status: session.confirmation_status,
-      payment_status: session.payment_status,
+      payment_status: session.price_cents.to_i.positive? ? "pending" : session.payment_status,
       price_cents: session.price_cents,
       currency: session.currency,
+      payment_required_before_session: session.payment_required_before_session,
       sync_to_google_calendar: session.sync_to_google_calendar,
       recurring: false,
       recurrence_frequency: "none",
@@ -62,6 +63,7 @@ class RecurringSessionGenerator
       notes: session.notes
     )
     occurrence.save!
+    Billing::CreateSessionChargeService.new(occurrence).call if occurrence.price_cents.to_i.positive?
   end
 
   def occurrence_time(date, source_time)

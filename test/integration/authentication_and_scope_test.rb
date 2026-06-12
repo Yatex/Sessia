@@ -68,4 +68,37 @@ class AuthenticationAndScopeTest < ActionDispatch::IntegrationTest
     assert_match "Visible Client", response.body
     assert_no_match "Hidden Client", response.body
   end
+
+  test "payments page is scoped to current professional charges" do
+    user = User.create!(name: "Payments Scope", email: "payments-scope@example.com", password: "password123")
+    client = user.clients.create!(name: "Visible Payer", phone: "+598 99 111 600")
+    session_record = user.sessions.create!(
+      client: client,
+      title: "Visible Paid Session",
+      start_time: 1.day.from_now,
+      end_time: 1.day.from_now + 1.hour,
+      price_cents: 12_000,
+      currency: "ARS"
+    )
+    Billing::CreateSessionChargeService.new(session_record).call
+
+    other_user = User.create!(name: "Other Payments", email: "other-payments@example.com", password: "password123")
+    other_client = other_user.clients.create!(name: "Hidden Payer", phone: "+598 99 111 601")
+    other_session = other_user.sessions.create!(
+      client: other_client,
+      title: "Hidden Paid Session",
+      start_time: 1.day.from_now,
+      end_time: 1.day.from_now + 1.hour,
+      price_cents: 30_000,
+      currency: "ARS"
+    )
+    Billing::CreateSessionChargeService.new(other_session).call
+
+    post sign_in_url, params: { email: user.email, password: "password123" }
+    get payments_url
+
+    assert_response :success
+    assert_match "Visible Payer", response.body
+    assert_no_match "Hidden Payer", response.body
+  end
 end

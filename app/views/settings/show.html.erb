@@ -134,6 +134,59 @@
   <% end %>
 </section>
 
+<section class="form-panel settings-integration-panel">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow"><%= t("settings.integrations") %></p>
+      <h2>Mercado Pago</h2>
+    </div>
+    <% if @mercado_pago_account&.connected? %>
+      <%= status_badge("connected") %>
+    <% elsif @mercado_pago_account&.expired? %>
+      <%= status_badge("expired") %>
+    <% elsif @mercado_pago_account&.error? %>
+      <%= status_badge("error") %>
+    <% else %>
+      <%= status_badge("not_connected") %>
+    <% end %>
+  </div>
+  <p class="panel-copy">
+    Mercado Pago lets your clients pay you directly. Sessia uses Stripe only for your platform subscription.
+  </p>
+
+  <% if @mercado_pago_account&.connected? %>
+    <div class="integration-status">
+      <div>
+        <span>Status</span>
+        <strong>Connected</strong>
+      </div>
+      <div>
+        <span>Provider account</span>
+        <strong><%= @mercado_pago_account.provider_user_id.presence || "Mercado Pago" %></strong>
+      </div>
+      <div>
+        <span>Connected</span>
+        <strong><%= @mercado_pago_account.connected_at ? l(@mercado_pago_account.connected_at, format: :short) : "Ready" %></strong>
+      </div>
+    </div>
+    <div class="integration-actions">
+      <%= link_to "Reconnect Mercado Pago", connect_payment_accounts_mercado_pago_path, class: "secondary-button" %>
+      <%= button_to "Disconnect Mercado Pago", disconnect_payment_accounts_mercado_pago_path, method: :delete, class: "ghost-button" %>
+    </div>
+  <% else %>
+    <% if @mercado_pago_account&.last_error.present? %>
+      <p class="field-hint calendar-error"><%= @mercado_pago_account.last_error %></p>
+    <% end %>
+    <% if @mercado_pago_configured %>
+      <%= link_to "Connect Mercado Pago", connect_payment_accounts_mercado_pago_path, class: "primary-button" %>
+    <% else %>
+      <p class="field-hint calendar-error">
+        Set MERCADO_PAGO_CLIENT_ID, MERCADO_PAGO_CLIENT_SECRET, and MERCADO_PAGO_REDIRECT_URI to enable Mercado Pago.
+      </p>
+    <% end %>
+  <% end %>
+</section>
+
 <% if google_calendar_feature_enabled? %>
   <section class="form-panel settings-integration-panel">
     <div class="section-heading">

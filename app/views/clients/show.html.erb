@@ -34,7 +34,63 @@
     </div>
   </aside>
 
-  <section class="table-panel">
+  <section>
+    <div class="table-panel">
+      <div class="section-heading">
+        <h2>Billing</h2>
+      </div>
+      <div class="integration-status">
+        <div>
+          <span>Pending charges</span>
+          <strong><%= @client.charges.unpaid.count %></strong>
+        </div>
+        <div>
+          <span>Paid sessions</span>
+          <strong><%= @client.sessions.where(payment_status: :paid).count %></strong>
+        </div>
+        <div>
+          <span>Credit balance</span>
+          <strong><%= money_from_cents(@client.credit_balance_cents, @billing_profile.currency.presence || "ARS") %></strong>
+        </div>
+      </div>
+
+      <%= form_with model: @billing_profile, url: client_billing_profile_path(@client), method: :patch, class: "form-grid" do |form| %>
+        <div class="field">
+          <%= form.label :default_session_price, "Default session price" %>
+          <%= form.number_field :default_session_price, min: 0, step: "0.01", inputmode: "decimal" %>
+        </div>
+        <div class="field">
+          <%= form.label :currency %>
+          <%= form.select :currency, Session::CURRENCIES.map { |currency| [currency, currency] } %>
+        </div>
+        <div class="field full-span">
+          <label class="toggle-row compact">
+            <%= form.check_box :payment_required_before_session %>
+            <span>
+              <strong>Payment required before session</strong>
+              <small>New sessions for this client will inherit this setting.</small>
+            </span>
+          </label>
+        </div>
+        <div class="field">
+          <%= form.label :default_due_timing, "Due timing" %>
+          <%= form.select :default_due_timing, ClientBillingProfile.default_due_timings.keys.map { |key| [key.humanize, key] } %>
+        </div>
+        <div class="field">
+          <%= form.label :custom_due_days_before, "Custom days before" %>
+          <%= form.number_field :custom_due_days_before, min: 0 %>
+        </div>
+        <div class="field full-span">
+          <%= form.label :notes %>
+          <%= form.text_area :notes, rows: 3 %>
+        </div>
+        <div class="form-actions full-span">
+          <%= form.submit "Save billing defaults", class: "secondary-button" %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="table-panel">
     <div class="section-heading">
       <h2><%= t("clients.show.recent_sessions") %></h2>
       <%= link_to t("clients.show.schedule"), new_session_path(client_id: @client.id), class: "text-link" %>
@@ -63,5 +119,6 @@
         <p><%= t("clients.show.no_sessions_body", name: @client.name) %></p>
       </div>
     <% end %>
+    </div>
   </section>
 </section>

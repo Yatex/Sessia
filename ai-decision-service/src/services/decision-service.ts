@@ -34,7 +34,7 @@ function maybeResolveDeterministicAutomation(input: DecideRequest): Decision | n
     case "ask_feedback_after_session":
       return sendIfAllowed(input, buildFeedbackMessage(input), "Deterministic feedback request after a session.");
     case "payment_reminder":
-      if (!["pending", "overdue"].includes(input.session?.payment_status ?? "")) return doNothing(input, "Payment is not pending or overdue.");
+      if (!["pending", "overdue", "partially_paid"].includes(input.session?.payment_status ?? "")) return doNothing(input, "Payment is not pending, partial, or overdue.");
       return sendIfAllowed(input, buildPaymentReminder(input), "Deterministic payment reminder for an unpaid session.");
     case "blocked_time_rebooking":
       return sendIfAllowed(input, buildBlockedTimeRebooking(input), "Deterministic rebooking options for a blocked session.");
@@ -70,7 +70,7 @@ function maybeResolveDeterministicReply(input: DecideRequest): Decision | null {
     case "declined":
       return stateUpdate(input, "mark_session_declined", "Client clearly declined the session.");
     case "payment_reported":
-      return stateUpdate(input, "mark_payment_reported", "Client clearly reported payment.");
+      return sendIfAllowed(input, buildPaymentReportedReply(input), "Answered reported payment without changing payment records.");
     default:
       return null;
   }
@@ -95,7 +95,11 @@ function maybeAnswerBasicQuestion(input: DecideRequest, normalizedBody: string):
 
     const amount = formatMoney(input.session.price_cents ?? 0, input.session.currency ?? "USD");
     const status = input.session.payment_status ?? "not tracked";
-    const instructions = paymentInstructions ? localize(input, {
+    const paymentLink = input.billing_context?.payment_link_for_next_unpaid_session;
+    const instructions = paymentLink ? localize(input, {
+      en: ` Payment link: ${paymentLink}`,
+      es: ` Link de pago: ${paymentLink}`
+    }) : paymentInstructions ? localize(input, {
       en: ` You can pay this way: ${paymentInstructions}`,
       es: ` Puedes pagar asi: ${paymentInstructions}`
     }) : "";
@@ -293,13 +297,33 @@ function buildPaymentReminder(input: DecideRequest): string | null {
 
   const amount = formatMoney(input.session.price_cents ?? 0, input.session.currency ?? "USD");
   const instructions = professionalPaymentInstructions(input);
-  const instructionSentence = instructions ? localize(input, {
+  const paymentLink = input.billing_context?.payment_link_for_next_unpaid_session ?? input.session.payment_link;
+  const instructionSentence = paymentLink ? localize(input, {
+    en: ` Pay here: ${paymentLink}`,
+    es: ` Podes pagar aca: ${paymentLink}`
+  }) : instructions ? localize(input, {
     en: ` You can pay this way: ${instructions}`,
     es: ` Puedes pagar asi: ${instructions}`
   }) : "";
   return localize(input, {
     en: `Hi ${preferredClientName(input)}, friendly reminder that ${input.session.title} has a pending payment of ${amount}.${instructionSentence}`,
     es: `Hola ${preferredClientName(input)}, te recuerdo que ${input.session.title} tiene pendiente el pago de ${amount}.${instructionSentence}`
+  });
+}
+
+function buildPaymentReportedReply(input: DecideRequest): string | null {
+  if (!input.client || !input.session) return null;
+
+  if (input.session.payment_status === "paid" || input.billing_context?.next_session_payment_status === "paid") {
+    return localize(input, {
+      en: `Thanks ${preferredClientName(input)}, ${input.session.title} already appears as paid.`,
+      es: `Gracias ${preferredClientName(input)}, la sesion ${input.session.title} ya figura como pagada.`
+    });
+  }
+
+  return localize(input, {
+    en: `Thanks ${preferredClientName(input)}. I still do not see the payment confirmed in Sessia. If you just paid, it can take a few minutes.`,
+    es: `Gracias ${preferredClientName(input)}. Todavia no veo el pago confirmado en Sessia. Si lo hiciste recien, puede tardar unos minutos.`
   });
 }
 

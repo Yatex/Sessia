@@ -15,7 +15,7 @@
       </div>
       <div class="field">
         <%= label_tag :payment_status, t("payments.filters.status") %>
-        <%= select_tag :payment_status, options_for_select([[t("payments.filters.all_statuses"), ""]] + PaymentRecord.statuses.keys.map { |status| [status == "pending" ? status_label("unpaid") : status_label(status), status] }, @filters[:payment_status]) %>
+        <%= select_tag :payment_status, options_for_select([[t("payments.filters.all_statuses"), ""]] + Charge.statuses.keys.map { |status| [status == "pending" ? status_label("unpaid") : status_label(status), status] }, @filters[:payment_status]) %>
       </div>
       <div class="field">
         <%= label_tag :date_from, t("filters.from") %>
@@ -33,7 +33,7 @@
   <% end %>
 </section>
 
-<section class="summary-grid two">
+<section class="summary-grid">
   <div class="metric-panel">
     <span><%= t("payments.summary.paid") %></span>
     <strong><%= @summary[:paid] %></strong>
@@ -42,6 +42,55 @@
     <span><%= t("payments.summary.unpaid") %></span>
     <strong><%= @summary[:unpaid] %></strong>
   </div>
+  <div class="metric-panel attention">
+    <span>Overdue</span>
+    <strong><%= @summary[:overdue] %></strong>
+  </div>
+  <div class="metric-panel">
+    <span>Paid this month</span>
+    <strong><%= @summary[:paid_this_month] %></strong>
+  </div>
+</section>
+
+<section class="table-panel">
+  <div class="section-heading">
+    <h2>Charges</h2>
+  </div>
+  <% if @charges.any? %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Concept</th>
+          <th>Due</th>
+          <th>Status</th>
+          <th>Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @charges.limit(20).each do |charge| %>
+          <tr>
+            <td><%= link_to charge.client.name, client_path(charge.client), class: "text-link" %></td>
+            <td><strong><%= charge.concept %></strong></td>
+            <td><%= charge.due_date ? l(charge.due_date, format: :long) : "-" %></td>
+            <td><%= status_badge(charge.status) %></td>
+            <td><%= money_from_cents(charge.amount_cents, charge.currency) %></td>
+            <td>
+              <% if charge.session.present? %>
+                <%= link_to t("actions.open"), session_path(charge.session), class: "text-link" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="empty-state compact">
+      <h2>No charges yet</h2>
+      <p>Session charges and Mercado Pago payment links will appear here.</p>
+    </div>
+  <% end %>
 </section>
 
 <section class="table-panel">

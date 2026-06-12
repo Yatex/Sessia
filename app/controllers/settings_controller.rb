@@ -53,6 +53,8 @@ class SettingsController < ApplicationController
     @ai_setting = current_user.ai_setting || current_user.create_ai_setting!
     @calendar_connection = current_user.calendar_connection
     @google_calendar_configured = GoogleCalendar::Client.configured?
+    @mercado_pago_account = current_user.mercado_pago_account
+    @mercado_pago_configured = MercadoPago::Client.configured?
     @availability_by_weekday = current_user.availability_rules.ordered.to_a.group_by(&:weekday)
   end
 

@@ -5,7 +5,6 @@ module Ai
       mark_session_confirmed
       mark_session_maybe
       mark_session_declined
-      mark_payment_reported
       reschedule_session
       create_client_note
       alert_professional
@@ -68,8 +67,6 @@ module Ai
         update_confirmation!("maybe")
       when "mark_session_declined"
         update_confirmation!("declined")
-      when "mark_payment_reported"
-        mark_payment_reported!
       when "reschedule_session"
         reschedule_session!(decision.fetch("target_start_at"))
       when "create_client_note"
@@ -110,28 +107,6 @@ module Ai
       session.update!(confirmation_status: status)
       acknowledgement = send_acknowledgement(confirmation_acknowledgement(status), event: "confirmation_#{status}")
       "#{session.client.name} marked #{status.humanize.downcase}#{acknowledgement ? ' and acknowledged' : ''}."
-    end
-
-    def mark_payment_reported!
-      session = context[:session]
-      client = context[:client]
-      raise "Cannot mark payment without a session." if session.blank?
-
-      session.update!(payment_status: "paid")
-      payment_record = context[:payment_record] || session.payment_records.build(user: task.user, client: client)
-      payment_record.assign_attributes(
-        user: task.user,
-        client: client,
-        amount_cents: session.price_cents,
-        currency: session.currency,
-        status: "paid",
-        due_on: session.start_time.to_date,
-        paid_at: Time.current
-      )
-      payment_record.save!
-
-      acknowledgement = send_acknowledgement(payment_acknowledgement(session), event: "payment_reported")
-      "#{client.name} marked paid for #{session.title}#{acknowledgement ? ' and acknowledged' : ''}."
     end
 
     def reschedule_session!(target_start_at)

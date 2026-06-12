@@ -4,8 +4,10 @@ class GoogleCalendarIntegrationTest < ActionDispatch::IntegrationTest
   test "settings exposes Google Calendar connection state" do
     user = User.create!(name: "Calendar Settings", email: "calendar-settings@example.com", password: "password123")
 
-    post sign_in_url, params: { email: user.email, password: "password123" }
-    get settings_url
+    with_env("GOOGLE_CALENDAR_UI_ENABLED" => "true") do
+      post sign_in_url, params: { email: user.email, password: "password123" }
+      get settings_url
+    end
 
     assert_response :success
     assert_match "Google Calendar", response.body
@@ -20,11 +22,23 @@ class GoogleCalendarIntegrationTest < ActionDispatch::IntegrationTest
     connection.refresh_token = "refresh-token"
     connection.save!
 
-    post sign_in_url, params: { email: user.email, password: "password123" }
-    get new_session_url
+    with_env("GOOGLE_CALENDAR_UI_ENABLED" => "true") do
+      post sign_in_url, params: { email: user.email, password: "password123" }
+      get new_session_url
+    end
 
     assert_response :success
     assert_select "input[name='session[sync_to_google_calendar]'][type='checkbox']"
     assert_select "input[name='session[sync_to_google_calendar]'][checked='checked']"
+  end
+
+  private
+
+  def with_env(values)
+    previous = values.keys.index_with { |key| ENV[key] }
+    values.each { |key, value| ENV[key] = value }
+    yield
+  ensure
+    previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
   end
 end

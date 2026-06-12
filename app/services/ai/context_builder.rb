@@ -18,6 +18,7 @@ module Ai
         client: serialize_client,
         session: serialize_session,
         payment_record: serialize_payment_record,
+        billing_context: serialize_billing_context,
         recent_messages: recent_messages,
         availability_options: serialize_availability_options,
         task_context: task.context_data,
@@ -75,6 +76,8 @@ module Ai
         status: session.status,
         confirmation_status: session.confirmation_status,
         payment_status: session.payment_status,
+        payment_link: session.main_charge&.payment_url.presence,
+        due_date: session.main_charge&.due_date&.iso8601,
         price_cents: session.price_cents.to_i,
         currency: session.currency,
         notes: session.notes.presence
@@ -94,6 +97,27 @@ module Ai
       }.compact
     end
 
+    def serialize_billing_context
+      return if client.blank?
+
+      charges = user.charges.where(client: client).includes(:session, :payments)
+      unpaid_charges = charges.select { |charge| charge.pending? || charge.partially_paid? || charge.overdue? }
+      next_unpaid_charge = unpaid_charges
+        .select { |charge| charge.session.blank? || charge.session.start_time >= 7.days.ago }
+        .min_by { |charge| charge.session&.start_time || charge.due_date || Date.current }
+      last_payment = user.payments.where(client: client).recent.first
+
+      {
+        current_balance_cents: unpaid_charges.sum { |charge| [charge.amount_cents - charge.approved_payment_total_cents, 0].max },
+        credit_balance_cents: client.credit_balance_cents,
+        unpaid_sessions: unpaid_charges.filter_map { |charge| serialize_charge_session(charge) },
+        overdue_charges: charges.select(&:overdue?).map { |charge| serialize_charge(charge) },
+        next_session_payment_status: session&.payment_status || next_unpaid_charge&.status,
+        payment_link_for_next_unpaid_session: next_unpaid_charge&.payment_url.presence,
+        last_payment_status: last_payment&.status
+      }.compact
+    end
+
     def serialize_recent_messages
       scope = user.messages
       scope = scope.where(client: client) if client.present?
@@ -109,6 +133,34 @@ module Ai
           occurred_at: (message.sent_at || message.created_at).iso8601
         }.compact
       end
+    end
+
+    def serialize_charge_session(charge)
+      return serialize_charge(charge) if charge.session.blank?
+
+      {
+        session_id: charge.session_id.to_s,
+        title: charge.session.title,
+        starts_at: charge.session.start_time.iso8601,
+        payment_status: charge.session.payment_status,
+        amount_cents: charge.amount_cents,
+        remaining_cents: [charge.amount_cents - charge.approved_payment_total_cents, 0].max,
+        currency: charge.currency,
+        due_date: charge.due_date&.iso8601,
+        payment_link: charge.payment_url.presence
+      }.compact
+    end
+
+    def serialize_charge(charge)
+      {
+        charge_id: charge.id.to_s,
+        status: charge.status,
+        amount_cents: charge.amount_cents,
+        remaining_cents: [charge.amount_cents - charge.approved_payment_total_cents, 0].max,
+        currency: charge.currency,
+        due_date: charge.due_date&.iso8601,
+        payment_link: charge.payment_url.presence
+      }.compact
     end
 
     def serialize_availability_options

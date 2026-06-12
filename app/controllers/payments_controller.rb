@@ -7,10 +7,14 @@ class PaymentsController < ApplicationController
 
     all_sessions = filtered_payment_sessions.to_a
     @sessions = all_sessions.reject(&:payment_not_tracked?)
+    @charges = filtered_charges.includes(:client, :session, :payments).recent
+    @recent_payments = current_user.payments.includes(:client, :charge).recent.limit(8)
     @client_payment_rows = client_payment_rows(all_sessions)
     @summary = {
       paid: @sessions.count { |session_record| session_record.payment_paid? },
-      unpaid: @sessions.count(&:payment_attention?)
+      unpaid: @sessions.count(&:payment_attention?),
+      overdue: @charges.overdue.count,
+      paid_this_month: current_user.payments.approved.where(paid_at: Time.current.beginning_of_month..Time.current.end_of_month).count
     }
   end
 
@@ -25,6 +29,13 @@ class PaymentsController < ApplicationController
     ends_on = parse_filter_date(@filters[:date_to])&.end_of_day
     scope = scope.where(start_time: starts_on..) if starts_on
     scope = scope.where(start_time: ..ends_on) if ends_on
+    scope
+  end
+
+  def filtered_charges
+    scope = current_user.charges
+    scope = scope.where(client_id: scoped_client_id(@filters[:client_id])) if @filters[:client_id].present?
+    scope = scope.where(status: @filters[:payment_status]) if Charge.statuses.key?(@filters[:payment_status])
     scope
   end
 
@@ -49,13 +60,14 @@ class PaymentsController < ApplicationController
 
       unpaid_sessions = tracked_sessions.select(&:payment_attention?)
       paid_sessions = tracked_sessions.select(&:payment_paid?)
+      charges = client.charges.to_a
 
       {
         client: client,
-        unpaid_count: unpaid_sessions.size,
-        unpaid_cents: unpaid_sessions.sum(&:price_cents),
-        paid_count: paid_sessions.size,
-        paid_cents: paid_sessions.sum(&:price_cents)
+        unpaid_count: charges.present? ? charges.count { |charge| charge.pending? || charge.overdue? || charge.partially_paid? } : unpaid_sessions.size,
+        unpaid_cents: charges.present? ? charges.select { |charge| charge.pending? || charge.overdue? || charge.partially_paid? }.sum(&:amount_cents) : unpaid_sessions.sum(&:price_cents),
+        paid_count: charges.present? ? charges.count(&:paid?) : paid_sessions.size,
+        paid_cents: charges.present? ? charges.select(&:paid?).sum(&:amount_cents) : paid_sessions.sum(&:price_cents)
       }
     end.sort_by { |row| [-row[:unpaid_count], row[:client].name] }
   end
