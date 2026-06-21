@@ -1,0 +1,32 @@
+<%= render "shared/form_errors", object: team_member %>
+
+<%= form_with model: team_member, url: team_member.persisted? ? team_member_path(team_member) : team_members_path, class: "form-grid" do |form| %>
+  <div class="field">
+    <%= form.label :name, t("team.form.name") %>
+    <%= form.text_field :name, autofocus: true, autocomplete: "name" %>
+  </div>
+  <div class="field">
+    <%= form.label :email, t("team.form.email") %>
+    <%= form.email_field :email, autocomplete: "email" %>
+  </div>
+  <div class="field">
+    <%= form.label :time_zone, t("settings.timezone") %>
+    <%= form.select :time_zone, iana_time_zone_options %>
+  </div>
+  <div class="field">
+    <%= form.label :locale, t("settings.language") %>
+    <%= form.select :locale, language_options %>
+  </div>
+  <div class="field">
+    <%= form.label :password, team_member.persisted? ? t("team.form.new_password") : t("team.form.password") %>
+    <%= form.password_field :password, autocomplete: "new-password" %>
+  </div>
+  <div class="field">
+    <%= form.label :password_confirmation, t("team.form.password_confirmation") %>
+    <%= form.password_field :password_confirmation, autocomplete: "new-password" %>
+  </div>
+  <div class="form-actions full-span">
+    <%= link_to t("actions.cancel"), team_members_path, class: "secondary-button" %>
+    <%= form.submit class: "primary-button" %>
+  </div>
+<% end %>

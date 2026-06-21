@@ -3,11 +3,11 @@ class ClientBillingProfilesController < ApplicationController
   before_action :set_client
 
   def update
-    profile = @client.billing_profile || @client.build_billing_profile(user: current_user)
-    profile.assign_attributes(profile_params.merge(user: current_user))
+    profile = @client.billing_profile || @client.build_billing_profile(user: @client.user)
+    profile.assign_attributes(profile_params.merge(user: @client.user))
 
     if profile.save
-      redirect_to @client, notice: "Client billing settings updated."
+      redirect_to @client, notice: t("flash.clients.billing_updated")
     else
       @sessions = @client.sessions.chronological.limit(12)
       @billing_profile = profile
@@ -18,7 +18,7 @@ class ClientBillingProfilesController < ApplicationController
   private
 
   def set_client
-    @client = current_user.clients.find(params[:client_id])
+    @client = workspace_clients.find(params[:client_id])
   end
 
   def profile_params

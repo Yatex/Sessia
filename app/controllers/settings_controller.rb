@@ -11,7 +11,7 @@ class SettingsController < ApplicationController
     @user = current_user
 
     if @user.update(user_params)
-      redirect_to settings_path, notice: "Account settings updated."
+      redirect_to settings_path, notice: t("flash.settings.account_updated")
     else
       load_settings_context
       render :show, status: :unprocessable_entity
@@ -20,10 +20,10 @@ class SettingsController < ApplicationController
 
   def availability
     update_availability_rules!
-    redirect_to settings_path, notice: "Working hours updated."
+    redirect_to settings_path, notice: t("flash.settings.working_hours_updated")
   rescue ActiveRecord::RecordInvalid => error
     load_settings_context
-    flash.now[:alert] = error.record.errors.full_messages.to_sentence.presence || "Working hours could not be saved."
+    flash.now[:alert] = error.record.errors.full_messages.to_sentence.presence || t("flash.settings.working_hours_failed")
     render :show, status: :unprocessable_entity
   end
 
@@ -31,7 +31,7 @@ class SettingsController < ApplicationController
     @ai_setting = current_user.ai_setting || current_user.create_ai_setting!
 
     if @ai_setting.update(professional_whatsapp_params)
-      redirect_to settings_path, notice: "WhatsApp settings updated."
+      redirect_to settings_path, notice: t("flash.settings.whatsapp_updated")
     else
       load_settings_context
       render :show, status: :unprocessable_entity
@@ -42,7 +42,7 @@ class SettingsController < ApplicationController
     token = current_user.generate_password_reset_token!
     PasswordMailer.with(user: current_user, token: token).reset.deliver_later
 
-    redirect_to settings_path, notice: "Password reset instructions were sent to #{current_user.email}."
+    redirect_to settings_path, notice: t("flash.settings.password_reset_sent", email: current_user.email)
   end
 
   private

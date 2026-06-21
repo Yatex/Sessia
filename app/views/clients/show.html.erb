@@ -12,6 +12,9 @@
 <section class="detail-layout">
   <aside class="detail-panel">
     <dl class="detail-list">
+      <% if studio_workspace? %>
+        <div><dt><%= t("team.professor") %></dt><dd><%= @client.user.name %></dd></div>
+      <% end %>
       <div><dt><%= t("clients.show.email") %></dt><dd><%= @client.email.presence || t("common.not_set") %></dd></div>
       <div><dt>WhatsApp</dt><dd><%= @client.phone %></dd></div>
       <div><dt><%= t("clients.show.contact") %></dt><dd><%= @client.preferred_contact_channel.humanize %></dd></div>
@@ -37,26 +40,26 @@
   <section>
     <div class="table-panel">
       <div class="section-heading">
-        <h2>Billing</h2>
+        <h2><%= t("clients.billing.title") %></h2>
       </div>
       <div class="integration-status">
         <div>
-          <span>Pending charges</span>
+          <span><%= t("clients.billing.pending_charges") %></span>
           <strong><%= @client.charges.unpaid.count %></strong>
         </div>
         <div>
-          <span>Paid sessions</span>
+          <span><%= t("clients.billing.paid_sessions") %></span>
           <strong><%= @client.sessions.where(payment_status: :paid).count %></strong>
         </div>
         <div>
-          <span>Credit balance</span>
+          <span><%= t("clients.billing.credit_balance") %></span>
           <strong><%= money_from_cents(@client.credit_balance_cents, @billing_profile.currency.presence || "ARS") %></strong>
         </div>
       </div>
 
       <%= form_with model: @billing_profile, url: client_billing_profile_path(@client), method: :patch, class: "form-grid" do |form| %>
         <div class="field">
-          <%= form.label :default_session_price, "Default session price" %>
+          <%= form.label :default_session_price, t("clients.billing.default_session_price") %>
           <%= form.number_field :default_session_price, min: 0, step: "0.01", inputmode: "decimal" %>
         </div>
         <div class="field">
@@ -67,17 +70,17 @@
           <label class="toggle-row compact">
             <%= form.check_box :payment_required_before_session %>
             <span>
-              <strong>Payment required before session</strong>
-              <small>New sessions for this client will inherit this setting.</small>
+              <strong><%= t("clients.billing.payment_required.title") %></strong>
+              <small><%= t("clients.billing.payment_required.copy") %></small>
             </span>
           </label>
         </div>
         <div class="field">
-          <%= form.label :default_due_timing, "Due timing" %>
-          <%= form.select :default_due_timing, ClientBillingProfile.default_due_timings.keys.map { |key| [key.humanize, key] } %>
+          <%= form.label :default_due_timing, t("clients.billing.due_timing") %>
+          <%= form.select :default_due_timing, ClientBillingProfile.default_due_timings.keys.map { |key| [t("clients.billing.due_timings.#{key}"), key] } %>
         </div>
         <div class="field">
-          <%= form.label :custom_due_days_before, "Custom days before" %>
+          <%= form.label :custom_due_days_before, t("clients.billing.custom_days_before") %>
           <%= form.number_field :custom_due_days_before, min: 0 %>
         </div>
         <div class="field full-span">
@@ -85,7 +88,7 @@
           <%= form.text_area :notes, rows: 3 %>
         </div>
         <div class="form-actions full-span">
-          <%= form.submit "Save billing defaults", class: "secondary-button" %>
+          <%= form.submit t("clients.billing.save"), class: "secondary-button" %>
         </div>
       <% end %>
     </div>

@@ -9,15 +9,15 @@ class UserSessionsController < ApplicationController
 
     if user&.authenticate(params[:password])
       sign_in(user)
-      redirect_to dashboard_path, notice: "Signed in."
+      redirect_to dashboard_path, notice: t("flash.auth.signed_in")
     else
-      flash.now[:alert] = "Invalid email or password."
+      flash.now[:alert] = t("flash.auth.invalid")
       render :new, status: :unprocessable_entity
     end
   end
 
   def destroy
     sign_out
-    redirect_to root_path, notice: "Signed out."
+    redirect_to root_path, notice: t("flash.auth.signed_out")
   end
 end

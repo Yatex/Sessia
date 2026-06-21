@@ -2,8 +2,8 @@
   <section class="auth-panel">
     <div class="auth-heading">
       <%= link_to "Sessia", root_path, class: "public-brand" %>
-      <h1>Reset password</h1>
-      <p>We will email a secure reset link.</p>
+      <h1><%= t("auth.passwords.reset_title") %></h1>
+      <p><%= t("auth.passwords.reset_copy") %></p>
     </div>
 
     <%= form_with url: password_resets_path, class: "form-stack" do |form| %>
@@ -11,9 +11,9 @@
         <%= form.label :email %>
         <%= form.email_field :email, autofocus: true, autocomplete: "email" %>
       </div>
-      <%= form.submit "Send reset link", class: "primary-button full" %>
+      <%= form.submit t("auth.passwords.send_reset"), class: "primary-button full" %>
     <% end %>
 
-    <p class="auth-switch"><%= link_to "Back to sign in", sign_in_path %></p>
+    <p class="auth-switch"><%= link_to t("auth.passwords.back_to_sign_in"), sign_in_path %></p>
   </section>
 </main>

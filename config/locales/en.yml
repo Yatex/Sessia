@@ -84,6 +84,21 @@ en:
       short: "%b %-d, %H:%M"
       long: "%B %-d, %Y %H:%M"
       short_time: "%-I:%M %p"
+  activerecord:
+    attributes:
+      user:
+        name: "Name"
+        email: "Email"
+        password: "Password"
+        password_confirmation: "Password confirmation"
+        time_zone: "Timezone"
+        account_type: "Workspace type"
+      session:
+        currency: "Currency"
+        notes: "Notes"
+      client_billing_profile:
+        currency: "Currency"
+        notes: "Notes"
   app_name: "Sessia"
   app:
     session_os: "Session OS"
@@ -95,6 +110,7 @@ en:
     remove: "Remove"
     cancel: "Cancel"
     open: "Open"
+    edit: "Edit"
   filters:
     from: "From"
     to: "To"
@@ -102,6 +118,89 @@ en:
     apply: "Apply filters"
   auth:
     sign_out: "Sign out"
+    or: "or"
+    sign_in:
+      title: "Sign in"
+      copy: "Open your session workspace."
+      google: "Sign in with Google"
+      submit: "Sign in"
+    sign_up:
+      title: "Create your account"
+      copy: "Set up your session workspace in a minute. Your 14-day free trial starts automatically."
+      trial_title: "Free trial included"
+      trial_copy: "No card is required to start. Choose a paid plan later from Subscriptions when you are ready."
+      google: "Sign up with Google"
+      detected_timezone: "Detected from this browser as"
+      change_timezone: "You can change it."
+      workspace_type: "Workspace type"
+      submit: "Create account"
+      legal_intro: "By creating an account, you agree to Sessia's"
+      legal_and: "and"
+      terms: "Terms"
+      privacy: "Privacy Policy"
+      have_account: "Already have an account?"
+      account_types:
+        professional:
+          title: "Independent professional"
+          copy: "I manage my own clients and sessions."
+        studio:
+          title: "Studio"
+          copy: "I manage several professionals from one workspace."
+    passwords:
+      reset_title: "Reset password"
+      reset_copy: "We will email a secure reset link."
+      send_reset: "Send reset link"
+      back_to_sign_in: "Back to sign in"
+      edit_title: "Choose a new password"
+      edit_copy: "Use at least eight characters."
+      update: "Update password"
+  flash:
+    auth:
+      signed_in: "Signed in."
+      invalid: "Invalid email or password."
+      signed_out: "Signed out."
+      welcome: "Welcome to Sessia."
+      sign_in_required: "Sign in to continue."
+    password_resets:
+      sent: "If that email exists, Sessia sent password reset instructions."
+      invalid: "That password reset link is invalid or expired."
+      updated: "Your password has been updated."
+    clients:
+      created: "Client created."
+      updated: "Client updated."
+      archived: "Client archived from Sessia."
+      billing_updated: "Client billing settings updated."
+    sessions:
+      scheduled: "Session scheduled."
+      updated: "Session updated."
+      removed: "Session removed."
+      add_price_for_link: "Add a session price before generating a payment link."
+      add_price_for_payment: "Add a session price before recording a payment."
+      payment_link_ready: "Mercado Pago payment link is ready."
+      payment_link_regenerated: "Mercado Pago payment link regenerated."
+      manual_payment_recorded: "Manual payment recorded."
+      payment_waived: "Session payment waived."
+      charge_cancelled: "Charge cancelled."
+      google_calendar_unavailable: "Google Calendar sync is temporarily unavailable."
+      google_calendar_synced: "Session synced to Google Calendar."
+      google_calendar_failed: "Session could not sync to Google Calendar."
+    settings:
+      account_updated: "Account settings updated."
+      working_hours_updated: "Working hours updated."
+      working_hours_failed: "Working hours could not be saved."
+      whatsapp_updated: "WhatsApp settings updated."
+      password_reset_sent: "Password reset instructions were sent to %{email}."
+    mercado_pago:
+      not_configured: "Mercado Pago is not configured yet."
+      connection_failed: "Mercado Pago connection could not be verified."
+      connected: "Mercado Pago connected."
+      disconnected: "Mercado Pago disconnected."
+  mailers:
+    password_reset:
+      greeting: "Hi %{name},"
+      copy: "Use the link below to reset your Sessia password. The link expires in two hours."
+      action: "Reset password"
+      ignore: "If you did not request this, you can safely ignore this email."
   common:
     no: "No"
     not_set: "Not set"
@@ -147,15 +246,38 @@ en:
     settings: "Settings"
     ai_settings: "AI Assistant"
     billing: "Subscriptions"
+    team_members: "Team"
   navigation:
     agenda: "Agenda"
     sessions: "Sessions"
     clients: "Clients"
+    team: "Team"
     ai_assistant: "AI Assistant"
     payments: "Payments"
     subscriptions: "Subscriptions"
     analytics: "Analytics"
     settings: "Settings"
+  team:
+    eyebrow: "Studio"
+    title: "Team"
+    professor: "Professor"
+    all_professors: "All professors"
+    new_professor: "New professor"
+    new_title: "Add professor"
+    edit_title: "Edit professor"
+    empty_title: "No professors yet"
+    empty_body: "Add the first professor so the studio can start assigning clients and sessions."
+    table:
+      professor: "Professor"
+      clients: "Clients"
+      sessions: "Sessions"
+      locale: "Language"
+    form:
+      name: "Name"
+      email: "Email"
+      password: "Temporary password"
+      new_password: "New password"
+      password_confirmation: "Password confirmation"
   plans:
     client_limit: "Up to %{count} active clients"
     trial:
@@ -230,6 +352,9 @@ en:
     unavailable_time: "Unavailable time"
     legend: "Calendar legend"
     paid_session: "Paid session"
+    empty_day:
+      title: "No sessions this day"
+      body: "None of the professors has sessions scheduled for the selected day."
     views:
       week: "Week"
       month: "Month"
@@ -262,6 +387,8 @@ en:
         one: "1 session cancelled and queued for AI rebooking."
         other: "%{count} sessions cancelled and queued for AI rebooking."
   sessions:
+    defaults:
+      title: "Session"
     new:
       title: "New session"
     edit:
@@ -327,11 +454,37 @@ en:
       ai_ready: "AI follow-up ready"
       ai_copy: "Confirmation, reminder, feedback, and escalation settings are prepared in the AI Assistant area."
       open_ai_settings: "Open AI settings"
+      payment_due: "Due %{date}"
+      payment_no_charge: "This priced session does not have a payment charge yet."
+      payment_add_price: "Add a price to generate a Mercado Pago payment link."
+      generate_payment_link: "Generate payment link"
+      mercado_pago_connect_first: "Connect Mercado Pago in Settings before generating client payment links."
+      regenerate_payment_link: "Regenerate payment link"
+      waive_payment: "Waive payment"
+      cancel_charge: "Cancel charge"
+      record_manual_payment: "Record manual payment"
+      payment_history: "Payment history"
+      manual_payment:
+        amount: "Amount"
+        paid_on: "Paid on"
+        cash: "Cash"
+        transfer: "Transfer"
+        other: "Other"
+        note: "Note"
+        submit: "Record payment"
     form:
       client: "Client"
       choose_client: "Choose client"
+      professor: "Professor"
+      professor_hint: "The client list and available blocks update for the selected professor."
       title: "Session type or title"
       price: "Session price"
+      payment_required:
+        title: "Payment required before session"
+        copy: "Use this when the client should pay before the appointment date."
+      generate_payment_link:
+        title: "Generate Mercado Pago payment link"
+        copy: "Create a session charge and Checkout Pro link after saving."
       blocks: "Session blocks"
       blocks_hint: "Choose one or more 30-minute blocks in the same day. Only working hours without existing sessions or blocked time are selectable."
       recurrent: "Recurrent"
@@ -385,6 +538,16 @@ en:
       connect_copy: "Connect Google Calendar so Sessia can add sessions to your primary calendar when you enable sync."
       connect: "Connect Google Calendar"
       env_missing: "Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable this integration."
+    mercado_pago:
+      copy: "Mercado Pago lets your clients pay you directly. Sessia uses Stripe only for your platform subscription."
+      status: "Status"
+      provider_account: "Provider account"
+      connected_at: "Connected"
+      ready: "Ready"
+      connect: "Connect Mercado Pago"
+      reconnect: "Reconnect Mercado Pago"
+      disconnect: "Disconnect Mercado Pago"
+      env_missing: "Set MERCADO_PAGO_CLIENT_ID, MERCADO_PAGO_CLIENT_SECRET, and MERCADO_PAGO_REDIRECT_URI to enable Mercado Pago."
     password_reset:
       title: "Password reset"
       copy_html: "Send a password reset link to <strong>%{email}</strong>. The link expires after 2 hours."
@@ -427,6 +590,17 @@ en:
     summary:
       paid: "Paid classes"
       unpaid: "Unpaid classes"
+      overdue: "Overdue"
+      paid_this_month: "Paid this month"
+    charges:
+      title: "Charges"
+      client: "Client"
+      concept: "Concept"
+      due: "Due"
+      status: "Status"
+      amount: "Amount"
+      empty_title: "No charges yet"
+      empty_body: "Session charges and Mercado Pago payment links will appear here."
     clients:
       title: "Payments by client"
       client: "Client"
@@ -470,6 +644,23 @@ en:
       schedule: "Schedule"
       no_sessions_title: "No sessions yet"
       no_sessions_body: "Schedule a first session with %{name}."
+    billing:
+      title: "Billing"
+      pending_charges: "Pending charges"
+      paid_sessions: "Paid sessions"
+      credit_balance: "Credit balance"
+      default_session_price: "Default session price"
+      payment_required:
+        title: "Payment required before session"
+        copy: "New sessions for this client will inherit this setting."
+      due_timing: "Due timing"
+      custom_days_before: "Custom days before"
+      save: "Save billing defaults"
+      due_timings:
+        same_day: "Same day"
+        before_session: "Before session"
+        after_session: "After session"
+        custom: "Custom"
     index:
       eyebrow: "Clients"
       title: "Client workspace"

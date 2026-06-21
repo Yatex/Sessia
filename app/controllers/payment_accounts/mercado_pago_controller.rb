@@ -4,7 +4,7 @@ module PaymentAccounts
 
     def connect
       unless MercadoPago::Client.configured?
-        redirect_to settings_path, alert: "Mercado Pago is not configured yet."
+        redirect_to settings_path, alert: t("flash.mercado_pago.not_configured")
         return
       end
 
@@ -15,7 +15,7 @@ module PaymentAccounts
 
     def callback
       unless valid_state?
-        redirect_to settings_path, alert: "Mercado Pago connection could not be verified."
+        redirect_to settings_path, alert: t("flash.mercado_pago.connection_failed")
         return
       end
 
@@ -34,7 +34,7 @@ module PaymentAccounts
         token_expires_at: body["expires_in"].present? ? Time.current + body["expires_in"].to_i.seconds : 180.days.from_now
       )
       AuditLog.record!(user: current_user, actor: current_user, event: "mercado_pago_connected", auditable: account)
-      redirect_to settings_path, notice: "Mercado Pago connected."
+      redirect_to settings_path, notice: t("flash.mercado_pago.connected")
     ensure
       session.delete(:mercado_pago_oauth_state)
     end
@@ -45,7 +45,7 @@ module PaymentAccounts
         AuditLog.record!(user: current_user, actor: current_user, event: "mercado_pago_disconnected", auditable: account)
       end
 
-      redirect_to settings_path, notice: "Mercado Pago disconnected."
+      redirect_to settings_path, notice: t("flash.mercado_pago.disconnected")
     end
 
     private

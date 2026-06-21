@@ -2,19 +2,19 @@
   <section class="auth-panel">
     <div class="auth-heading">
       <%= link_to "Sessia", root_path, class: "public-brand" %>
-      <h1>Create your account</h1>
-      <p>Set up your session workspace in a minute. Your 14-day free trial starts automatically.</p>
+      <h1><%= t("auth.sign_up.title") %></h1>
+      <p><%= t("auth.sign_up.copy") %></p>
     </div>
 
     <div class="trial-note">
-      <strong>Free trial included</strong>
-      <span>No card is required to start. Choose a paid plan later from Subscriptions when you are ready.</span>
+      <strong><%= t("auth.sign_up.trial_title") %></strong>
+      <span><%= t("auth.sign_up.trial_copy") %></span>
     </div>
 
     <%= render "shared/form_errors", object: @user %>
 
-    <%= render "shared/google_auth_button", origin: "sign_up", label: "Sign up with Google" %>
-    <div class="auth-divider"><span>or</span></div>
+    <%= render "shared/google_auth_button", origin: "sign_up", label: t("auth.sign_up.google") %>
+    <div class="auth-divider"><span><%= t("auth.or") %></span></div>
 
     <%= form_with model: @user, url: sign_up_path, class: "form-stack" do |form| %>
       <div class="field">
@@ -26,13 +26,32 @@
         <%= form.email_field :email, autocomplete: "email" %>
       </div>
       <div class="field">
-        <%= form.label :time_zone, "Timezone" %>
+        <%= form.label :time_zone, t("settings.timezone") %>
         <%= form.select :time_zone, iana_time_zone_options, {}, data: { time_zone_auto: true } %>
         <small class="field-hint">
-          Detected from this browser as
+          <%= t("auth.sign_up.detected_timezone") %>
           <strong data-time-zone-detected-label data-fallback-time-zone="<%= @user.time_zone %>"><%= @user.time_zone %></strong>.
-          You can change it.
+          <%= t("auth.sign_up.change_timezone") %>
         </small>
+      </div>
+      <div class="field full-span">
+        <%= form.label :account_type, t("auth.sign_up.workspace_type") %>
+        <div class="choice-card-grid">
+          <label class="choice-card">
+            <%= form.radio_button :account_type, "professional", checked: @user.account_type.blank? || @user.professional? %>
+            <span>
+              <strong><%= t("auth.sign_up.account_types.professional.title") %></strong>
+              <small><%= t("auth.sign_up.account_types.professional.copy") %></small>
+            </span>
+          </label>
+          <label class="choice-card">
+            <%= form.radio_button :account_type, "studio", checked: @user.studio? %>
+            <span>
+              <strong><%= t("auth.sign_up.account_types.studio.title") %></strong>
+              <small><%= t("auth.sign_up.account_types.studio.copy") %></small>
+            </span>
+          </label>
+        </div>
       </div>
       <div class="field">
         <%= form.label :password %>
@@ -42,16 +61,16 @@
         <%= form.label :password_confirmation %>
         <%= form.password_field :password_confirmation, autocomplete: "new-password" %>
       </div>
-      <%= form.submit "Create account", class: "primary-button full" %>
+      <%= form.submit t("auth.sign_up.submit"), class: "primary-button full" %>
     <% end %>
 
     <p class="auth-legal">
-      By creating an account, you agree to Sessia's
-      <%= link_to "Terms", terms_path, target: "_blank", rel: "noopener" %>
-      and
-      <%= link_to "Privacy Policy", privacy_path, target: "_blank", rel: "noopener" %>.
+      <%= t("auth.sign_up.legal_intro") %>
+      <%= link_to t("auth.sign_up.terms"), terms_path, target: "_blank", rel: "noopener" %>
+      <%= t("auth.sign_up.legal_and") %>
+      <%= link_to t("auth.sign_up.privacy"), privacy_path, target: "_blank", rel: "noopener" %>.
     </p>
 
-    <p class="auth-switch">Already have an account? <%= link_to "Sign in", sign_in_path %></p>
+    <p class="auth-switch"><%= t("auth.sign_up.have_account") %> <%= link_to t("auth.sign_in.title"), sign_in_path %></p>
   </section>
 </main>

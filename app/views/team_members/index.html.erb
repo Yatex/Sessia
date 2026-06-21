@@ -1,0 +1,43 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow"><%= t("team.eyebrow") %></p>
+    <h1><%= t("team.title") %></h1>
+  </div>
+  <%= link_to t("team.new_professor"), new_team_member_path, class: "primary-button" %>
+</section>
+
+<section class="table-panel">
+  <% if @team_members.any? %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><%= t("team.table.professor") %></th>
+          <th><%= t("team.table.clients") %></th>
+          <th><%= t("team.table.sessions") %></th>
+          <th><%= t("team.table.locale") %></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @team_members.each do |teacher| %>
+          <tr>
+            <td>
+              <strong><%= teacher.name %></strong>
+              <small><%= teacher.email %></small>
+            </td>
+            <td><%= teacher.clients.count %></td>
+            <td><%= teacher.sessions.count %></td>
+            <td><%= User::AVAILABLE_LOCALES[teacher.locale] || teacher.locale %></td>
+            <td><%= link_to t("actions.edit"), edit_team_member_path(teacher), class: "text-link" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="empty-state">
+      <h2><%= t("team.empty_title") %></h2>
+      <p><%= t("team.empty_body") %></p>
+      <%= link_to t("team.new_professor"), new_team_member_path, class: "primary-button" %>
+    </div>
+  <% end %>
+</section>

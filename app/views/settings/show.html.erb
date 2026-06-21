@@ -151,37 +151,37 @@
     <% end %>
   </div>
   <p class="panel-copy">
-    Mercado Pago lets your clients pay you directly. Sessia uses Stripe only for your platform subscription.
+    <%= t("settings.mercado_pago.copy") %>
   </p>
 
   <% if @mercado_pago_account&.connected? %>
     <div class="integration-status">
       <div>
-        <span>Status</span>
-        <strong>Connected</strong>
+        <span><%= t("settings.mercado_pago.status") %></span>
+        <strong><%= t("statuses.connected") %></strong>
       </div>
       <div>
-        <span>Provider account</span>
+        <span><%= t("settings.mercado_pago.provider_account") %></span>
         <strong><%= @mercado_pago_account.provider_user_id.presence || "Mercado Pago" %></strong>
       </div>
       <div>
-        <span>Connected</span>
-        <strong><%= @mercado_pago_account.connected_at ? l(@mercado_pago_account.connected_at, format: :short) : "Ready" %></strong>
+        <span><%= t("settings.mercado_pago.connected_at") %></span>
+        <strong><%= @mercado_pago_account.connected_at ? l(@mercado_pago_account.connected_at, format: :short) : t("settings.mercado_pago.ready") %></strong>
       </div>
     </div>
     <div class="integration-actions">
-      <%= link_to "Reconnect Mercado Pago", connect_payment_accounts_mercado_pago_path, class: "secondary-button" %>
-      <%= button_to "Disconnect Mercado Pago", disconnect_payment_accounts_mercado_pago_path, method: :delete, class: "ghost-button" %>
+      <%= link_to t("settings.mercado_pago.reconnect"), connect_payment_accounts_mercado_pago_path, class: "secondary-button" %>
+      <%= button_to t("settings.mercado_pago.disconnect"), disconnect_payment_accounts_mercado_pago_path, method: :delete, class: "ghost-button" %>
     </div>
   <% else %>
     <% if @mercado_pago_account&.last_error.present? %>
       <p class="field-hint calendar-error"><%= @mercado_pago_account.last_error %></p>
     <% end %>
     <% if @mercado_pago_configured %>
-      <%= link_to "Connect Mercado Pago", connect_payment_accounts_mercado_pago_path, class: "primary-button" %>
+      <%= link_to t("settings.mercado_pago.connect"), connect_payment_accounts_mercado_pago_path, class: "primary-button" %>
     <% else %>
       <p class="field-hint calendar-error">
-        Set MERCADO_PAGO_CLIENT_ID, MERCADO_PAGO_CLIENT_SECRET, and MERCADO_PAGO_REDIRECT_URI to enable Mercado Pago.
+        <%= t("settings.mercado_pago.env_missing") %>
       </p>
     <% end %>
   <% end %>

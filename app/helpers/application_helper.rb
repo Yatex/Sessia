@@ -14,7 +14,9 @@ module ApplicationHelper
   ].freeze
 
   def nav_items
-    NAV_ITEMS.map { |key, helper| [t("navigation.#{key}"), public_send(helper)] }
+    items = NAV_ITEMS.map { |key, helper| [t("navigation.#{key}"), public_send(helper)] }
+    items << [t("navigation.team"), team_members_path] if current_user&.studio?
+    items
   end
 
   def admin_nav_items

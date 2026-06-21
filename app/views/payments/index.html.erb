@@ -13,6 +13,12 @@
         <%= label_tag :client_id, t("payments.filters.client") %>
         <%= select_tag :client_id, options_from_collection_for_select(@payment_clients, :id, :name, @filters[:client_id]), include_blank: t("payments.filters.all_clients") %>
       </div>
+      <% if studio_workspace? %>
+        <div class="field">
+          <%= label_tag :user_id, t("team.professor") %>
+          <%= select_tag :user_id, options_from_collection_for_select(@filter_professionals, :id, :name, @filters[:user_id]), include_blank: t("team.all_professors") %>
+        </div>
+      <% end %>
       <div class="field">
         <%= label_tag :payment_status, t("payments.filters.status") %>
         <%= select_tag :payment_status, options_for_select([[t("payments.filters.all_statuses"), ""]] + Charge.statuses.keys.map { |status| [status == "pending" ? status_label("unpaid") : status_label(status), status] }, @filters[:payment_status]) %>
@@ -43,28 +49,31 @@
     <strong><%= @summary[:unpaid] %></strong>
   </div>
   <div class="metric-panel attention">
-    <span>Overdue</span>
+    <span><%= t("payments.summary.overdue") %></span>
     <strong><%= @summary[:overdue] %></strong>
   </div>
   <div class="metric-panel">
-    <span>Paid this month</span>
+    <span><%= t("payments.summary.paid_this_month") %></span>
     <strong><%= @summary[:paid_this_month] %></strong>
   </div>
 </section>
 
 <section class="table-panel">
   <div class="section-heading">
-    <h2>Charges</h2>
+    <h2><%= t("payments.charges.title") %></h2>
   </div>
   <% if @charges.any? %>
     <table class="data-table">
       <thead>
         <tr>
-          <th>Client</th>
-          <th>Concept</th>
-          <th>Due</th>
-          <th>Status</th>
-          <th>Amount</th>
+          <th><%= t("payments.charges.client") %></th>
+          <% if studio_workspace? %>
+            <th><%= t("team.professor") %></th>
+          <% end %>
+          <th><%= t("payments.charges.concept") %></th>
+          <th><%= t("payments.charges.due") %></th>
+          <th><%= t("payments.charges.status") %></th>
+          <th><%= t("payments.charges.amount") %></th>
           <th></th>
         </tr>
       </thead>
@@ -72,6 +81,9 @@
         <% @charges.limit(20).each do |charge| %>
           <tr>
             <td><%= link_to charge.client.name, client_path(charge.client), class: "text-link" %></td>
+            <% if studio_workspace? %>
+              <td><%= charge.user.name %></td>
+            <% end %>
             <td><strong><%= charge.concept %></strong></td>
             <td><%= charge.due_date ? l(charge.due_date, format: :long) : "-" %></td>
             <td><%= status_badge(charge.status) %></td>
@@ -87,8 +99,8 @@
     </table>
   <% else %>
     <div class="empty-state compact">
-      <h2>No charges yet</h2>
-      <p>Session charges and Mercado Pago payment links will appear here.</p>
+      <h2><%= t("payments.charges.empty_title") %></h2>
+      <p><%= t("payments.charges.empty_body") %></p>
     </div>
   <% end %>
 </section>
@@ -102,6 +114,9 @@
       <thead>
         <tr>
           <th><%= t("payments.clients.client") %></th>
+          <% if studio_workspace? %>
+            <th><%= t("team.professor") %></th>
+          <% end %>
           <th><%= t("payments.clients.paid") %></th>
           <th><%= t("payments.clients.unpaid") %></th>
           <th></th>
@@ -111,6 +126,9 @@
         <% @client_payment_rows.each do |row| %>
           <tr>
             <td><strong><%= row[:client].name %></strong></td>
+            <% if studio_workspace? %>
+              <td><%= row[:client].user.name %></td>
+            <% end %>
             <td>
               <span class="payment-position clear">
                 <%= t("payments.classes", count: row[:paid_count]) %>
@@ -145,6 +163,9 @@
       <thead>
         <tr>
           <th><%= t("payments.sessions.session") %></th>
+          <% if studio_workspace? %>
+            <th><%= t("team.professor") %></th>
+          <% end %>
           <th><%= t("payments.sessions.client") %></th>
           <th><%= t("payments.sessions.date") %></th>
           <th><%= t("payments.sessions.status") %></th>
@@ -155,6 +176,9 @@
         <% @sessions.each do |session_record| %>
           <tr>
             <td><strong><%= session_record.title %></strong></td>
+            <% if studio_workspace? %>
+              <td><%= session_record.user.name %></td>
+            <% end %>
             <td><%= session_record.client.name %></td>
             <td><%= l(session_record.start_time, format: :long) %></td>
             <td><%= payment_status_badge(session_record.payment_status) %></td>
