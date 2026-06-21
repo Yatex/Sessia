@@ -13,6 +13,12 @@
         <%= label_tag :client_id, t("sessions.index.filters.client") %>
         <%= select_tag :client_id, options_from_collection_for_select(@filter_clients, :id, :name, @filters[:client_id]), include_blank: t("sessions.index.filters.all_clients") %>
       </div>
+      <% if studio_workspace? %>
+        <div class="field">
+          <%= label_tag :user_id, t("team.professor") %>
+          <%= select_tag :user_id, options_from_collection_for_select(@filter_professionals, :id, :name, @filters[:user_id]), include_blank: t("team.all_professors") %>
+        </div>
+      <% end %>
       <div class="field">
         <%= label_tag :date_from, t("filters.from") %>
         <%= date_field_tag :date_from, @filters[:date_from] %>
@@ -51,6 +57,9 @@
       <thead>
         <tr>
           <th><%= t("sessions.index.table.when") %></th>
+          <% if studio_workspace? %>
+            <th><%= t("team.professor") %></th>
+          <% end %>
           <th><%= t("sessions.index.table.client") %></th>
           <th><%= t("sessions.index.table.title") %></th>
           <th><%= t("sessions.index.table.price") %></th>
@@ -65,6 +74,9 @@
         <% @sessions.each do |session_record| %>
           <tr>
             <td><%= l(session_record.start_time, format: :long) %></td>
+            <% if studio_workspace? %>
+              <td><%= session_record.user.name %></td>
+            <% end %>
             <td><strong><%= session_record.client.name %></strong></td>
             <td><%= session_record.title %></td>
             <td><%= session_price(session_record) %></td>

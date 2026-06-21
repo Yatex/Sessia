@@ -13,6 +13,14 @@ class User < ApplicationRecord
     admin: 1
   }
 
+  enum account_type: {
+    professional: 0,
+    studio: 1
+  }
+
+  belongs_to :studio_owner, class_name: "User", foreign_key: :studio_id, optional: true, inverse_of: :studio_teachers
+  has_many :studio_teachers, class_name: "User", foreign_key: :studio_id, dependent: :nullify, inverse_of: :studio_owner
+
   has_many :clients, dependent: :destroy
   has_many :sessions, dependent: :destroy
   has_many :payment_records, dependent: :destroy
@@ -50,9 +58,12 @@ class User < ApplicationRecord
   validates :time_zone, presence: true
   validates :locale, presence: true, inclusion: { in: AVAILABLE_LOCALES.keys }
   validates :payment_instructions, length: { maximum: 1_500 }, allow_blank: true
+  validate :studio_relationship_is_valid
   validate :time_zone_is_supported
 
   scope :admins, -> { where(role: :admin) }
+  scope :professionals, -> { where(account_type: :professional) }
+  scope :studios, -> { where(account_type: :studio) }
 
   def self.find_by_normalized_email(email)
     find_by(email: email.to_s.strip.downcase)
@@ -83,6 +94,26 @@ class User < ApplicationRecord
     subscriptions.order(created_at: :desc).detect(&:usable?)
   end
 
+  def workspace_user_ids
+    return [id] unless studio?
+
+    [id] + studio_teachers.select(:id).map(&:id)
+  end
+
+  def workspace_professionals
+    return User.where(id: id) unless studio?
+
+    User.where(id: workspace_user_ids).order(Arel.sql("LOWER(name) ASC"))
+  end
+
+  def studio_member?
+    studio_id.present?
+  end
+
+  def account_type_label
+    studio? ? "Studio" : "Independent professional"
+  end
+
   private
 
   def normalize_email
@@ -101,6 +132,13 @@ class User < ApplicationRecord
 
   def time_zone_is_supported
     errors.add(:time_zone, "is not supported") unless ActiveSupport::TimeZone[time_zone].present?
+  end
+
+  def studio_relationship_is_valid
+    return if studio_id.blank?
+
+    errors.add(:studio_owner, "must be a studio account") unless studio_owner&.studio?
+    errors.add(:studio_owner, "cannot be assigned to a studio") if studio?
   end
 
   def create_default_ai_setting

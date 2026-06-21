@@ -38,6 +38,7 @@ Rails.application.routes.draw do
     post :run
   end
   get "payments", to: "payments#index", as: :payments
+  resources :team_members, path: "team", only: %i[index new create edit update]
 
   resource :subscription, only: :show, controller: :billing, path: "subscriptions" do
     post :checkout

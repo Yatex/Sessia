@@ -4,12 +4,12 @@ class BillingController < ApplicationController
   def show
     @plans = StripeBilling.plans
     @subscription = current_user.current_subscription || current_user.subscriptions.order(created_at: :desc).first
-    @active_client_count = current_user.clients.active.count
+    @active_client_count = workspace_clients.active.count
     @recommended_plan = StripeBilling.recommended_plan_for(@active_client_count)
   end
 
   def checkout
-    active_client_count = current_user.clients.active.count
+    active_client_count = workspace_clients.active.count
     result = StripeBilling.create_checkout_session(
       user: current_user,
       plan_tier: params[:plan],

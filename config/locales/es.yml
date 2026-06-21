@@ -55,6 +55,21 @@ es:
       short: "%-d %b, %H:%M"
       long: "%-d de %B de %Y %H:%M"
       short_time: "%H:%M"
+  activerecord:
+    attributes:
+      user:
+        name: "Nombre"
+        email: "Email"
+        password: "Contraseña"
+        password_confirmation: "Confirmar contraseña"
+        time_zone: "Zona horaria"
+        account_type: "Tipo de espacio"
+      session:
+        currency: "Moneda"
+        notes: "Notas"
+      client_billing_profile:
+        currency: "Moneda"
+        notes: "Notas"
   app_name: "Sessia"
   app:
     session_os: "Sistema de sesiones"
@@ -66,6 +81,7 @@ es:
     remove: "Quitar"
     cancel: "Cancelar"
     open: "Abrir"
+    edit: "Editar"
   filters:
     from: "Desde"
     to: "Hasta"
@@ -73,6 +89,89 @@ es:
     apply: "Aplicar filtros"
   auth:
     sign_out: "Cerrar sesión"
+    or: "o"
+    sign_in:
+      title: "Ingresar"
+      copy: "Abrí tu espacio de sesiones."
+      google: "Ingresar con Google"
+      submit: "Ingresar"
+    sign_up:
+      title: "Crear tu cuenta"
+      copy: "Configurá tu espacio de sesiones en un minuto. Tu prueba gratis de 14 días empieza automáticamente."
+      trial_title: "Prueba gratis incluida"
+      trial_copy: "No necesitás tarjeta para empezar. Podés elegir un plan pago más adelante desde Suscripciones."
+      google: "Registrarme con Google"
+      detected_timezone: "Detectado desde este navegador como"
+      change_timezone: "Podés cambiarlo."
+      workspace_type: "Tipo de espacio"
+      submit: "Crear cuenta"
+      legal_intro: "Al crear una cuenta, aceptás los"
+      legal_and: "y la"
+      terms: "Términos"
+      privacy: "Política de Privacidad"
+      have_account: "¿Ya tenés cuenta?"
+      account_types:
+        professional:
+          title: "Profesional independiente"
+          copy: "Gestiono mis propios clientes y sesiones."
+        studio:
+          title: "Estudio"
+          copy: "Gestiono varios profesionales desde un mismo espacio."
+    passwords:
+      reset_title: "Resetear contraseña"
+      reset_copy: "Te vamos a enviar un link seguro para resetearla."
+      send_reset: "Enviar link"
+      back_to_sign_in: "Volver a ingresar"
+      edit_title: "Elegí una nueva contraseña"
+      edit_copy: "Usá al menos ocho caracteres."
+      update: "Actualizar contraseña"
+  flash:
+    auth:
+      signed_in: "Ingresaste correctamente."
+      invalid: "Email o contraseña inválidos."
+      signed_out: "Cerraste sesión."
+      welcome: "Bienvenido a Sessia."
+      sign_in_required: "Ingresá para continuar."
+    password_resets:
+      sent: "Si ese email existe, Sessia envió instrucciones para resetear la contraseña."
+      invalid: "Ese link para resetear la contraseña es inválido o expiró."
+      updated: "Tu contraseña fue actualizada."
+    clients:
+      created: "Cliente creado."
+      updated: "Cliente actualizado."
+      archived: "Cliente archivado de Sessia."
+      billing_updated: "Configuración de pagos del cliente actualizada."
+    sessions:
+      scheduled: "Sesión agendada."
+      updated: "Sesión actualizada."
+      removed: "Sesión eliminada."
+      add_price_for_link: "Agregá un precio de sesión antes de generar un link de pago."
+      add_price_for_payment: "Agregá un precio de sesión antes de registrar un pago."
+      payment_link_ready: "El link de pago de Mercado Pago está listo."
+      payment_link_regenerated: "Link de pago de Mercado Pago regenerado."
+      manual_payment_recorded: "Pago manual registrado."
+      payment_waived: "Pago de sesión bonificado."
+      charge_cancelled: "Cargo cancelado."
+      google_calendar_unavailable: "La sincronización con Google Calendar no está disponible temporalmente."
+      google_calendar_synced: "Sesión sincronizada con Google Calendar."
+      google_calendar_failed: "No se pudo sincronizar la sesión con Google Calendar."
+    settings:
+      account_updated: "Configuración de cuenta actualizada."
+      working_hours_updated: "Horarios de trabajo actualizados."
+      working_hours_failed: "No se pudieron guardar los horarios de trabajo."
+      whatsapp_updated: "Configuración de WhatsApp actualizada."
+      password_reset_sent: "Se enviaron instrucciones para resetear la contraseña a %{email}."
+    mercado_pago:
+      not_configured: "Mercado Pago todavía no está configurado."
+      connection_failed: "No se pudo verificar la conexión con Mercado Pago."
+      connected: "Mercado Pago conectado."
+      disconnected: "Mercado Pago desconectado."
+  mailers:
+    password_reset:
+      greeting: "Hola %{name},"
+      copy: "Usá el link de abajo para resetear tu contraseña de Sessia. El link vence en dos horas."
+      action: "Resetear contraseña"
+      ignore: "Si no pediste este cambio, podés ignorar este email."
   common:
     no: "No"
     not_set: "No configurado"
@@ -118,6 +217,7 @@ es:
     settings: "Configuración"
     ai_settings: "Asistente IA"
     billing: "Suscripciones"
+    team_members: "Equipo"
   errors:
     format: "%{attribute} %{message}"
     messages:
@@ -144,11 +244,33 @@ es:
     agenda: "Agenda"
     sessions: "Sesiones"
     clients: "Clientes"
+    team: "Equipo"
     ai_assistant: "Asistente IA"
     payments: "Pagos"
     subscriptions: "Suscripciones"
     analytics: "Analítica"
     settings: "Configuración"
+  team:
+    eyebrow: "Estudio"
+    title: "Equipo"
+    professor: "Profesor"
+    all_professors: "Todos los profesores"
+    new_professor: "Nuevo profesor"
+    new_title: "Agregar profesor"
+    edit_title: "Editar profesor"
+    empty_title: "Todavía no hay profesores"
+    empty_body: "Agregá el primer profesor para que el estudio pueda asignar clientes y sesiones."
+    table:
+      professor: "Profesor"
+      clients: "Clientes"
+      sessions: "Sesiones"
+      locale: "Idioma"
+    form:
+      name: "Nombre"
+      email: "Email"
+      password: "Contraseña temporal"
+      new_password: "Nueva contraseña"
+      password_confirmation: "Confirmar contraseña"
   plans:
     client_limit: "Hasta %{count} clientes activos"
     trial:
@@ -223,6 +345,9 @@ es:
     unavailable_time: "Horario no disponible"
     legend: "Leyenda del calendario"
     paid_session: "Sesión pagada"
+    empty_day:
+      title: "No hay sesiones este día"
+      body: "Ningún profesor tiene sesiones agendadas para el día seleccionado."
     views:
       week: "Semana"
       month: "Mes"
@@ -255,6 +380,8 @@ es:
         one: "1 sesión cancelada y enviada a la IA para reagendar."
         other: "%{count} sesiones canceladas y enviadas a la IA para reagendar."
   sessions:
+    defaults:
+      title: "Sesión"
     new:
       title: "Nueva sesión"
     edit:
@@ -320,11 +447,37 @@ es:
       ai_ready: "Seguimiento con IA listo"
       ai_copy: "La confirmación, recordatorios, feedback y escalaciones se configuran desde el área de Asistente IA."
       open_ai_settings: "Abrir configuración de IA"
+      payment_due: "Vence %{date}"
+      payment_no_charge: "Esta sesión con precio todavía no tiene un cargo de pago."
+      payment_add_price: "Agregá un precio para generar un link de pago de Mercado Pago."
+      generate_payment_link: "Generar link de pago"
+      mercado_pago_connect_first: "Conectá Mercado Pago en Configuración antes de generar links de pago para clientes."
+      regenerate_payment_link: "Regenerar link de pago"
+      waive_payment: "Bonificar pago"
+      cancel_charge: "Cancelar cargo"
+      record_manual_payment: "Registrar pago manual"
+      payment_history: "Historial de pagos"
+      manual_payment:
+        amount: "Monto"
+        paid_on: "Pagado el"
+        cash: "Efectivo"
+        transfer: "Transferencia"
+        other: "Otro"
+        note: "Nota"
+        submit: "Registrar pago"
     form:
       client: "Cliente"
       choose_client: "Elegir cliente"
+      professor: "Profesor"
+      professor_hint: "La lista de clientes y los bloques disponibles se actualizan para el profesor elegido."
       title: "Tipo o título de sesión"
       price: "Precio de la sesión"
+      payment_required:
+        title: "Pago requerido antes de la sesión"
+        copy: "Usalo cuando el cliente deba pagar antes de la fecha del turno."
+      generate_payment_link:
+        title: "Generar link de pago de Mercado Pago"
+        copy: "Crea un cargo de sesión y un link de Checkout Pro después de guardar."
       blocks: "Bloques de sesión"
       blocks_hint: "Elegí uno o más bloques de 30 minutos en el mismo día. Solo se pueden elegir horarios de trabajo sin sesiones ni bloqueos."
       recurrent: "Recurrente"
@@ -378,6 +531,16 @@ es:
       connect_copy: "Conectá Google Calendar para que Sessia pueda agregar sesiones a tu calendario principal cuando actives la sincronización."
       connect: "Conectar Google Calendar"
       env_missing: "Agregá GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET para activar esta integración."
+    mercado_pago:
+      copy: "Mercado Pago permite que tus clientes te paguen directamente. Sessia usa Stripe solo para tu suscripción a la plataforma."
+      status: "Estado"
+      provider_account: "Cuenta del proveedor"
+      connected_at: "Conectado"
+      ready: "Listo"
+      connect: "Conectar Mercado Pago"
+      reconnect: "Reconectar Mercado Pago"
+      disconnect: "Desconectar Mercado Pago"
+      env_missing: "Configurá MERCADO_PAGO_CLIENT_ID, MERCADO_PAGO_CLIENT_SECRET y MERCADO_PAGO_REDIRECT_URI para activar Mercado Pago."
     password_reset:
       title: "Resetear contraseña"
       copy_html: "Enviar un link para resetear contraseña a <strong>%{email}</strong>. El link vence después de 2 horas."
@@ -420,6 +583,17 @@ es:
     summary:
       paid: "Clases pagadas"
       unpaid: "Clases sin pagar"
+      overdue: "Vencidas"
+      paid_this_month: "Pagadas este mes"
+    charges:
+      title: "Cargos"
+      client: "Cliente"
+      concept: "Concepto"
+      due: "Vencimiento"
+      status: "Estado"
+      amount: "Monto"
+      empty_title: "Todavía no hay cargos"
+      empty_body: "Los cargos de sesiones y links de pago de Mercado Pago van a aparecer acá."
     clients:
       title: "Pagos por cliente"
       client: "Cliente"
@@ -463,6 +637,23 @@ es:
       schedule: "Agendar"
       no_sessions_title: "Todavía no hay sesiones"
       no_sessions_body: "Agendá una primera sesión con %{name}."
+    billing:
+      title: "Pagos"
+      pending_charges: "Cargos pendientes"
+      paid_sessions: "Sesiones pagadas"
+      credit_balance: "Saldo a favor"
+      default_session_price: "Precio por defecto de la sesión"
+      payment_required:
+        title: "Pago requerido antes de la sesión"
+        copy: "Las nuevas sesiones de este cliente van a heredar esta configuración."
+      due_timing: "Momento de vencimiento"
+      custom_days_before: "Días antes personalizados"
+      save: "Guardar configuración de pagos"
+      due_timings:
+        same_day: "Mismo día"
+        before_session: "Antes de la sesión"
+        after_session: "Después de la sesión"
+        custom: "Personalizado"
     index:
       eyebrow: "Clientes"
       title: "Espacio de clientes"

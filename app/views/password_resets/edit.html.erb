@@ -2,8 +2,8 @@
   <section class="auth-panel">
     <div class="auth-heading">
       <%= link_to "Sessia", root_path, class: "public-brand" %>
-      <h1>Choose a new password</h1>
-      <p>Use at least eight characters.</p>
+      <h1><%= t("auth.passwords.edit_title") %></h1>
+      <p><%= t("auth.passwords.edit_copy") %></p>
     </div>
 
     <%= render "shared/form_errors", object: @user %>
@@ -17,7 +17,7 @@
         <%= form.label :password_confirmation %>
         <%= form.password_field :password_confirmation, autocomplete: "new-password" %>
       </div>
-      <%= form.submit "Update password", class: "primary-button full" %>
+      <%= form.submit t("auth.passwords.update"), class: "primary-button full" %>
     <% end %>
   </section>
 </main>

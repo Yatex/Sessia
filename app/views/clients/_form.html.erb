@@ -1,6 +1,12 @@
 <%= render "shared/form_errors", object: client %>
 
 <%= form_with model: client, class: "form-grid" do |form| %>
+  <% if studio_workspace? %>
+    <div class="field full-span">
+      <%= form.label :user_id, t("team.professor") %>
+      <%= form.select :user_id, options_from_collection_for_select(workspace_professionals, :id, :name, client.user_id) %>
+    </div>
+  <% end %>
   <div class="field">
     <%= form.label :name %>
     <%= form.text_field :name, autofocus: true %>

@@ -2,7 +2,7 @@ class ApplicationController < ActionController::Base
   around_action :use_current_locale
   around_action :use_current_user_time_zone
 
-  helper_method :current_user, :authenticated?
+  helper_method :current_user, :authenticated?, :workspace_user_ids, :workspace_professionals, :studio_workspace?
 
   private
 
@@ -17,7 +17,39 @@ class ApplicationController < ActionController::Base
   def authenticate_user!
     return if authenticated?
 
-    redirect_to sign_in_path, alert: "Sign in to continue."
+    redirect_to sign_in_path, alert: t("flash.auth.sign_in_required")
+  end
+
+  def workspace_user_ids
+    return [] unless current_user
+
+    @workspace_user_ids ||= current_user.workspace_user_ids
+  end
+
+  def workspace_professionals
+    return User.none unless current_user
+
+    @workspace_professionals ||= current_user.workspace_professionals
+  end
+
+  def studio_workspace?
+    current_user&.studio?
+  end
+
+  def workspace_clients
+    Client.where(user_id: workspace_user_ids)
+  end
+
+  def workspace_sessions
+    Session.where(user_id: workspace_user_ids)
+  end
+
+  def workspace_charges
+    Charge.where(user_id: workspace_user_ids)
+  end
+
+  def workspace_payments
+    Payment.where(user_id: workspace_user_ids)
   end
 
   def require_guest!

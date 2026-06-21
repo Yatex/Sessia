@@ -11,6 +11,13 @@
     <%= form.hidden_field :start_time, value: @session_start_value, data: { session_start_field: true } %>
     <%= form.hidden_field :end_time, value: @session_end_value, data: { session_end_time: true } %>
     <%= form.hidden_field :recurrence_frequency, value: (session_record.recurring? ? "weekly" : "none"), data: { recurrence_frequency_field: true } %>
+    <% if studio_workspace? %>
+      <div class="field">
+        <%= form.label :user_id, t("sessions.form.professor") %>
+        <%= form.select :user_id, options_from_collection_for_select(@session_professionals, :id, :name, (@selected_session_owner || session_record.user).id), {}, data: { session_professor_select: true } %>
+        <small class="field-hint"><%= t("sessions.form.professor_hint") %></small>
+      </div>
+    <% end %>
     <div class="field">
       <%= form.label :client_id, t("sessions.form.client") %>
       <%= form.select :client_id, @clients.map { |client| [client.name, client.id] }, include_blank: t("sessions.form.choose_client") %>
@@ -31,8 +38,8 @@
       <label class="toggle-row compact">
         <%= form.check_box :payment_required_before_session %>
         <span>
-          <strong>Payment required before session</strong>
-          <small>Use this when the client should pay before the appointment date.</small>
+          <strong><%= t("sessions.form.payment_required.title") %></strong>
+          <small><%= t("sessions.form.payment_required.copy") %></small>
         </span>
       </label>
     </div>
@@ -40,8 +47,8 @@
       <label class="toggle-row compact">
         <%= check_box_tag "session[generate_payment_link]", "1", false %>
         <span>
-          <strong>Generate Mercado Pago payment link</strong>
-          <small>Create a session charge and Checkout Pro link after saving.</small>
+          <strong><%= t("sessions.form.generate_payment_link.title") %></strong>
+          <small><%= t("sessions.form.generate_payment_link.copy") %></small>
         </span>
       </label>
     </div>

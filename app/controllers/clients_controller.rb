@@ -4,7 +4,9 @@ class ClientsController < ApplicationController
 
   def index
     @filters = client_filter_params
-    @clients = current_user.clients.alphabetical
+    @filter_professionals = workspace_professionals
+    @clients = workspace_clients.includes(:user).alphabetical
+    @clients = @clients.where(user_id: scoped_professional_id(@filters[:user_id])) if @filters[:user_id].present?
     @clients = @clients.where(status: @filters[:status]) if Client.statuses.key?(@filters[:status])
     @clients = @clients.where.not(linked_at: nil) if @filters[:linked] == "linked"
     @clients = @clients.where(linked_at: nil) if @filters[:linked] == "unlinked"
@@ -20,18 +22,19 @@ class ClientsController < ApplicationController
 
   def show
     @sessions = @client.sessions.chronological.limit(12)
-    @billing_profile = @client.billing_profile || @client.build_billing_profile(user: current_user)
+    @billing_profile = @client.billing_profile || @client.build_billing_profile(user: @client.user)
   end
 
   def new
-    @client = current_user.clients.new(preferred_contact_channel: Client::WHATSAPP_CHANNEL)
+    @client = default_client_owner.clients.new(preferred_contact_channel: Client::WHATSAPP_CHANNEL)
   end
 
   def create
-    @client = current_user.clients.new(client_params)
+    owner = client_owner_from_params
+    @client = owner.clients.new(client_params.except(:user_id))
 
     if @client.save
-      redirect_to @client, notice: "Client created."
+      redirect_to @client, notice: t("flash.clients.created")
     else
       render :new, status: :unprocessable_entity
     end
@@ -42,7 +45,8 @@ class ClientsController < ApplicationController
 
   def update
     if @client.update(client_params)
-      redirect_to @client, notice: "Client updated."
+      @client.billing_profile&.update!(user: @client.user)
+      redirect_to @client, notice: t("flash.clients.updated")
     else
       render :edit, status: :unprocessable_entity
     end
@@ -50,7 +54,7 @@ class ClientsController < ApplicationController
 
   def destroy
     if @client.destroy
-      redirect_to clients_path, notice: "Client archived from Sessia."
+      redirect_to clients_path, notice: t("flash.clients.archived")
     else
       redirect_to @client, alert: @client.errors.full_messages.to_sentence
     end
@@ -59,14 +63,34 @@ class ClientsController < ApplicationController
   private
 
   def set_client
-    @client = current_user.clients.find(params[:id])
+    @client = workspace_clients.find(params[:id])
   end
 
   def client_params
-    params.require(:client).permit(:name, :email, :phone, :status, :notes)
+    permitted = params.require(:client).permit(:user_id, :name, :email, :phone, :status, :notes)
+    if studio_workspace? && permitted[:user_id].present?
+      permitted[:user_id] = workspace_professionals.find(permitted[:user_id]).id
+    else
+      permitted.delete(:user_id)
+    end
+    permitted
   end
 
   def client_filter_params
-    params.permit(:query, :status, :linked)
+    params.permit(:query, :status, :linked, :user_id)
+  end
+
+  def default_client_owner
+    studio_workspace? ? workspace_professionals.first || current_user : current_user
+  end
+
+  def client_owner_from_params
+    return current_user unless studio_workspace?
+
+    workspace_professionals.find_by(id: client_params[:user_id]) || default_client_owner
+  end
+
+  def scoped_professional_id(user_id)
+    workspace_professionals.where(id: user_id).pick(:id)
   end
 end

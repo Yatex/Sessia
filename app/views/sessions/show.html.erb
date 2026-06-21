@@ -12,6 +12,9 @@
 <section class="detail-layout">
   <aside class="detail-panel">
     <dl class="detail-list">
+      <% if studio_workspace? %>
+        <div><dt><%= t("team.professor") %></dt><dd><%= @session.user.name %></dd></div>
+      <% end %>
       <div><dt><%= t("sessions.show.client") %></dt><dd><%= link_to @session.client.name, client_path(@session.client), class: "text-link" %></dd></div>
       <div><dt><%= t("sessions.show.time") %></dt><dd><%= l(@session.start_time, format: :long) %><br><%= session_time_range(@session) %></dd></div>
       <div><dt><%= t("sessions.show.duration") %></dt><dd><%= t("sessions.show.minutes", count: @session.duration_minutes) %></dd></div>
@@ -72,17 +75,17 @@
     <div class="action-strip payment-action-strip">
       <span>Mercado Pago</span>
       <p>
-        <% if charge.present? %>
-          <strong><%= money_from_cents(charge.amount_cents, charge.currency) %></strong>
-          · <%= payment_status_badge(@session.payment_status) %>
-          <% if charge.due_date.present? %>
-            · Due <%= l(charge.due_date, format: :long) %>
+          <% if charge.present? %>
+            <strong><%= money_from_cents(charge.amount_cents, charge.currency) %></strong>
+            · <%= payment_status_badge(@session.payment_status) %>
+            <% if charge.due_date.present? %>
+            · <%= t("sessions.show.payment_due", date: l(charge.due_date, format: :long)) %>
+            <% end %>
+          <% elsif @session.priced? %>
+          <%= t("sessions.show.payment_no_charge") %>
+          <% else %>
+          <%= t("sessions.show.payment_add_price") %>
           <% end %>
-        <% elsif @session.priced? %>
-          This priced session does not have a payment charge yet.
-        <% else %>
-          Add a price to generate a Mercado Pago payment link.
-        <% end %>
       </p>
 
       <% if charge&.payment_url.present? %>
@@ -90,34 +93,34 @@
           <input type="text" readonly value="<%= charge.payment_url %>">
         </div>
       <% elsif current_user.mercado_pago_account&.connected? %>
-        <%= button_to "Generate payment link", generate_payment_link_session_path(@session), method: :post, class: "secondary-button" %>
+        <%= button_to t("sessions.show.generate_payment_link"), generate_payment_link_session_path(@session), method: :post, class: "secondary-button" %>
       <% else %>
-        <p class="field-hint calendar-error">Connect Mercado Pago in Settings before generating client payment links.</p>
+        <p class="field-hint calendar-error"><%= t("sessions.show.mercado_pago_connect_first") %></p>
       <% end %>
 
       <div class="integration-actions">
         <% if charge.present? %>
-          <%= button_to "Regenerate payment link", regenerate_payment_link_session_path(@session), method: :post, class: "secondary-button compact" %>
-          <%= button_to "Waive payment", waive_payment_session_path(@session), method: :patch, class: "ghost-button compact" %>
-          <%= button_to "Cancel charge", cancel_charge_session_path(@session), method: :patch, class: "ghost-button compact" %>
+          <%= button_to t("sessions.show.regenerate_payment_link"), regenerate_payment_link_session_path(@session), method: :post, class: "secondary-button compact" %>
+          <%= button_to t("sessions.show.waive_payment"), waive_payment_session_path(@session), method: :patch, class: "ghost-button compact" %>
+          <%= button_to t("sessions.show.cancel_charge"), cancel_charge_session_path(@session), method: :patch, class: "ghost-button compact" %>
         <% end %>
       </div>
 
       <% if charge.present? %>
         <details class="manual-payment-details">
-          <summary>Record manual payment</summary>
+          <summary><%= t("sessions.show.record_manual_payment") %></summary>
           <%= form_with url: record_manual_payment_session_path(@session), method: :post, class: "inline-payment-form" do |form| %>
-            <%= form.number_field :amount, min: 0, step: "0.01", value: @session.price, aria: { label: "Amount" } %>
-            <%= form.date_field :paid_on, value: Date.current.iso8601, aria: { label: "Paid on" } %>
-            <%= form.select :method, [["Cash", "cash"], ["Transfer", "transfer"], ["Other", "other"]] %>
-            <%= form.text_field :note, placeholder: "Note" %>
-            <%= form.submit "Record payment", class: "secondary-button compact" %>
+            <%= form.number_field :amount, min: 0, step: "0.01", value: @session.price, aria: { label: t("sessions.show.manual_payment.amount") } %>
+            <%= form.date_field :paid_on, value: Date.current.iso8601, aria: { label: t("sessions.show.manual_payment.paid_on") } %>
+            <%= form.select :method, [[t("sessions.show.manual_payment.cash"), "cash"], [t("sessions.show.manual_payment.transfer"), "transfer"], [t("sessions.show.manual_payment.other"), "other"]] %>
+            <%= form.text_field :note, placeholder: t("sessions.show.manual_payment.note") %>
+            <%= form.submit t("sessions.show.manual_payment.submit"), class: "secondary-button compact" %>
           <% end %>
         </details>
 
         <% if charge.payments.any? %>
           <div class="payment-history">
-            <strong>Payment history</strong>
+            <strong><%= t("sessions.show.payment_history") %></strong>
             <% charge.payments.recent.each do |payment| %>
               <p>
                 <%= status_badge(payment.status) %>

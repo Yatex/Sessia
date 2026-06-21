@@ -6,67 +6,88 @@
 
   <div class="calendar-actions">
     <div class="segmented-control" aria-label="<%= t("dashboard.calendar_view") %>">
-      <%= link_to t("dashboard.views.week"), dashboard_path(view: "week", date: @selected_date.iso8601), class: @view_mode == "week" ? "active" : nil %>
-      <%= link_to t("dashboard.views.month"), dashboard_path(view: "month", date: @selected_date.iso8601), class: @view_mode == "month" ? "active" : nil %>
+      <%= link_to t("dashboard.views.week"), dashboard_path(view: "week", date: @selected_date.iso8601, user_id: @selected_professional_id), class: @view_mode == "week" ? "active" : nil %>
+      <%= link_to t("dashboard.views.month"), dashboard_path(view: "month", date: @selected_date.iso8601, user_id: @selected_professional_id), class: @view_mode == "month" ? "active" : nil %>
     </div>
-    <%= link_to t("dashboard.previous"), dashboard_path(view: @view_mode, date: @previous_date.iso8601), class: "secondary-button" %>
-    <%= link_to t("dashboard.today"), dashboard_path(view: @view_mode, date: Date.current.iso8601), class: "secondary-button" %>
-    <%= link_to t("dashboard.next"), dashboard_path(view: @view_mode, date: @next_date.iso8601), class: "secondary-button" %>
-    <details class="agenda-block-menu">
-      <summary class="secondary-button"><%= t("dashboard.block_time.action") %></summary>
-      <div class="agenda-block-panel">
-        <div class="section-heading compact">
-          <div>
-            <p class="eyebrow"><%= t("dashboard.eyebrow") %></p>
-            <h2><%= t("dashboard.block_time.heading") %></h2>
+    <%= link_to t("dashboard.previous"), dashboard_path(view: @view_mode, date: @previous_date.iso8601, user_id: @selected_professional_id), class: "secondary-button" %>
+    <%= link_to t("dashboard.today"), dashboard_path(view: @view_mode, date: Date.current.iso8601, user_id: @selected_professional_id), class: "secondary-button" %>
+    <%= link_to t("dashboard.next"), dashboard_path(view: @view_mode, date: @next_date.iso8601, user_id: @selected_professional_id), class: "secondary-button" %>
+    <% unless @studio_resource_view %>
+      <details class="agenda-block-menu">
+        <summary class="secondary-button"><%= t("dashboard.block_time.action") %></summary>
+        <div class="agenda-block-panel">
+          <div class="section-heading compact">
+            <div>
+              <p class="eyebrow"><%= t("dashboard.eyebrow") %></p>
+              <h2><%= t("dashboard.block_time.heading") %></h2>
+            </div>
           </div>
+          <p class="panel-copy">
+            <%= t("dashboard.block_time.copy") %>
+          </p>
+
+          <%= form_with model: @schedule_block, url: dashboard_schedule_block_path, class: "form-stack" do |form| %>
+            <%= hidden_field_tag :view, @view_mode %>
+            <%= hidden_field_tag :date, @selected_date.iso8601 %>
+            <%= hidden_field_tag :user_id, @selected_professional_id %>
+            <div class="field">
+              <%= form.label :title, t("dashboard.block_time.title") %>
+              <%= form.text_field :title, placeholder: t("dashboard.block_time.title_placeholder") %>
+            </div>
+            <div class="field">
+              <%= form.label :starts_at, t("dashboard.block_time.starts") %>
+              <%= form.datetime_local_field :starts_at %>
+            </div>
+            <div class="field">
+              <%= form.label :ends_at, t("dashboard.block_time.ends") %>
+              <%= form.datetime_local_field :ends_at %>
+            </div>
+            <div class="field">
+              <%= form.label :notes, t("dashboard.block_time.notes") %>
+              <%= form.text_area :notes, rows: 3 %>
+            </div>
+            <div class="form-actions">
+              <%= form.submit t("dashboard.block_time.submit"), class: "primary-button" %>
+            </div>
+          <% end %>
+
+          <% if @schedule_blocks.any? %>
+            <div class="blocked-time-list compact">
+              <% @schedule_blocks.each do |block| %>
+                <article>
+                  <div>
+                    <strong><%= block.title %></strong>
+                    <span><%= l(block.starts_at, format: :short) %> - <%= l(block.ends_at, format: :short) %></span>
+                  </div>
+                  <%= button_to t("actions.remove"), destroy_dashboard_schedule_block_path(block, view: @view_mode, date: @selected_date.iso8601, user_id: @selected_professional_id), method: :delete, class: "ghost-button" %>
+                </article>
+              <% end %>
+            </div>
+          <% end %>
         </div>
-        <p class="panel-copy">
-          <%= t("dashboard.block_time.copy") %>
-        </p>
-
-        <%= form_with model: @schedule_block, url: dashboard_schedule_block_path, class: "form-stack" do |form| %>
-          <%= hidden_field_tag :view, @view_mode %>
-          <%= hidden_field_tag :date, @selected_date.iso8601 %>
-          <div class="field">
-            <%= form.label :title, t("dashboard.block_time.title") %>
-            <%= form.text_field :title, placeholder: t("dashboard.block_time.title_placeholder") %>
-          </div>
-          <div class="field">
-            <%= form.label :starts_at, t("dashboard.block_time.starts") %>
-            <%= form.datetime_local_field :starts_at %>
-          </div>
-          <div class="field">
-            <%= form.label :ends_at, t("dashboard.block_time.ends") %>
-            <%= form.datetime_local_field :ends_at %>
-          </div>
-          <div class="field">
-            <%= form.label :notes, t("dashboard.block_time.notes") %>
-            <%= form.text_area :notes, rows: 3 %>
-          </div>
-          <div class="form-actions">
-            <%= form.submit t("dashboard.block_time.submit"), class: "primary-button" %>
-          </div>
-        <% end %>
-
-        <% if @schedule_blocks.any? %>
-          <div class="blocked-time-list compact">
-            <% @schedule_blocks.each do |block| %>
-              <article>
-                <div>
-                  <strong><%= block.title %></strong>
-                  <span><%= l(block.starts_at, format: :short) %> - <%= l(block.ends_at, format: :short) %></span>
-                </div>
-                <%= button_to t("actions.remove"), destroy_dashboard_schedule_block_path(block, view: @view_mode, date: @selected_date.iso8601), method: :delete, class: "ghost-button" %>
-              </article>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-    </details>
+      </details>
+    <% end %>
     <%= link_to t("actions.new_session"), new_session_path, class: "primary-button" %>
   </div>
 </section>
+
+<% if studio_workspace? %>
+  <section class="filter-panel compact-filter-panel">
+    <%= form_with url: dashboard_path, method: :get, local: true, class: "filter-form" do %>
+      <%= hidden_field_tag :view, @view_mode %>
+      <%= hidden_field_tag :date, @selected_date.iso8601 %>
+      <div class="filter-grid">
+        <div class="field">
+          <%= label_tag :user_id, t("team.professor") %>
+          <%= select_tag :user_id, options_from_collection_for_select(@filter_professionals, :id, :name, @selected_professional_id), include_blank: t("team.all_professors") %>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <%= submit_tag t("filters.apply"), class: "primary-button" %>
+      </div>
+    <% end %>
+  </section>
+<% end %>
 
 <% if @view_mode == "month" %>
   <section class="month-calendar">
@@ -76,7 +97,7 @@
 
     <% @calendar_days.each do |day| %>
       <% day_sessions = @sessions_by_day.fetch(day, []) %>
-      <%= link_to dashboard_path(view: "week", date: day.iso8601), class: "month-day #{'today' if day == Date.current} #{'outside-month' if day.month != @month_start.month}" do %>
+      <%= link_to dashboard_path(view: "week", date: day.iso8601, user_id: @selected_professional_id), class: "month-day #{'today' if day == Date.current} #{'outside-month' if day.month != @month_start.month}" do %>
         <header>
           <span><%= day.day %></span>
           <% if day == Date.current %>
@@ -94,6 +115,90 @@
           <span class="signal-count danger"><%= t("dashboard.counts.unpaid", count: unpaid_payment_count(day_sessions)) %></span>
         </div>
       <% end %>
+    <% end %>
+  </section>
+<% elsif @studio_resource_view %>
+  <section class="studio-day-strip" aria-label="<%= t("dashboard.weekly_agenda") %>">
+    <% @calendar_days.each do |day| %>
+      <%= link_to dashboard_path(view: "week", date: day.iso8601), class: "studio-day-tab #{'active' if day == @resource_day} #{'today' if day == Date.current}" do %>
+        <span><%= l(day, format: "%a") %></span>
+        <strong><%= day.day %></strong>
+      <% end %>
+    <% end %>
+  </section>
+
+  <section class="week-scheduler resource-scheduler" aria-label="<%= t("dashboard.weekly_agenda") %>">
+    <% if @resource_professionals.empty? %>
+      <div class="empty-state">
+        <h2><%= t("team.empty_title") %></h2>
+        <p><%= t("team.empty_body") %></p>
+        <%= link_to t("team.new_professor"), new_team_member_path, class: "primary-button" %>
+      </div>
+    <% elsif @sessions.empty? %>
+      <div class="empty-state studio-empty-day">
+        <h2><%= t("dashboard.empty_day.title") %></h2>
+        <p><%= t("dashboard.empty_day.body") %></p>
+        <%= link_to t("actions.new_session"), new_session_path(date: @resource_day.iso8601), class: "primary-button" %>
+      </div>
+    <% else %>
+      <div class="week-grid resource-grid" style="grid-template-columns: 76px repeat(<%= @resource_professionals.size %>, minmax(180px, 1fr));">
+        <div class="week-grid-corner"><%= t("dashboard.time") %></div>
+
+        <% @resource_professionals.each do |professional| %>
+          <div class="week-grid-day resource-grid-professor">
+            <span><%= t("team.professor") %></span>
+            <strong><%= professional.name %></strong>
+          </div>
+        <% end %>
+
+        <% @time_slots.each do |slot_minutes| %>
+          <div class="week-grid-time"><%= slot_time_label(slot_minutes) %></div>
+
+          <% @resource_professionals.each do |professional| %>
+            <% slot_start = calendar_slot_time(@resource_day, slot_minutes) %>
+            <% slot_end = slot_start + DashboardController::SLOT_MINUTES.minutes %>
+            <% slot_sessions = @sessions_by_professional_slot.fetch([professional.id, slot_minutes], []) %>
+
+            <% if slot_sessions.any? %>
+              <% session_record = slot_sessions.first %>
+              <% starts_in_slot = session_record.start_time >= slot_start && session_record.start_time < slot_end %>
+              <% continues_after_slot = session_record.end_time > slot_end %>
+              <div class="calendar-slot occupied <%= slot_session_tone(session_record) %> <%= "session-continuation" unless starts_in_slot %> <%= "session-continues" if continues_after_slot %>">
+                <% if starts_in_slot %>
+                  <%= link_to session_path(session_record), class: "slot-open-link" do %>
+                    <div class="slot-main-line">
+                      <strong><%= session_record.client.name %></strong>
+                      <%= session_payment_icon(session_record) %>
+                    </div>
+                    <span><%= session_record.title %></span>
+                  <% end %>
+                  <% if slot_sessions.size > 1 %>
+                    <b>+<%= slot_sessions.size - 1 %></b>
+                  <% end %>
+                  <% unless session_record.payment_paid? %>
+                    <%= button_to t("payments.mark_paid_short"), mark_paid_session_path(session_record), method: :patch, class: "slot-mark-paid", form: { class: "slot-mark-paid-form" } %>
+                  <% end %>
+                <% else %>
+                  <%= link_to session_path(session_record), class: "slot-continuation-link", aria: { label: session_record.title } do %>
+                    <span class="visually-hidden"><%= session_record.title %></span>
+                  <% end %>
+                <% end %>
+              </div>
+            <% else %>
+              <% available_slot = @available_slots_by_professional_key.fetch([professional.id, slot_minutes], nil) %>
+              <% if available_slot %>
+                <%= link_to new_session_path(start_at: available_slot.starts_at.iso8601, user_id: professional.id), class: "calendar-slot empty" do %>
+                  <span><%= t("dashboard.free") %></span>
+                <% end %>
+              <% else %>
+                <div class="calendar-slot unavailable" aria-label="<%= t("dashboard.unavailable_time") %>">
+                  <span><%= t("dashboard.unavailable") %></span>
+                </div>
+              <% end %>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
     <% end %>
   </section>
 <% else %>
@@ -127,6 +232,9 @@
                     <strong><%= session_record.client.name %></strong>
                     <%= session_payment_icon(session_record) %>
                   </div>
+                  <% if studio_workspace? && @selected_professional_id.blank? %>
+                    <small><%= session_record.user.name %></small>
+                  <% end %>
                   <span><%= session_record.title %></span>
                 <% end %>
                 <% if slot_sessions.size > 1 %>
@@ -164,41 +272,4 @@
   <span><i class="slot-pending"></i> <%= t("statuses.pending") %></span>
   <span><i class="slot-cancelled"></i> <%= t("statuses.cancelled") %></span>
   <span><i class="slot-paid">$</i> <%= t("statuses.paid") %></span>
-</section>
-
-<section class="table-panel">
-  <div class="section-heading">
-    <h2>Payments</h2>
-    <%= link_to t("navigation.payments"), payments_path, class: "text-link" %>
-  </div>
-  <div class="integration-status">
-    <div>
-      <span>Unpaid sessions</span>
-      <strong><%= @payment_dashboard[:unpaid_sessions] %></strong>
-    </div>
-    <div>
-      <span>Paid this month</span>
-      <strong><%= @payment_dashboard[:paid_this_month] %></strong>
-    </div>
-    <div>
-      <span>Overdue charges</span>
-      <strong><%= @payment_dashboard[:overdue_charges] %></strong>
-    </div>
-  </div>
-  <% if @payment_dashboard[:recent_payments].any? || @payment_dashboard[:clients_with_pending_balance].any? %>
-    <div class="two-column-list">
-      <div>
-        <strong>Recent payments</strong>
-        <% @payment_dashboard[:recent_payments].each do |payment| %>
-          <p><%= payment.client.name %> · <%= money_from_cents(payment.amount_cents, payment.currency) %></p>
-        <% end %>
-      </div>
-      <div>
-        <strong>Clients with pending balance</strong>
-        <% @payment_dashboard[:clients_with_pending_balance].each do |client| %>
-          <p><%= link_to client.name, client_path(client), class: "text-link" %></p>
-        <% end %>
-      </div>
-    </div>
-  <% end %>
 </section>

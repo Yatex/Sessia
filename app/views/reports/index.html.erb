@@ -5,6 +5,22 @@
   </div>
 </section>
 
+<% if studio_workspace? %>
+  <section class="filter-panel compact-filter-panel">
+    <%= form_with url: analytics_path, method: :get, local: true, class: "filter-form" do %>
+      <div class="filter-grid">
+        <div class="field">
+          <%= label_tag :user_id, t("team.professor") %>
+          <%= select_tag :user_id, options_from_collection_for_select(@filter_professionals, :id, :name, @selected_professional_id), include_blank: t("team.all_professors") %>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <%= submit_tag t("filters.apply"), class: "primary-button" %>
+      </div>
+    <% end %>
+  </section>
+<% end %>
+
 <section class="summary-grid">
   <div class="metric-panel">
     <span><%= t("analytics.scheduled") %></span>

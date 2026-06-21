@@ -12,8 +12,10 @@ class SessionsController < ApplicationController
 
   def index
     @filters = session_filter_params
-    @filter_clients = current_user.clients.alphabetical
-    @sessions = current_user.sessions.includes(:client).chronological
+    @filter_clients = workspace_clients.includes(:user).alphabetical
+    @filter_professionals = workspace_professionals
+    @sessions = workspace_sessions.includes(:client, :user).chronological
+    @sessions = @sessions.where(user_id: scoped_professional_id(@filters[:user_id])) if @filters[:user_id].present?
     @sessions = @sessions.where(client_id: scoped_client_id(@filters[:client_id])) if @filters[:client_id].present?
     @sessions = @sessions.where(status: @filters[:status]) if Session.statuses.key?(@filters[:status])
     @sessions = @sessions.where(confirmation_status: @filters[:confirmation_status]) if Session.confirmation_statuses.key?(@filters[:confirmation_status])
@@ -27,13 +29,14 @@ class SessionsController < ApplicationController
 
   def new
     start_time = parsed_start_time || default_available_start_time || Time.current.beginning_of_hour + 1.hour
-    client_id = current_user.clients.where(id: params[:client_id]).pick(:id) if params[:client_id].present?
-    billing_profile = current_user.client_billing_profiles.find_by(client_id: client_id) if client_id.present?
-    @session = current_user.sessions.new(
-      client_id: client_id,
+    client = workspace_clients.find_by(id: params[:client_id]) if params[:client_id].present?
+    owner = client&.user || @selected_session_owner || default_session_owner
+    billing_profile = client&.billing_profile
+    @session = owner.sessions.new(
+      client: client,
       start_time: start_time,
       end_time: start_time + 60.minutes,
-      title: "Session",
+      title: t("sessions.defaults.title"),
       payment_status: "pending",
       price_cents: billing_profile&.default_session_price_cents.to_i,
       currency: billing_profile&.currency.presence || "ARS",
@@ -44,11 +47,13 @@ class SessionsController < ApplicationController
   end
 
   def create
-    @session = current_user.sessions.new(session_params)
+    attributes = session_params
+    owner = session_owner_from_attributes(attributes)
+    @session = owner.sessions.new(attributes.except(:user_id))
 
     if @session.save
       after_session_saved(@session)
-      redirect_to @session, notice: "Session scheduled."
+      redirect_to @session, notice: t("flash.sessions.scheduled")
     else
       load_available_start_options
       render :new, status: :unprocessable_entity
@@ -60,9 +65,12 @@ class SessionsController < ApplicationController
   end
 
   def update
-    if @session.update(session_params)
+    attributes = session_params
+    @session.user = session_owner_from_attributes(attributes) if studio_workspace? || attributes[:client_id].present?
+
+    if @session.update(attributes.except(:user_id))
       after_session_saved(@session)
-      redirect_to @session, notice: "Session updated."
+      redirect_to @session, notice: t("flash.sessions.updated")
     else
       load_available_start_options
       render :edit, status: :unprocessable_entity
@@ -71,7 +79,7 @@ class SessionsController < ApplicationController
 
   def destroy
     @session.destroy
-    redirect_to sessions_path, notice: "Session removed."
+    redirect_to sessions_path, notice: t("flash.sessions.removed")
   end
 
   def mark_paid
@@ -82,29 +90,29 @@ class SessionsController < ApplicationController
   def generate_payment_link
     charge = Billing::CreateSessionChargeService.new(@session).call
     if charge.blank?
-      redirect_to @session, alert: "Add a session price before generating a payment link."
+      redirect_to @session, alert: t("flash.sessions.add_price_for_link")
       return
     end
 
     result = create_payment_preference(charge)
-    redirect_to @session, result.success? ? { notice: "Mercado Pago payment link is ready." } : { alert: result.error_message }
+    redirect_to @session, result.success? ? { notice: t("flash.sessions.payment_link_ready") } : { alert: result.error_message }
   end
 
   def regenerate_payment_link
     charge = @session.main_charge || Billing::CreateSessionChargeService.new(@session).call
     if charge.blank?
-      redirect_to @session, alert: "Add a session price before generating a payment link."
+      redirect_to @session, alert: t("flash.sessions.add_price_for_link")
       return
     end
 
     result = create_payment_preference(charge, regenerate: true)
-    redirect_to @session, result.success? ? { notice: "Mercado Pago payment link regenerated." } : { alert: result.error_message }
+    redirect_to @session, result.success? ? { notice: t("flash.sessions.payment_link_regenerated") } : { alert: result.error_message }
   end
 
   def record_manual_payment
     charge = @session.main_charge || Billing::CreateSessionChargeService.new(@session).call
     if charge.blank?
-      redirect_to @session, alert: "Add a session price before recording a payment."
+      redirect_to @session, alert: t("flash.sessions.add_price_for_payment")
       return
     end
 
@@ -116,7 +124,7 @@ class SessionsController < ApplicationController
       note: params[:note],
       actor: current_user
     ).call
-    redirect_to @session, notice: "Manual payment recorded."
+    redirect_to @session, notice: t("flash.sessions.manual_payment_recorded")
   rescue ArgumentError, ActiveRecord::RecordInvalid => error
     redirect_to @session, alert: error.message
   end
@@ -126,11 +134,11 @@ class SessionsController < ApplicationController
     if charge.present?
       charge.update!(status: "forgiven", cancelled_at: Time.current)
       charge.sync_session_payment_status!
-      AuditLog.record!(user: current_user, actor: current_user, event: "charge_forgiven", auditable: charge)
+      AuditLog.record!(user: charge.user, actor: current_user, event: "charge_forgiven", auditable: charge)
     else
       @session.update!(payment_status: "waived")
     end
-    redirect_to @session, notice: "Session payment waived."
+    redirect_to @session, notice: t("flash.sessions.payment_waived")
   end
 
   def cancel_charge
@@ -138,42 +146,46 @@ class SessionsController < ApplicationController
     if charge.present?
       charge.update!(status: "cancelled", cancelled_at: Time.current)
       charge.sync_session_payment_status!
-      AuditLog.record!(user: current_user, actor: current_user, event: "charge_cancelled", auditable: charge)
+      AuditLog.record!(user: charge.user, actor: current_user, event: "charge_cancelled", auditable: charge)
     end
-    redirect_to @session, notice: "Charge cancelled."
+    redirect_to @session, notice: t("flash.sessions.charge_cancelled")
   end
 
   def sync_google_calendar
     unless google_calendar_feature_enabled?
-      redirect_to @session, alert: "Google Calendar sync is temporarily unavailable."
+      redirect_to @session, alert: t("flash.sessions.google_calendar_unavailable")
       return
     end
 
     if GoogleCalendar::SyncSession.new(@session).call
-      redirect_to @session, notice: "Session synced to Google Calendar."
+      redirect_to @session, notice: t("flash.sessions.google_calendar_synced")
     else
-      redirect_to @session, alert: @session.google_calendar_sync_error.presence || "Session could not sync to Google Calendar."
+      redirect_to @session, alert: @session.google_calendar_sync_error.presence || t("flash.sessions.google_calendar_failed")
     end
   end
 
   private
 
   def set_session
-    @session = current_user.sessions.includes(:client).find(params[:id])
+    @session = workspace_sessions.includes(:client, :user).find(params[:id])
   end
 
   def load_clients
-    @clients = current_user.clients.active.alphabetical
+    @session_professionals = workspace_professionals
+    @selected_session_owner = selected_session_owner
+    @clients = workspace_clients.includes(:user).active.alphabetical
+    @clients = @clients.where(user_id: @selected_session_owner.id) if studio_workspace? && @selected_session_owner.present?
   end
 
   def load_calendar_connection
-    @calendar_connection = current_user.calendar_connection
+    @calendar_connection = (@selected_session_owner || @session&.user || current_user).calendar_connection
   end
 
   def load_available_start_options
     duration = @session&.duration_minutes.to_i.positive? ? @session.duration_minutes : 60
-    availability_calendar = Availability::Calendar.new(current_user)
-    slots = Availability::FreeSlotFinder.new(current_user).call(
+    availability_user = @selected_session_owner || @session&.user || default_session_owner
+    availability_calendar = Availability::Calendar.new(availability_user)
+    slots = Availability::FreeSlotFinder.new(availability_user).call(
       from: Time.current.beginning_of_day,
       days: 45,
       duration_minutes: duration,
@@ -208,6 +220,7 @@ class SessionsController < ApplicationController
   def session_params
     permitted = params.require(:session).permit(
       :client_id,
+      :user_id,
       :title,
       :start_time,
       :end_time,
@@ -224,9 +237,12 @@ class SessionsController < ApplicationController
       recurrence_days: []
     )
 
-    if permitted[:client_id].present?
-      permitted[:client_id] = current_user.clients.find(permitted[:client_id]).id
-    end
+    permitted[:user_id] = scoped_professional_id(permitted[:user_id]) if studio_workspace? && permitted[:user_id].present?
+    permitted.delete(:user_id) unless studio_workspace?
+
+    client = workspace_clients.find(permitted[:client_id]) if permitted[:client_id].present?
+    permitted[:client_id] = client.id if client
+    permitted[:user_id] ||= client.user_id if studio_workspace? && client
 
     permitted
   end
@@ -289,11 +305,15 @@ class SessionsController < ApplicationController
   end
 
   def session_filter_params
-    params.permit(:client_id, :status, :confirmation_status, :payment_status, :recurrence, :date_from, :date_to)
+    params.permit(:client_id, :user_id, :status, :confirmation_status, :payment_status, :recurrence, :date_from, :date_to)
   end
 
   def scoped_client_id(client_id)
-    current_user.clients.where(id: client_id).pick(:id)
+    workspace_clients.where(id: client_id).pick(:id)
+  end
+
+  def scoped_professional_id(user_id)
+    workspace_professionals.where(id: user_id).pick(:id)
   end
 
   def apply_recurrence_filter(scope, recurrence)
@@ -334,7 +354,7 @@ class SessionsController < ApplicationController
   end
 
   def default_available_start_time
-    Availability::FreeSlotFinder.new(current_user).call(
+    Availability::FreeSlotFinder.new(@selected_session_owner || default_session_owner).call(
       from: Time.current.beginning_of_hour,
       days: 14,
       duration_minutes: 60,
@@ -380,5 +400,26 @@ class SessionsController < ApplicationController
 
   def google_calendar_feature_enabled?
     ActiveModel::Type::Boolean.new.cast(ENV["GOOGLE_CALENDAR_UI_ENABLED"])
+  end
+
+  def default_session_owner
+    studio_workspace? ? workspace_professionals.first || current_user : current_user
+  end
+
+  def selected_session_owner
+    return current_user unless studio_workspace?
+
+    user_id = params.dig(:session, :user_id).presence || params[:user_id].presence
+    workspace_professionals.find_by(id: user_id) || @session&.user || default_session_owner
+  end
+
+  def session_owner_from_attributes(attributes)
+    if studio_workspace? && attributes[:user_id].present?
+      return workspace_professionals.find(attributes[:user_id])
+    end
+
+    return default_session_owner if attributes[:client_id].blank?
+
+    workspace_clients.find(attributes[:client_id]).user
   end
 end

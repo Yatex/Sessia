@@ -241,6 +241,21 @@
     });
   }
 
+  function bindSessionProfessorSelects() {
+    document.querySelectorAll("[data-session-professor-select]").forEach(function (select) {
+      if (select.dataset.professorSelectBound === "true") return;
+      select.dataset.professorSelectBound = "true";
+
+      select.addEventListener("change", function () {
+        if (!select.value) return;
+        var url = new URL(window.location.href);
+        url.searchParams.set("user_id", select.value);
+        url.searchParams.delete("client_id");
+        window.location.href = url.toString();
+      });
+    });
+  }
+
   function setAvailabilityCell(cell, selected) {
     var input = cell.querySelector("[data-availability-cell]");
     if (!input) return;
@@ -370,6 +385,7 @@
   document.addEventListener("DOMContentLoaded", dismissFlashes);
   document.addEventListener("DOMContentLoaded", bindSessionTimeSelects);
   document.addEventListener("DOMContentLoaded", bindRecurrenceCheckboxes);
+  document.addEventListener("DOMContentLoaded", bindSessionProfessorSelects);
   document.addEventListener("DOMContentLoaded", bindAvailabilityGrids);
   document.addEventListener("DOMContentLoaded", bindSettingsAutosave);
   document.addEventListener("DOMContentLoaded", bindDismissibleDetails);
@@ -378,6 +394,7 @@
     dismissFlashes();
     bindSessionTimeSelects();
     bindRecurrenceCheckboxes();
+    bindSessionProfessorSelects();
     bindAvailabilityGrids();
     bindSettingsAutosave();
     bindDismissibleDetails();

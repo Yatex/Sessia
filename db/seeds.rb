@@ -385,4 +385,180 @@ sample_accounts.each do |account|
   end
 end
 
+def reset_seed_workspace_user!(user)
+  user.ai_alerts.delete_all
+  user.messages.delete_all
+  user.ai_tasks.delete_all
+  user.payment_records.delete_all
+  user.payments.delete_all if user.respond_to?(:payments)
+  user.credit_ledger_entries.delete_all if user.respond_to?(:credit_ledger_entries)
+  user.charges.delete_all if user.respond_to?(:charges)
+  user.sessions.delete_all
+  user.clients.delete_all
+  user.subscriptions.delete_all
+  user.schedule_blocks.delete_all
+  user.availability_rules.delete_all
+end
+
+studio = User.find_or_initialize_by(email: "studio@sessia.local")
+studio.assign_attributes(
+  name: "Sessia Studio Demo",
+  password: "password123",
+  password_confirmation: "password123",
+  time_zone: "America/Montevideo",
+  locale: "es",
+  role: "member",
+  account_type: "studio",
+  studio_id: nil,
+  stripe_customer_id: "cus_sessia_studio_demo"
+)
+studio.save!
+
+reset_seed_workspace_user!(studio)
+Availability::Defaults.ensure_for(studio)
+
+studio.subscriptions.create!(
+  plan_tier: "studio",
+  status: "active",
+  provider: "stripe",
+  provider_subscription_id: "sub_sessia_studio_demo",
+  provider_plan_id: ENV["STRIPE_PRICE_ID_STUDIO"].presence || "price_demo_studio",
+  current_period_start: Time.current.beginning_of_month,
+  current_period_end: 1.month.from_now.end_of_day,
+  quantity: 1
+)
+
+studio_teacher_rows = [
+  {
+    name: "Lucia Fernandez",
+    email: "lucia@sessia.local",
+    phone: "+598 99 101 101",
+    specialty: "Psychologist",
+    clients: [
+      ["Martina Perez", "+598 91 200 001", "Therapy process. Needs calm reminders."],
+      ["Rodrigo Varela", "+598 91 200 002", "Weekly follow-up for anxiety management."],
+      ["Paula Ibarra", "+598 91 200 003", "Prefers afternoon sessions."]
+    ]
+  },
+  {
+    name: "Tomas Garcia",
+    email: "tomas@sessia.local",
+    phone: "+598 99 202 202",
+    specialty: "Math tutor",
+    clients: [
+      ["Agustin Lopez", "+598 92 300 001", "Exam preparation. Parents ask for payment links."],
+      ["Florencia Rios", "+598 92 300 002", "Algebra tutoring, twice a week."],
+      ["Benjamin Nuñez", "+598 92 300 003", "Needs reminders the day before."]
+    ]
+  },
+  {
+    name: "Carolina Mendez",
+    email: "carolina@sessia.local",
+    phone: "+598 99 303 303",
+    specialty: "Coach",
+    clients: [
+      ["Santiago Duarte", "+598 93 400 001", "Executive coaching client."],
+      ["Victoria Costa", "+598 93 400 002", "Career coaching. Pays ahead."],
+      ["Manuel Prieto", "+598 93 400 003", "Leadership sessions every Thursday."]
+    ]
+  }
+]
+
+Time.use_zone(studio.time_zone) do
+  week_start = Date.current.beginning_of_week(:monday)
+
+  studio_teacher_rows.each_with_index do |teacher_row, teacher_index|
+    teacher = User.find_or_initialize_by(email: teacher_row[:email])
+    teacher.assign_attributes(
+      name: teacher_row[:name],
+      password: "password123",
+      password_confirmation: "password123",
+      time_zone: studio.time_zone,
+      locale: "es",
+      role: "member",
+      account_type: "professional",
+      studio_owner: studio,
+      payment_instructions: "Transferencia bancaria o Mercado Pago. Enviar comprobante por WhatsApp."
+    )
+    teacher.save!
+
+    reset_seed_workspace_user!(teacher)
+    Availability::Defaults.ensure_for(teacher)
+    teacher.ai_setting&.destroy
+    teacher.create_ai_setting!(
+      confirm_sessions: true,
+      send_pre_session_reminders: true,
+      follow_up_no_response: true,
+      ask_feedback_after_sessions: true,
+      answer_basic_questions: true,
+      escalate_important_conversations: true,
+      payment_reminders: true,
+      use_professional_whatsapp: true,
+      professional_whatsapp_phone: teacher_row[:phone],
+      instructions: "Responder como #{teacher_row[:specialty]} del estudio. Mantener tono breve, cálido y profesional."
+    )
+
+    teacher.schedule_blocks.create!(
+      title: "Studio team meeting",
+      starts_at: Time.zone.parse("#{week_start + teacher_index.days} 13:00"),
+      ends_at: Time.zone.parse("#{week_start + teacher_index.days} 14:00"),
+      notes: "Blocked by the studio demo seed."
+    )
+
+    teacher_clients = teacher_row[:clients].map.with_index do |(name, phone, notes), client_index|
+      client = teacher.clients.create!(
+        name: name,
+        email: "#{name.parameterize}@student.sessia.local",
+        phone: phone,
+        preferred_contact_channel: Client::WHATSAPP_CHANNEL,
+        notes: notes,
+        linked_at: client_index < 2 ? (client_index + teacher_index + 1).days.ago : nil
+      )
+      client.create_billing_profile!(
+        user: teacher,
+        default_session_price_cents: [8500, 12000, 15000][teacher_index],
+        currency: "UYU",
+        payment_required_before_session: client_index == 1,
+        default_due_timing: client_index == 1 ? "before_session" : "same_day"
+      )
+      client
+    end
+
+    session_specs = [
+      [teacher_clients[0], "#{teacher_row[:specialty]} session", week_start + teacher_index.days, "09:00", "confirmed", "paid"],
+      [teacher_clients[1], "#{teacher_row[:specialty]} follow-up", week_start + teacher_index.days + 1.day, "11:00", "pending", "pending"],
+      [teacher_clients[2], "#{teacher_row[:specialty]} review", week_start + teacher_index.days + 2.days, "16:00", "confirmed", teacher_index == 1 ? "overdue" : "paid"]
+    ]
+
+    session_specs.each do |client, title, date, hour, confirmation_status, payment_status|
+      session_record = teacher.sessions.create!(
+        client: client,
+        title: title,
+        start_time: Time.zone.parse("#{date} #{hour}"),
+        end_time: Time.zone.parse("#{date} #{hour}") + 1.hour,
+        price_cents: client.billing_profile.default_session_price_cents,
+        currency: client.billing_profile.currency,
+        status: "scheduled",
+        confirmation_status: confirmation_status,
+        payment_status: payment_status,
+        payment_required_before_session: client.billing_profile.payment_required_before_session,
+        notes: "Seeded studio session owned by #{teacher.name}."
+      )
+
+      teacher.payment_records.create!(
+        client: client,
+        session: session_record,
+        amount_cents: session_record.price_cents,
+        currency: session_record.currency,
+        status: payment_status == "paid" ? "paid" : (payment_status == "overdue" ? "overdue" : "pending"),
+        due_on: session_record.start_time.to_date,
+        paid_at: payment_status == "paid" ? session_record.start_time - 1.day : nil,
+        notes: "Studio demo payment tracking."
+      )
+    end
+  end
+end
+
 puts "Seeded demo account: demo@sessia.local / password123"
+puts "Seeded studio account: studio@sessia.local / password123"
+puts "Seeded studio teachers: lucia@sessia.local, tomas@sessia.local, carolina@sessia.local / password123"

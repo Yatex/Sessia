@@ -10,7 +10,7 @@ class SignUpsController < ApplicationController
 
     if @user.save
       sign_in(@user)
-      redirect_to dashboard_path, notice: "Welcome to Sessia."
+      redirect_to dashboard_path, notice: t("flash.auth.welcome")
     else
       render :new, status: :unprocessable_entity
     end
@@ -19,6 +19,6 @@ class SignUpsController < ApplicationController
   private
 
   def user_params
-    params.require(:user).permit(:name, :email, :password, :password_confirmation, :time_zone)
+    params.require(:user).permit(:name, :email, :password, :password_confirmation, :time_zone, :account_type)
   end
 end
