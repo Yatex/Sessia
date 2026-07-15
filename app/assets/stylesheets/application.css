@@ -779,6 +779,7 @@ textarea {
   display: grid;
   gap: 14px;
   align-content: start;
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: #ffffff;
@@ -807,6 +808,7 @@ textarea {
   color: var(--ink);
   font-size: 42px;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 .landing-price-card strong {
@@ -819,6 +821,7 @@ textarea {
   margin: 0;
   color: var(--muted);
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .landing-final-cta {
@@ -3593,6 +3596,10 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .landing-pricing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .landing-workflow,
   .section-kicker {
     grid-template-columns: 1fr;
@@ -3803,8 +3810,33 @@ textarea {
   .landing-proof,
   .landing-section,
   .landing-workflow,
+  .landing-pricing,
   .landing-final-cta {
     margin-bottom: 54px;
+  }
+
+  .landing-pricing-grid,
+  .plan-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .landing-price-card,
+  .plan-card {
+    width: 100%;
+    min-width: 0;
+    padding: 18px;
+  }
+
+  .landing-price-card p {
+    min-height: 0;
+  }
+
+  .landing-price-card .primary-button,
+  .landing-price-card .secondary-button,
+  .plan-card .primary-button,
+  .plan-card .secondary-button,
+  .plan-card form {
+    width: 100%;
   }
 
   .section-kicker h2,
