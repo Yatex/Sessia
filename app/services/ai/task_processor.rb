@@ -12,6 +12,16 @@ module Ai
       task.update!(status: "processing", error_message: nil)
 
       current_stage = "context_building"
+      if grounded_inbound_task?
+        grounded_result = Ai::Grounded::TaskProcessor.new(
+          task: task,
+          decision_client: decision_client,
+          dispatcher: dispatcher
+        ).call
+        finalize!(grounded_result.fetch("status"), grounded_result, error_message: grounded_result["error_message"])
+        return task
+      end
+
       context = Ai::ContextBuilder.new(task: task).call
       current_stage = "instruction_matching"
       instruction = Ai::InstructionCatalog.for_task(task, ai_setting: task.user.ai_setting || task.user.create_ai_setting!)
@@ -57,6 +67,10 @@ module Ai
     private
 
     attr_reader :task, :decision_client, :dispatcher
+
+    def grounded_inbound_task?
+      task.trigger_event == "client_replied" && Ai::Grounded::Feature.inbound_enabled?
+    end
 
     def finalize!(status, result_data, error_message: nil)
       task.update!(
