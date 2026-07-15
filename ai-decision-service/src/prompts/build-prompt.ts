@@ -27,7 +27,10 @@ export function buildDecisionPrompt(request: DecideRequest): DecisionPrompt {
         task_context: request.task_context,
         recent_messages: request.recent_messages,
         current_time: request.current_time,
-        timezone: request.timezone
+        timezone: request.timezone,
+        tool_results: request.tool_results,
+        evidence: request.evidence,
+        context_token_present: Boolean(request.context_token)
       }, null, 2),
       "",
       "Decision guidance:",
@@ -36,7 +39,10 @@ export function buildDecisionPrompt(request: DecideRequest): DecisionPrompt {
       "- For simple questions about session time, price, confirmation, or payment, answer only from context.",
       "- For rescheduling requests, offer availability_options first; when the client clearly chooses one, choose reschedule_session with that target_start_at when allowed.",
       "- For clinical/personal/sensitive matters, complaints, or missing facts, alert the professional.",
-      "- If nothing useful or safe should happen, choose do_nothing."
+      "- If nothing useful or safe should happen, choose do_nothing.",
+      "- Treat the output as a proposal. Rails independently validates and executes it.",
+      "- Cite only relevant evidence_ids from the supplied evidence and tool results.",
+      "- Never invent IDs, facts, availability, payment state, or successful effects."
     ].join("\n")
   };
 }

@@ -35,7 +35,9 @@ export function validateDecision(decision: unknown, request: DecideRequest): Dec
     follow_up_at: parsed.data.follow_up_at ?? null,
     target_start_at: parsed.data.target_start_at ?? null,
     confidence: Number(parsed.data.confidence.toFixed(3)),
-    reasoning_summary: parsed.data.reasoning_summary.trim()
+    reasoning_summary: parsed.data.reasoning_summary.trim(),
+    evidence_ids: parsed.data.evidence_ids.length > 0 ? parsed.data.evidence_ids : evidenceForDecision(parsed.data, request),
+    human_review_required: parsed.data.human_review_required
   };
 }
 
@@ -50,6 +52,33 @@ function normalizeDecision(decision: unknown): unknown {
     target_start_at: null,
     confidence: 0.5,
     reasoning_summary: "No reasoning summary supplied.",
+    evidence_ids: [],
+    human_review_required: false,
     ...decision
   };
+}
+
+function evidenceForDecision(decision: Decision, request: DecideRequest): string[] {
+  if (request.architecture_version !== "grounded_v1") return [];
+
+  const ids: string[] = [];
+  const latestInbound = [...request.recent_messages].reverse().find((message) => message.direction === "inbound");
+  if (latestInbound?.evidence_id) ids.push(latestInbound.evidence_id);
+
+  if (["mark_session_confirmed", "mark_session_maybe", "mark_session_declined"].includes(decision.action)) {
+    const confirmationEvidence = request.evidence?.find((item) => item.source_type === "session" && item.field === "confirmation_status");
+    if (confirmationEvidence) ids.push(confirmationEvidence.evidence_id);
+  }
+
+  if (decision.action === "reschedule_session" && decision.target_start_at) {
+    const slot = request.availability_options.find((option) => option.starts_at === decision.target_start_at);
+    if (slot?.evidence_id) ids.push(slot.evidence_id);
+  }
+
+  if (decision.action === "send_message" && ids.length === 0) {
+    const sessionEvidence = request.evidence?.find((item) => item.source_type === "session");
+    if (sessionEvidence) ids.push(sessionEvidence.evidence_id);
+  }
+
+  return [...new Set(ids)];
 }

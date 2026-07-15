@@ -173,3 +173,46 @@ test("offers rebooking options for blocked sessions", async () => {
   assert.equal(decision.action, "send_message");
   assert.match(decision.message_body ?? "", /free|libres/i);
 });
+
+test("grounded decisions cite scoped message and session evidence", async () => {
+  const decision = await new DecisionService(new MockDecisionProvider()).decide(buildRequest({
+    architecture_version: "grounded_v1",
+    context_token: "signed-context-token",
+    trigger_event: "incoming_message",
+    instruction: {
+      key: "answer_client_reply",
+      name: "Answer client reply",
+      description: "Interpret an inbound client reply.",
+      trigger_event: "incoming_message",
+      allowed_actions: ["mark_session_confirmed", "send_message", "do_nothing"]
+    },
+    recent_messages: [
+      {
+        id: "message_0",
+        direction: "outbound",
+        author_role: "assistant",
+        channel: "whatsapp",
+        body: "Can you confirm your session?",
+        occurred_at: "2026-05-05T11:55:00-03:00",
+        evidence_id: "message.40.body"
+      },
+      {
+        id: "message_1",
+        direction: "inbound",
+        author_role: "client",
+        channel: "whatsapp",
+        body: "yes",
+        occurred_at: "2026-05-05T12:00:00-03:00",
+        evidence_id: "message.41.body"
+      }
+    ],
+    evidence: [
+      { evidence_id: "message.41.body", source_type: "message", source_id: "41", field: "body", value: "yes" },
+      { evidence_id: "session.12.confirmation_status", source_type: "session", source_id: "12", field: "confirmation_status", value: "pending" }
+    ],
+    required_evidence_citations: true
+  }));
+
+  assert.equal(decision.action, "mark_session_confirmed");
+  assert.deepEqual(decision.evidence_ids, ["message.41.body", "session.12.confirmation_status"]);
+});

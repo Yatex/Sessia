@@ -68,7 +68,8 @@ const availabilityOptionSchema = z.object({
   id: nonEmptyStringSchema.optional(),
   label: nonEmptyStringSchema,
   starts_at: isoDatetimeSchema,
-  ends_at: isoDatetimeSchema
+  ends_at: isoDatetimeSchema,
+  evidence_id: nonEmptyStringSchema.optional()
 }).passthrough();
 
 export const recentMessageSchema = z.object({
@@ -78,10 +79,22 @@ export const recentMessageSchema = z.object({
   channel: nonEmptyStringSchema.optional(),
   subject: nonEmptyStringSchema.nullable().optional(),
   body: nonEmptyStringSchema.max(4000),
-  occurred_at: isoDatetimeSchema
+  occurred_at: isoDatetimeSchema,
+  evidence_id: nonEmptyStringSchema.optional()
+}).passthrough();
+
+const evidenceSchema = z.object({
+  evidence_id: nonEmptyStringSchema,
+  source_type: nonEmptyStringSchema,
+  source_id: nonEmptyStringSchema.optional(),
+  field: nonEmptyStringSchema,
+  value: z.unknown(),
+  metadata: z.record(z.unknown()).optional()
 }).passthrough();
 
 export const decideRequestSchema = z.object({
+  architecture_version: z.enum(["grounded_v1"]).optional(),
+  context_token: nonEmptyStringSchema.optional(),
   trigger_event: nonEmptyStringSchema,
   professional: professionalSchema,
   instruction: instructionSchema,
@@ -93,7 +106,11 @@ export const decideRequestSchema = z.object({
   availability_options: z.array(availabilityOptionSchema).max(20).default([]),
   task_context: z.record(z.unknown()).default({}),
   current_time: isoDatetimeSchema,
-  timezone: nonEmptyStringSchema
+  timezone: nonEmptyStringSchema,
+  tool_results: z.record(z.unknown()).optional(),
+  evidence: z.array(evidenceSchema).max(200).optional(),
+  required_evidence_citations: z.boolean().optional(),
+  safety_rules: z.array(nonEmptyStringSchema).max(20).optional()
 }).strict().superRefine((request, ctx) => {
   if (request.instruction.trigger_event !== request.trigger_event) {
     ctx.addIssue({
@@ -101,6 +118,9 @@ export const decideRequestSchema = z.object({
       path: ["instruction", "trigger_event"],
       message: "instruction.trigger_event must match trigger_event."
     });
+  }
+  if (request.architecture_version === "grounded_v1" && !request.context_token) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["context_token"], message: "context_token is required for grounded decisions." });
   }
 });
 

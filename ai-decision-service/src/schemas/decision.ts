@@ -25,7 +25,9 @@ export const decisionSchema = z.object({
   follow_up_at: z.string().datetime({ offset: true }).nullable(),
   target_start_at: z.string().datetime({ offset: true }).nullable(),
   confidence: z.number().min(0).max(1),
-  reasoning_summary: z.string().trim().min(1).max(280)
+  reasoning_summary: z.string().trim().min(1).max(280),
+  evidence_ids: z.array(z.string().trim().min(1)).max(20).default([]),
+  human_review_required: z.boolean().default(false)
 }).strict().superRefine((decision, ctx) => {
   if (decision.action === "send_message" && !decision.message_body) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["message_body"], message: "message_body is required when action is send_message." });
