@@ -104,6 +104,8 @@ en:
     session_os: "Session OS"
     whatsapp_ai: "WhatsApp AI"
     professional_number_configured: "Professional number configured"
+    configure_professional_whatsapp: "Set up professional WhatsApp"
+    whatsapp_settings: "Open professional WhatsApp settings"
     provider_not_connected: "Provider not connected"
   actions:
     new_session: "New session"

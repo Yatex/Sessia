@@ -4,6 +4,9 @@
     <h1><%= @session.title %></h1>
   </div>
   <div class="header-actions">
+    <% unless @session.payment_paid? %>
+      <%= button_to t("payments.mark_paid_short"), mark_paid_session_path(@session), method: :patch, class: "secondary-button" %>
+    <% end %>
     <%= link_to t("sessions.show.edit"), edit_session_path(@session), class: "secondary-button" %>
     <%= link_to t("sessions.show.back_to_agenda"), dashboard_path(week: @session.start_time.to_date.iso8601), class: "primary-button" %>
   </div>

@@ -38,10 +38,10 @@
           </nav>
 
           <div class="sidebar-footer">
-            <div class="sidebar-status-card">
+            <%= link_to settings_path(anchor: "professional-whatsapp"), class: "sidebar-status-card", aria: { label: t("app.whatsapp_settings") } do %>
               <strong><%= t("app.whatsapp_ai") %></strong>
-              <small><%= current_user.ai_setting&.use_professional_whatsapp? ? t("app.professional_number_configured") : t("app.provider_not_connected") %></small>
-            </div>
+              <small><%= current_user.ai_setting&.use_professional_whatsapp? ? t("app.professional_number_configured") : t("app.configure_professional_whatsapp") %></small>
+            <% end %>
           </div>
         </aside>
 

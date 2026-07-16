@@ -46,7 +46,12 @@ class PublicLocaleTest < ActionDispatch::IntegrationTest
     assert_match "Siguiente", response.body
     assert_match "Hora", response.body
     assert_match "No disponible", response.body
+    assert_select "a.sidebar-status-card[href='#{settings_path}#professional-whatsapp']", text: /Configurar WhatsApp profesional/
     assert_no_match "Previous", response.body
     assert_no_match "Unavailable", response.body
+
+    get settings_url(anchor: "professional-whatsapp")
+    assert_response :success
+    assert_select "section#professional-whatsapp"
   end
 end

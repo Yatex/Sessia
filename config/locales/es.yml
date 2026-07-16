@@ -75,6 +75,8 @@ es:
     session_os: "Sistema de sesiones"
     whatsapp_ai: "IA por WhatsApp"
     professional_number_configured: "Número profesional configurado"
+    configure_professional_whatsapp: "Configurar WhatsApp profesional"
+    whatsapp_settings: "Abrir la configuración del WhatsApp profesional"
     provider_not_connected: "Proveedor no conectado"
   actions:
     new_session: "Nueva sesión"

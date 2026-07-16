@@ -152,5 +152,29 @@ class FiltersAndSettingsTest < ActionDispatch::IntegrationTest
     assert_equal 25_000, payment_record.amount_cents
     assert_equal "CLP", payment_record.currency
     assert_equal client, payment_record.client
+
+    get session_url(session_record)
+    assert_response :success
+    assert_select ".header-actions form[action='#{mark_paid_session_path(session_record)}']", count: 0
+  end
+
+  test "session detail offers mark as paid while payment is pending" do
+    user = User.create!(name: "Detail Payment", email: "detail-payment@example.com", password: "password123")
+    client = user.clients.create!(name: "Pending Client", phone: "+598 99 123 777")
+    session_record = user.sessions.create!(
+      client: client,
+      title: "Pending Session",
+      start_time: 1.day.from_now,
+      end_time: 1.day.from_now + 1.hour,
+      payment_status: "pending"
+    )
+    post sign_in_url, params: { email: user.email, password: "password123" }
+
+    get session_url(session_record)
+
+    assert_response :success
+    assert_select ".header-actions form[action='#{mark_paid_session_path(session_record)}']" do
+      assert_select "button", text: "Mark as paid"
+    end
   end
 end
