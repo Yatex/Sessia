@@ -80,7 +80,7 @@ class AuthenticationAndScopeTest < ActionDispatch::IntegrationTest
     assert_select ".agenda-grid.agenda-span-three_days.agenda-density-comfortable"
     assert_select ".agenda-grid .week-grid-day", count: 3
     assert_select ".agenda-range-control .active", text: "3 days"
-    assert_select ".agenda-density-control .active", text: "Comfortable"
+    assert_select ".agenda-density-control .active", text: "Spacious"
 
     get dashboard_url(view: "week", date: selected_date.iso8601)
 

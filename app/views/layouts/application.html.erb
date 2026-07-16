@@ -37,10 +37,46 @@
             <% end %>
           </nav>
 
-          <div class="sidebar-footer">
-            <%= link_to settings_path(anchor: "professional-whatsapp"), class: "sidebar-status-card", aria: { label: t("app.whatsapp_settings") } do %>
-              <strong><%= t("app.whatsapp_ai") %></strong>
-              <small><%= current_user.ai_setting&.use_professional_whatsapp? ? t("app.professional_number_configured") : t("app.configure_professional_whatsapp") %></small>
+          <div class="sidebar-footer" aria-label="<%= t("app.integrations.label") %>">
+            <% mercado_pago_connected = current_user.mercado_pago_account&.connected? %>
+            <%= link_to settings_path(anchor: "mercado-pago"), class: "sidebar-status-card", aria: { label: t("app.integrations.mercado_pago.aria") } do %>
+              <span class="sidebar-integration-mark mercado-pago" aria-hidden="true">MP</span>
+              <span class="sidebar-integration-copy">
+                <strong>Mercado Pago</strong>
+                <small><%= t("app.integrations.mercado_pago.copy") %></small>
+              </span>
+              <span class="sidebar-integration-state <%= mercado_pago_connected ? "connected" : "pending" %>" title="<%= t("app.integrations.states.#{mercado_pago_connected ? "connected" : "setup"}") %>"></span>
+            <% end %>
+
+            <% whatsapp_configured = current_user.ai_setting&.use_professional_whatsapp? %>
+            <%= link_to settings_path(anchor: "professional-whatsapp"), class: "sidebar-status-card", aria: { label: t("app.integrations.whatsapp.aria") } do %>
+              <span class="sidebar-integration-mark whatsapp" aria-hidden="true">WA</span>
+              <span class="sidebar-integration-copy">
+                <strong><%= t("app.integrations.whatsapp.title") %></strong>
+                <small><%= t("app.integrations.whatsapp.copy") %></small>
+              </span>
+              <span class="sidebar-integration-state <%= whatsapp_configured ? "connected" : "pending" %>" title="<%= t("app.integrations.states.#{whatsapp_configured ? "connected" : "setup"}") %>"></span>
+            <% end %>
+
+            <% calendar_connected = current_user.calendar_connection&.connected? %>
+            <% if google_calendar_feature_enabled? %>
+              <%= link_to settings_path(anchor: "google-calendar"), class: "sidebar-status-card", aria: { label: t("app.integrations.google_calendar.aria") } do %>
+                <span class="sidebar-integration-mark google-calendar" aria-hidden="true">G</span>
+                <span class="sidebar-integration-copy">
+                  <strong>Google Calendar</strong>
+                  <small><%= t("app.integrations.google_calendar.copy") %></small>
+                </span>
+                <span class="sidebar-integration-state <%= calendar_connected ? "connected" : "pending" %>" title="<%= t("app.integrations.states.#{calendar_connected ? "connected" : "setup"}") %>"></span>
+              <% end %>
+            <% else %>
+              <div class="sidebar-status-card disabled" aria-label="<%= t("app.integrations.google_calendar.unavailable_aria") %>">
+                <span class="sidebar-integration-mark google-calendar" aria-hidden="true">G</span>
+                <span class="sidebar-integration-copy">
+                  <strong>Google Calendar</strong>
+                  <small><%= t("app.integrations.google_calendar.coming_soon") %></small>
+                </span>
+                <span class="sidebar-integration-state unavailable" title="<%= t("app.integrations.states.coming_soon") %>"></span>
+              </div>
             <% end %>
           </div>
         </aside>

@@ -107,6 +107,24 @@ en:
     configure_professional_whatsapp: "Set up professional WhatsApp"
     whatsapp_settings: "Open professional WhatsApp settings"
     provider_not_connected: "Provider not connected"
+    integrations:
+      label: "Integrations"
+      states:
+        connected: "Connected"
+        setup: "Setup required"
+        coming_soon: "Coming soon"
+      mercado_pago:
+        copy: "Receive and track payments"
+        aria: "Set up Mercado Pago to receive and track payments"
+      whatsapp:
+        title: "WhatsApp assistant"
+        copy: "Talk to your assistant"
+        aria: "Set up WhatsApp to talk to your assistant"
+      google_calendar:
+        copy: "Save your sessions"
+        coming_soon: "Sync coming soon"
+        aria: "Set up Google Calendar to save your sessions"
+        unavailable_aria: "Google Calendar sync is coming soon"
   actions:
     new_session: "New session"
     remove: "Remove"
@@ -362,16 +380,16 @@ en:
       week: "Week"
       month: "Month"
     display:
-      label: "Agenda view and density"
-      range: "Range"
-      density: "Density"
+      label: "Agenda options"
+      range: "View"
+      density: "Size"
       ranges:
         week: "Week"
         three_days: "3 days"
         day: "Day"
       densities:
         compact: "Compact"
-        comfortable: "Comfortable"
+        comfortable: "Spacious"
     counts:
       sessions:
         one: "1 session"

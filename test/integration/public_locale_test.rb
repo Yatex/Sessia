@@ -46,7 +46,10 @@ class PublicLocaleTest < ActionDispatch::IntegrationTest
     assert_match "Siguiente", response.body
     assert_match "Hora", response.body
     assert_match "No disponible", response.body
-    assert_select "a.sidebar-status-card[href='#{settings_path}#professional-whatsapp']", text: /Configurar WhatsApp profesional/
+    assert_select ".sidebar-footer .sidebar-status-card", count: 3
+    assert_select "a.sidebar-status-card[href='#{settings_path}#mercado-pago']", text: /Recibí y registrá pagos/
+    assert_select "a.sidebar-status-card[href='#{settings_path}#professional-whatsapp']", text: /Hablá con tu asistente/
+    assert_select ".sidebar-status-card.disabled", text: /Sincronización próximamente/
     assert_no_match "Previous", response.body
     assert_no_match "Unavailable", response.body
 

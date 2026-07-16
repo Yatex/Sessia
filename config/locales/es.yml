@@ -78,6 +78,24 @@ es:
     configure_professional_whatsapp: "Configurar WhatsApp profesional"
     whatsapp_settings: "Abrir la configuración del WhatsApp profesional"
     provider_not_connected: "Proveedor no conectado"
+    integrations:
+      label: "Integraciones"
+      states:
+        connected: "Conectado"
+        setup: "Requiere configuración"
+        coming_soon: "Próximamente"
+      mercado_pago:
+        copy: "Recibí y registrá pagos"
+        aria: "Configurar Mercado Pago para recibir y registrar pagos"
+      whatsapp:
+        title: "Asistente por WhatsApp"
+        copy: "Hablá con tu asistente"
+        aria: "Configurar WhatsApp para hablar con tu asistente"
+      google_calendar:
+        copy: "Guardá tus sesiones"
+        coming_soon: "Sincronización próximamente"
+        aria: "Configurar Google Calendar para guardar tus sesiones"
+        unavailable_aria: "Google Calendar estará disponible próximamente"
   actions:
     new_session: "Nueva sesión"
     remove: "Quitar"
@@ -355,16 +373,16 @@ es:
       week: "Semana"
       month: "Mes"
     display:
-      label: "Vista y densidad de la agenda"
-      range: "Rango"
-      density: "Densidad"
+      label: "Opciones de la agenda"
+      range: "Vista"
+      density: "Tamaño"
       ranges:
         week: "Semana"
         three_days: "3 días"
         day: "Día"
       densities:
         compact: "Compacta"
-        comfortable: "Cómoda"
+        comfortable: "Amplia"
     counts:
       sessions:
         one: "1 sesión"
