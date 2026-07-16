@@ -3,6 +3,7 @@ class Message < ApplicationRecord
   belongs_to :client, optional: true
   belongs_to :session, optional: true
   belongs_to :ai_task, optional: true
+  has_many :delivery_attempts, class_name: "MessageDeliveryAttempt", dependent: :destroy
 
   enum direction: {
     outbound: 0,

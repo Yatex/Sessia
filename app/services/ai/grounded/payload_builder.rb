@@ -8,6 +8,7 @@ module Ai
       end
 
       def call
+        return v2_payload if Ai::Grounded::Feature.v2_for?(context.task)
         session_data = tools.results.dig("session_context") || {}
         history = tools.results.dig("conversation_history", "messages") || []
         availability = tools.results.dig("availability_options", "options") || []
@@ -59,6 +60,30 @@ module Ai
       private
 
       attr_reader :context, :instruction, :tools
+
+      def v2_payload
+        {
+          architecture_version: "grounded_v2",
+          context_token: context.context_token,
+          trigger_event: context.trigger,
+          professional: { name: context.professional.name, locale: context.locale, time_zone: context.time_zone },
+          client: { name: context.client.name },
+          session: nil,
+          recent_messages: context.message ? [{
+            id: context.message.id.to_s, direction: "inbound", author_role: "client",
+            channel: context.message.channel, body: context.message.body,
+            occurred_at: context.message.created_at.iso8601,
+            evidence_id: "message.#{context.message.id}.body"
+          }] : [],
+          availability_options: [], task_context: { permissions: context.permissions },
+          current_time: Time.current.iso8601, timezone: context.time_zone,
+          instruction: instruction.to_h.merge(trigger_event: context.trigger),
+          allowed_tools: ToolRunner::ALLOWED_TOOLS,
+          tool_endpoint: "#{ENV.fetch('APP_HOST', 'http://127.0.0.1:3000').sub(%r{/\z}, '')}/internal/ai/tools/__TOOL__",
+          required_evidence_citations: true,
+          safety_rules: ["Use tools for facts and cite their evidence.", "Never mutate through tools."]
+        }
+      end
 
       def legacy_session(data)
         return if data["present"] == false

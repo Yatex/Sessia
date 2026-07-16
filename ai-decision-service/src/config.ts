@@ -32,7 +32,8 @@ const appConfigSchema = z.object({
   aiGatewayApiKey: z.string().trim().optional(),
   aiGatewayBaseUrl: z.string().trim().optional(),
   anthropicApiKey: z.string().trim().optional(),
-  anthropicBaseUrl: z.string().trim().optional()
+  anthropicBaseUrl: z.string().trim().optional(),
+  toolServiceSecret: z.string().trim().optional()
 }).superRefine((value, ctx) => {
   if (value.provider !== "vercel") return;
 
@@ -65,7 +66,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     aiGatewayApiKey: env.AI_GATEWAY_API_KEY,
     aiGatewayBaseUrl: env.AI_GATEWAY_BASE_URL,
     anthropicApiKey: env.ANTHROPIC_API_KEY,
-    anthropicBaseUrl: env.ANTHROPIC_BASE_URL
+    anthropicBaseUrl: env.ANTHROPIC_BASE_URL,
+    toolServiceSecret: env.SESSIA_AI_TOOL_SECRET
   });
 
   if (!parsed.success) {

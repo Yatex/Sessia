@@ -14,6 +14,7 @@ module Ai
 
     def call
       generated = Ai::TaskGenerator.new(users: users, now: now).call
+      retry_due_deliveries
       processed = []
       errors = []
 
@@ -47,6 +48,16 @@ module Ai
 
     def due_scope
       AiTask.due.where(user_id: user_scope.select(:id)).includes(:user, :client, :session)
+    end
+
+    def retry_due_deliveries
+      AiTask.due_delivery_retry.where(user_id: user_scope.select(:id)).find_each do |task|
+        next unless task.retryable?
+        message = task.latest_outbound_message
+        next if message.blank?
+
+        Messaging::RetryDeliveryService.new(message: message).call
+      end
     end
   end
 end

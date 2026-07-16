@@ -12,13 +12,14 @@ import { validateDecision } from "./validate-decision.js";
 export class DecisionService {
   constructor(private readonly provider: DecisionProvider) {}
 
-  async decide(input: DecideRequest): Promise<Decision> {
-    const deterministicDecision = maybeResolveDeterministicAutomation(input) ?? maybeResolveDeterministicReply(input);
+  async decide(input: DecideRequest): Promise<Decision & { _trace?: Record<string, unknown> }> {
+    const deterministicDecision = input.architecture_version === "grounded_v2" ? null : maybeResolveDeterministicAutomation(input) ?? maybeResolveDeterministicReply(input);
     if (deterministicDecision) return deterministicDecision;
 
     const prompt = buildDecisionPrompt(input);
     const result = await this.provider.decide({ prompt, context: input });
-    return validateDecision(result.rawDecision, input);
+    const decision = validateDecision(result.rawDecision, input);
+    return input.architecture_version === "grounded_v2" ? { ...decision, _trace: result.metadata ?? {} } : decision;
   }
 }
 

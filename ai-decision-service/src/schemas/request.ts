@@ -93,7 +93,7 @@ const evidenceSchema = z.object({
 }).passthrough();
 
 export const decideRequestSchema = z.object({
-  architecture_version: z.enum(["grounded_v1"]).optional(),
+  architecture_version: z.enum(["grounded_v1", "grounded_v2"]).optional(),
   context_token: nonEmptyStringSchema.optional(),
   trigger_event: nonEmptyStringSchema,
   professional: professionalSchema,
@@ -111,6 +111,8 @@ export const decideRequestSchema = z.object({
   evidence: z.array(evidenceSchema).max(200).optional(),
   required_evidence_citations: z.boolean().optional(),
   safety_rules: z.array(nonEmptyStringSchema).max(20).optional()
+  ,allowed_tools: z.array(z.enum(["client_context", "session_context", "conversation_history", "pending_interaction", "professional_settings"])).max(5).optional()
+  ,tool_endpoint: z.string().url().optional()
 }).strict().superRefine((request, ctx) => {
   if (request.instruction.trigger_event !== request.trigger_event) {
     ctx.addIssue({
@@ -119,8 +121,11 @@ export const decideRequestSchema = z.object({
       message: "instruction.trigger_event must match trigger_event."
     });
   }
-  if (request.architecture_version === "grounded_v1" && !request.context_token) {
+  if (request.architecture_version?.startsWith("grounded_") && !request.context_token) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["context_token"], message: "context_token is required for grounded decisions." });
+  }
+  if (request.architecture_version === "grounded_v2" && (!request.tool_endpoint || !request.allowed_tools?.length)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["tool_endpoint"], message: "tool_endpoint and allowed_tools are required for grounded_v2." });
   }
 });
 

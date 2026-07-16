@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { DecisionService } from "../src/services/decision-service.js";
 import { MockDecisionProvider } from "../src/providers/mock-provider.js";
+import type { DecisionProvider, ProviderDecisionInput, ProviderDecisionResult } from "../src/providers/base-provider.js";
 import { buildRequest } from "./support/build-request.js";
 
 test("marks a clear confirmation reply without provider ambiguity", async () => {
@@ -215,4 +216,73 @@ test("grounded decisions cite scoped message and session evidence", async () => 
 
   assert.equal(decision.action, "mark_session_confirmed");
   assert.deepEqual(decision.evidence_ids, ["message.41.body", "session.12.confirmation_status"]);
+});
+
+test("grounded_v2 sends semantic replies to the provider instead of regex classification", async () => {
+  class RecordingProvider implements DecisionProvider {
+    calls = 0;
+    async decide(_input: ProviderDecisionInput): Promise<ProviderDecisionResult> {
+      this.calls += 1;
+      return { rawDecision: { action: "send_message", message_body: "Could you clarify?", confidence: 0.75, reasoning_summary: "The short reply is ambiguous." }, metadata: { provider: "test" } };
+    }
+  }
+  const provider = new RecordingProvider();
+  const base = buildRequest();
+  const input = buildRequest({
+    architecture_version: "grounded_v2",
+    context_token: "signed-context",
+    tool_endpoint: "https://sessia.org/internal/ai/tools/__TOOL__",
+    allowed_tools: ["pending_interaction", "conversation_history"],
+    recent_messages: [{ direction: "inbound", author_role: "client", body: "dale", occurred_at: base.current_time }]
+  });
+
+  const decision = await new DecisionService(provider).decide(input);
+  assert.equal(provider.calls, 1);
+  assert.equal(decision.action, "send_message");
+});
+
+test("grounded_v2 delegates confirmation and rescheduling language to the provider", async () => {
+  const replies = [
+    "sí",
+    "dale",
+    "creo que sí",
+    "después te confirmo",
+    "no puedo",
+    "no puedo, ¿puedo ir otro día?",
+    "¿a qué hora es mi sesión?"
+  ];
+
+  class RecordingProvider implements DecisionProvider {
+    bodies: string[] = [];
+
+    async decide(input: ProviderDecisionInput): Promise<ProviderDecisionResult> {
+      const latest = input.context.recent_messages.at(-1)?.body ?? "";
+      this.bodies.push(latest);
+      return {
+        rawDecision: {
+          action: "send_message",
+          message_body: "Respuesta basada en contexto.",
+          confidence: 0.8,
+          reasoning_summary: "The provider interpreted the reply."
+        },
+        metadata: { provider: "test" }
+      };
+    }
+  }
+
+  const provider = new RecordingProvider();
+  const service = new DecisionService(provider);
+  const base = buildRequest();
+
+  for (const body of replies) {
+    await service.decide(buildRequest({
+      architecture_version: "grounded_v2",
+      context_token: "signed-context",
+      tool_endpoint: "https://sessia.org/internal/ai/tools/__TOOL__",
+      allowed_tools: ["pending_interaction", "conversation_history", "session_context"],
+      recent_messages: [{ direction: "inbound", author_role: "client", body, occurred_at: base.current_time }]
+    }));
+  }
+
+  assert.deepEqual(provider.bodies, replies);
 });

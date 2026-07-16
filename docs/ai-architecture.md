@@ -22,3 +22,15 @@ The model never receives database access and cannot mutate payments. Mercado Pag
 ## Known migration boundary
 
 Proactive tasks still use `Ai::ContextBuilder` and the legacy decision contract. They should be migrated one trigger at a time after the grounded inbound path has production evidence. Confirmation tasks are the recommended next stage, followed by reminders, no-response follow-ups, rescheduling, payment reminders, and post-session feedback.
+
+## Grounded V2 rollout
+
+`SESSIA_GROUNDED_INBOUND_V2` enables model-interpreted inbound replies. `SESSIA_GROUNDED_BEFORE_SESSION_V2` independently enables confirmation requests. V2 sends a minimal signed context to the decision service. The Vercel AI SDK model can call only `client_context`, `session_context`, `conversation_history`, `pending_interaction`, and `professional_settings` through the authenticated Rails endpoint. Rails re-runs exactly the requested read-only tools before validating evidence.
+
+Use the same strong `SESSIA_AI_TOOL_SECRET` in Rails and `ai-decision-service`. Never expose it to a browser or model prompt.
+
+Each task has a stable `idempotency_key`, separate pipeline statuses, one `AiTrace`, and zero or more `MessageDeliveryAttempt` records. Delivery retries reuse the existing message and decision. A template/configuration failure is terminal; temporary provider failures use bounded exponential backoff.
+
+## Verifying Twilio Content templates
+
+Sessia now audits Content resources and WhatsApp approval status through Twilio's official API. The central contracts, production commands, ENV mapping, and manual approval procedure are documented in [whatsapp-templates.md](whatsapp-templates.md). The admin trace continues to show template variables and provider errors without exposing Twilio credentials.

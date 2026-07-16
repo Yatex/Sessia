@@ -58,6 +58,7 @@ Rails.application.routes.draw do
     end
     get "analytics", to: "analytics#index", as: :analytics
     get "ai-messages", to: "ai_messages#index", as: :ai_messages
+    get "ai-messages/:id", to: "ai_messages#show", as: :ai_message
   end
 
   resource :settings, only: %i[show update] do
@@ -89,4 +90,10 @@ Rails.application.routes.draw do
   post "stripe/webhook", to: "stripe_webhooks#create", as: :stripe_webhook
   post "webhooks/mercado_pago", to: "webhooks/mercado_pago#create", as: :mercado_pago_webhook
   post "webhooks/twilio/whatsapp", to: "twilio_whatsapp_webhooks#create", as: :twilio_whatsapp_webhook
+
+  namespace :internal do
+    namespace :ai do
+      post "tools/:tool_name", to: "tools#show", as: :tool
+    end
+  end
 end

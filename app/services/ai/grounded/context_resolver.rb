@@ -8,11 +8,11 @@ module Ai
       end
 
       def call
-        raise ArgumentError, "Grounded context currently supports client replies only." unless task.trigger_event == "client_replied"
+        raise ArgumentError, "Grounded context does not support this trigger." unless task.trigger_event.in?(%w[client_replied before_session])
 
-        message = task.user.messages.inbound.find(task.context_data.fetch("message_id"))
-        client = task.user.clients.find(task.client_id || message.client_id)
-        raise ActiveRecord::RecordNotFound, "Inbound message does not belong to the resolved client." unless message.client_id == client.id
+        message = task.trigger_event == "client_replied" ? task.user.messages.inbound.find(task.context_data.fetch("message_id")) : nil
+        client = task.user.clients.find(task.client_id || message&.client_id)
+        raise ActiveRecord::RecordNotFound, "Inbound message does not belong to the resolved client." if message && message.client_id != client.id
 
         session = resolve_session(client, message)
         setting = task.user.ai_setting || task.user.create_ai_setting!
@@ -25,7 +25,7 @@ module Ai
           client: client,
           session: session,
           message: message,
-          trigger: "incoming_message",
+          trigger: resolved_trigger,
           ai_setting: setting,
           permissions: permissions_for(setting),
           locale: task.user.locale,
@@ -43,7 +43,7 @@ module Ai
       attr_reader :task
 
       def resolve_session(client, message)
-        session_id = task.session_id || message.session_id
+        session_id = task.session_id || message&.session_id
         return if session_id.blank?
 
         task.user.sessions.where(client: client).find(session_id)
@@ -57,10 +57,12 @@ module Ai
           "professional_id" => task.user_id,
           "client_id" => client.id,
           "session_id" => session&.id,
-          "message_id" => message.id,
-          "trigger" => "incoming_message"
+          "message_id" => message&.id,
+          "trigger" => resolved_trigger
         }.compact
       end
+
+      def resolved_trigger = task.trigger_event == "client_replied" ? "incoming_message" : "before_session"
 
       def permissions_for(setting)
         {

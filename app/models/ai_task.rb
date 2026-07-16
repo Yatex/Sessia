@@ -13,6 +13,15 @@ class AiTask < ApplicationRecord
   belongs_to :session, optional: true
   has_many :messages, dependent: :nullify
   has_many :ai_alerts, dependent: :nullify
+  has_many :ai_traces, dependent: :destroy
+  has_many :delivery_attempts, class_name: "MessageDeliveryAttempt", dependent: :nullify
+
+  DECISION_STATUSES = %w[pending processing completed failed skipped].freeze
+  VALIDATION_STATUSES = %w[pending accepted rejected not_required].freeze
+  EXECUTION_STATUSES = %w[pending completed failed not_required].freeze
+  DELIVERY_STATUSES = %w[pending sent delivered failed_retryable failed_configuration failed_permanent not_required].freeze
+  ERROR_CATEGORIES = %w[ai_timeout ai_invalid_response validation_rejected execution_failed provider_temporary provider_configuration provider_permanent duplicate].freeze
+  MAX_RETRIES = 3
 
   enum status: {
     pending: "pending",
@@ -27,10 +36,17 @@ class AiTask < ApplicationRecord
 
   validates :trigger_event, presence: true, inclusion: { in: TRIGGER_EVENTS }
   validates :status, :scheduled_for, presence: true
+  validates :idempotency_key, uniqueness: true, allow_nil: true
+  validates :decision_status, inclusion: { in: DECISION_STATUSES }, allow_nil: true
+  validates :validation_status, inclusion: { in: VALIDATION_STATUSES }, allow_nil: true
+  validates :execution_status, inclusion: { in: EXECUTION_STATUSES }, allow_nil: true
+  validates :delivery_status, inclusion: { in: DELIVERY_STATUSES }, allow_nil: true
+  validates :error_category, inclusion: { in: ERROR_CATEGORIES }, allow_nil: true
   validate :client_belongs_to_user
   validate :session_belongs_to_user
 
   scope :due, -> { where(status: "pending").where("scheduled_for <= ?", Time.current) }
+  scope :due_delivery_retry, -> { where(delivery_status: "failed_retryable").where("next_retry_at <= ?", Time.current) }
   scope :recent_first, -> { order(created_at: :desc) }
 
   def activity_summary
@@ -54,6 +70,35 @@ class AiTask < ApplicationRecord
 
   def latest_outbound_message
     messages.outbound.max_by { |message| message.sent_at || message.created_at }
+  end
+
+  def claim!
+    claimed = self.class.where(id: id, status: "pending").update_all(
+      status: "processing",
+      decision_status: "processing",
+      claimed_at: Time.current,
+      updated_at: Time.current
+    )
+    reload if claimed == 1
+    claimed == 1
+  end
+
+  def retryable?
+    delivery_status == "failed_retryable" && retry_count < MAX_RETRIES
+  end
+
+  def claim_delivery_retry!
+    claimed = self.class.where(id: id, delivery_status: "failed_retryable")
+      .where("next_retry_at <= ?", Time.current)
+      .where("retry_count < ?", MAX_RETRIES)
+      .update_all(delivery_status: "pending", next_retry_at: nil, updated_at: Time.current)
+    reload if claimed == 1
+    claimed == 1
+  end
+
+  def schedule_retry!
+    next_count = retry_count + 1
+    update!(retry_count: next_count, next_retry_at: Time.current + (2**next_count).minutes, last_error_at: Time.current)
   end
 
   def message_delivery_summary
@@ -98,6 +143,11 @@ class AiTask < ApplicationRecord
   def set_defaults
     self.status = "pending" if status.blank?
     self.scheduled_for ||= Time.current
+    self.trace_id ||= SecureRandom.uuid if has_attribute?(:trace_id)
+    self.decision_status ||= "pending" if has_attribute?(:decision_status)
+    self.validation_status ||= "pending" if has_attribute?(:validation_status)
+    self.execution_status ||= "pending" if has_attribute?(:execution_status)
+    self.delivery_status ||= "pending" if has_attribute?(:delivery_status)
   end
 
   def normalize_json_columns

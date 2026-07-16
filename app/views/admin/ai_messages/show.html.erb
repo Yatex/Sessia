@@ -1,0 +1,34 @@
+<section class="page-header">
+  <div><p class="eyebrow">AI trace</p><h1>Task #<%= @task.id %></h1><p class="page-subtitle"><%= @task.trace_id %></p></div>
+  <%= link_to "Back to monitor", admin_ai_messages_path, class: "secondary-button" %>
+</section>
+
+<section class="summary-grid admin-ai-summary admin-ai-trace-summary">
+  <% { Decision: @task.decision_status, Validation: @task.validation_status, Execution: @task.execution_status, Delivery: @task.delivery_status, Error: @task.error_category, Retries: @task.retry_count }.each do |label, value| %>
+    <article class="metric-panel"><span><%= label %></span><strong><%= value.present? ? value.to_s.humanize : "-" %></strong></article>
+  <% end %>
+</section>
+
+<section class="table-panel">
+  <div class="section-heading"><div><h2><%= @task.trigger_event.humanize %></h2><p><%= [@task.user.name, @task.client&.name, @task.session&.title].compact.join(" · ") %></p></div></div>
+  <% if @trace %>
+    <% {
+      "Authorized context" => @trace.context_scope,
+      "Tools" => { requested: @trace.tools_requested, completed: @trace.tools_completed, errors: @trace.tool_errors },
+      "Evidence" => { found: @trace.evidence_found, used: @trace.evidence_used },
+      "AI candidate" => @trace.candidate_decision,
+      "Rails validation" => @trace.validation_results,
+      "Final decision" => @trace.final_decision,
+      "Execution" => @trace.execution_result,
+      "Delivery" => @trace.delivery_result
+    }.each do |title, payload| %>
+      <details class="admin-debug-details"><summary><%= title %></summary><pre><%= pretty_json(payload) %></pre></details>
+    <% end %>
+  <% else %>
+    <div class="empty-state compact"><h2>No trace recorded</h2><p>This is a legacy task created before trace collection.</p></div>
+  <% end %>
+
+  <% if @task.delivery_attempts.any? %>
+    <details class="admin-debug-details"><summary>Delivery attempts (<%= @task.delivery_attempts.size %>)</summary><pre><%= pretty_json(@task.delivery_attempts.order(:attempt_number).map { |attempt| attempt.attributes.except("request_data").merge("request_data" => attempt.request_data.except("auth_token")) }) %></pre></details>
+  <% end %>
+</section>

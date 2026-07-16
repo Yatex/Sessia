@@ -111,7 +111,9 @@ module Messaging
     def template_debug(template)
       return if template.blank?
 
-      template.to_h.slice("name", "content_sid", "variables")
+      template.to_h.deep_stringify_keys.slice(
+        "key", "name", "locale", "content_sid", "variable_names", "semantic_variables", "variables"
+      )
     end
   end
 end

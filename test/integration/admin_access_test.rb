@@ -78,6 +78,24 @@ class AdminAccessTest < ActionDispatch::IntegrationTest
     assert_match "Outside WhatsApp conversation window", response.body
   end
 
+  test "admins can filter pipeline states and inspect a closed trace" do
+    admin = create_user(email: "admin-ai-trace@example.com", role: "admin")
+    member = create_user(email: "trace-owner@example.com")
+    client = member.clients.create!(name: "Trace Client", phone: "+598 99 111 251")
+    task = member.ai_tasks.create!(client: client, trigger_event: "client_replied", automation_key: "answer_client_reply", status: "completed", scheduled_for: Time.current, decision_status: "completed", validation_status: "accepted", execution_status: "completed", delivery_status: "failed_configuration", error_category: "provider_configuration")
+    task.ai_traces.create!(user: member, client: client, trace_id: task.trace_id, trigger: task.trigger_event, decision_status: "completed", validation_status: "accepted", execution_status: "completed", delivery_status: "failed_configuration", candidate_decision: { action: "send_message" })
+    sign_in_as(admin)
+
+    get admin_ai_messages_url, params: { delivery_status: "failed_configuration", error_category: "provider_configuration" }
+    assert_response :success
+    assert_match "trace-owner@example.com", response.body
+
+    get admin_ai_message_url(task)
+    assert_response :success
+    assert_select "details:not([open])", minimum: 1
+    assert_match "AI candidate", response.body
+  end
+
   test "admins can extend a user subscription" do
     admin = create_user(email: "admin-extend@example.com", role: "admin")
     member = create_user(email: "extend-target@example.com")

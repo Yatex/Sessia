@@ -1,6 +1,19 @@
 require "test_helper"
 
 class MessagingDispatcherTest < ActiveSupport::TestCase
+  def setup
+    @template_env = {
+      "TWILIO_TEMPLATE_SESSION_CONFIRMATION_EN" => ENV["TWILIO_TEMPLATE_SESSION_CONFIRMATION_EN"],
+      "TWILIO_TEMPLATE_PAYMENT_REMINDER_EN" => ENV["TWILIO_TEMPLATE_PAYMENT_REMINDER_EN"]
+    }
+    ENV["TWILIO_TEMPLATE_SESSION_CONFIRMATION_EN"] = "HX#{'1' * 32}"
+    ENV["TWILIO_TEMPLATE_PAYMENT_REMINDER_EN"] = "HX#{'2' * 32}"
+  end
+
+  def teardown
+    @template_env.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+  end
+
   class UnconfiguredProvider
     def configured?
       false
@@ -96,7 +109,7 @@ class MessagingDispatcherTest < ActiveSupport::TestCase
 
     template = provider.deliveries.first[:template]
     assert_equal "session_confirmation_en", template["name"]
-    assert_equal "HX88edb7ea06c9c6b8f992ee87489e64ca", template["content_sid"]
+    assert_equal "HX#{'1' * 32}", template["content_sid"]
     assert_equal "Client", template["variables"]["1"]
     assert_equal "Coaching", template["variables"]["2"]
     assert_equal "sent", message.status

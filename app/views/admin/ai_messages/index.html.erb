@@ -43,6 +43,18 @@
         <%= label_tag :query, "Search" %>
         <%= text_field_tag :query, @filters[:query], placeholder: "Professional, client, or email" %>
       </div>
+      <div class="field"><%= label_tag :trigger, "Trigger" %><%= select_tag :trigger, options_for_select([["All", ""]] + AiTask::TRIGGER_EVENTS.map { |value| [value.humanize, value] }, @filters[:trigger]) %></div>
+      <div class="field"><%= label_tag :decision_status, "Decision" %><%= select_tag :decision_status, options_for_select([["All", ""]] + AiTask::DECISION_STATUSES.map { |value| [value.humanize, value] }, @filters[:decision_status]) %></div>
+      <div class="field"><%= label_tag :validation_status, "Validation" %><%= select_tag :validation_status, options_for_select([["All", ""]] + AiTask::VALIDATION_STATUSES.map { |value| [value.humanize, value] }, @filters[:validation_status]) %></div>
+      <div class="field"><%= label_tag :execution_status, "Execution" %><%= select_tag :execution_status, options_for_select([["All", ""]] + AiTask::EXECUTION_STATUSES.map { |value| [value.humanize, value] }, @filters[:execution_status]) %></div>
+      <div class="field"><%= label_tag :delivery_status, "Delivery" %><%= select_tag :delivery_status, options_for_select([["All", ""]] + AiTask::DELIVERY_STATUSES.map { |value| [value.humanize, value] }, @filters[:delivery_status]) %></div>
+      <div class="field"><%= label_tag :error_category, "Error" %><%= select_tag :error_category, options_for_select([["All", ""]] + AiTask::ERROR_CATEGORIES.map { |value| [value.humanize, value] }, @filters[:error_category]) %></div>
+      <div class="field"><%= label_tag :workspace, "Workspace" %><%= select_tag :workspace, options_for_select([["All", ""]] + User.order(:name).pluck(:name, :id), @filters[:workspace]) %></div>
+      <div class="field"><%= label_tag :channel, "Channel" %><%= select_tag :channel, options_for_select([["All", ""], ["WhatsApp", "whatsapp"]], @filters[:channel]) %></div>
+      <div class="field"><%= label_tag :date_from, "From" %><%= date_field_tag :date_from, @filters[:date_from] %></div>
+      <div class="field"><%= label_tag :date_to, "To" %><%= date_field_tag :date_to, @filters[:date_to] %></div>
+      <div class="field"><%= label_tag :retry, "Retry" %><%= select_tag :retry, options_for_select([["All", ""], ["With retries", "yes"], ["No retries", "no"]], @filters[:retry]) %></div>
+      <div class="field"><%= label_tag :fallback, "Fallback" %><%= select_tag :fallback, options_for_select([["All", ""], ["Used", "yes"], ["Not used", "no"]], @filters[:fallback]) %></div>
       <div class="field">
         <%= label_tag :task_status, "AI task" %>
         <%= select_tag :task_status, options_for_select([["All tasks", ""]] + AiTask.statuses.keys.map { |status| [status.humanize, status] }, @filters[:task_status]) %>
@@ -106,6 +118,7 @@
               <div class="stacked-cell">
                 <%= status_badge(task.status) %>
                 <strong><%= task.performed_action_names.map { |action| action.to_s.humanize }.join(", ") %></strong>
+                <span><%= [task.decision_status, task.validation_status, task.execution_status].compact.join(" · ") %></span>
                 <span><%= truncate(task.decision_reason.presence || task.activity_summary, length: 160) %></span>
               </div>
             </td>
@@ -134,7 +147,7 @@
                 <% end %>
               </div>
             </td>
-            <td><%= l((task.processed_at || task.scheduled_for).in_time_zone(current_user.time_zone), format: :short) %></td>
+              <td><%= l((task.processed_at || task.scheduled_for).in_time_zone(current_user.time_zone), format: :short) %><br><%= link_to "Trace", admin_ai_message_path(task), class: "text-link" %></td>
           </tr>
         <% end %>
       </tbody>

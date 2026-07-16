@@ -13,9 +13,16 @@ module Ai
         instruction = Ai::InstructionCatalog.for_task(task, ai_setting: context.ai_setting)
         return skipped_result("No enabled AI instruction matched this task.") if instruction.blank?
 
-        tools = Toolset.new(context: context).call
+        tools = Ai::Grounded::Feature.v2_for?(task) ? nil : Toolset.new(context: context).call
         payload = PayloadBuilder.new(context: context, instruction: instruction, tools: tools).call
         candidate = decision_client.decide(payload)
+        decision_metadata = {}
+        if Ai::Grounded::Feature.v2_for?(task)
+          metadata = candidate.delete("_trace") || candidate.delete(:_trace) || {}
+          metadata = independently_resolve_requested_tools(context, metadata)
+          decision_metadata = metadata
+          tools = ToolSnapshot.new(metadata)
+        end
         grounded = GroundedDecisionBuilder.new(context: context, tools: tools).call(candidate)
         validation = DecisionValidator.new(context: context, tools: tools, instruction: instruction).call(grounded)
 
@@ -33,6 +40,10 @@ module Ai
           "trigger" => context.trigger,
           "context_scope" => context_scope(context),
           "tools_executed" => tools.executed_tools,
+          "tools_requested" => tools.executed_tools,
+          "tools_completed" => tools.executed_tools,
+          "tool_errors" => tools.respond_to?(:errors) ? tools.errors : [],
+          "decision_metadata" => decision_metadata,
           "evidence" => tools.evidence.values,
           "candidate_decision" => candidate,
           "grounded_decision" => grounded,
@@ -54,6 +65,24 @@ module Ai
       private
 
       attr_reader :task, :decision_client, :dispatcher
+
+      def independently_resolve_requested_tools(context, metadata)
+        metadata = metadata.to_h.deep_stringify_keys
+        requested = Array(metadata["tools_requested"]) & ToolRunner::ALLOWED_TOOLS
+        results = {}
+        evidence = []
+        completed = []
+        errors = Array(metadata["tool_errors"])
+        requested.each do |name|
+          response = ToolRunner.new(context_token: context.context_token, tool_name: name).call.deep_stringify_keys
+          results[name] = response["result"]
+          evidence.concat(Array(response["evidence"]))
+          completed << name
+        rescue StandardError => error
+          errors << { "tool" => name, "error" => error.message }
+        end
+        metadata.merge("tool_results" => results, "evidence" => evidence, "tools_completed" => completed, "tool_errors" => errors)
+      end
 
       def rejected_result(context:, tools:, candidate:, grounded:, errors:, started_at:)
         {

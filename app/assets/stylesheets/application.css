@@ -2667,6 +2667,16 @@ textarea {
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
+.admin-ai-trace-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-ai-trace-summary .metric-panel strong {
+  overflow-wrap: anywhere;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
 .filter-grid.admin-ai-messages {
   grid-template-columns: 1.4fr repeat(2, minmax(0, 1fr));
 }
@@ -3742,6 +3752,10 @@ textarea {
 
   .admin-ai-summary {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-ai-trace-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .calendar-header {

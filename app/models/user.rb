@@ -33,6 +33,7 @@ class User < ApplicationRecord
   has_many :subscriptions, dependent: :destroy
   has_many :messages, dependent: :destroy
   has_many :ai_tasks, dependent: :destroy
+  has_many :ai_traces, dependent: :destroy
   has_many :ai_alerts, dependent: :destroy
   has_many :availability_rules, dependent: :destroy
   has_many :schedule_blocks, dependent: :destroy

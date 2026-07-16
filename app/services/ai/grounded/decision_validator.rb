@@ -21,6 +21,7 @@ module Ai
         validate_context(errors)
         validate_schema(decision, errors)
         validate_evidence(decision, errors)
+        validate_required_tools(decision, errors)
         validate_effect(decision, errors)
         validate_confidence(decision, errors)
         Result.new(valid: errors.empty?, decision: decision, errors: errors)
@@ -38,7 +39,7 @@ module Ai
           "task_id" => context.task.id,
           "professional_id" => context.professional.id,
           "client_id" => context.client.id,
-          "message_id" => context.message.id,
+          "message_id" => context.message&.id,
           "session_id" => context.session&.id
         }.compact.transform_values(&:to_s)
         actual = token.slice(*expected.keys).transform_values(&:to_s)
@@ -49,6 +50,8 @@ module Ai
 
       def validate_schema(decision, errors)
         errors << "unsupported_action" unless ALLOWED_ACTIONS.include?(decision["action"])
+        legacy_action = decision.dig("legacy_decision", "action")
+        errors << "action_not_allowed" if legacy_action.present? && !instruction.allows_action?(legacy_action)
         errors << "missing_reasoning_summary" if decision["reasoning_summary"].blank?
         errors << "message_body_required" if decision.dig("message", "send") && decision.dig("message", "body").blank?
         errors << "message_too_long" if decision.dig("message", "body").to_s.length > 2_000
@@ -106,6 +109,19 @@ module Ai
         errors << "payment_mutation_forbidden" if type.to_s.match?(/payment|charge|credit|refund|waive|forgive/i)
       end
 
+      def validate_required_tools(decision, errors)
+        return unless Feature.v2_for?(context.task)
+
+        requested = tools.executed_tools
+        if decision["action"] == "propose_session_status_change"
+          errors << "pending_interaction_tool_required" unless requested.include?("pending_interaction")
+          errors << "conversation_history_tool_required" unless requested.include?("conversation_history")
+        end
+        if Array(decision["evidence_ids"]).any? { |id| id.to_s.start_with?("session.") }
+          errors << "session_context_tool_required" unless requested.include?("session_context")
+        end
+      end
+
       def validate_confidence(decision, errors)
         minimum = decision["action"].start_with?("propose_") ? 0.9 : 0.6
         errors << "confidence_below_threshold" if decision["confidence"].to_f < minimum
@@ -113,13 +129,19 @@ module Ai
 
       def unambiguous_confirmation_context?
         return false if context.session.blank?
-        return false unless context.message.session_id == context.session.id
+        return false unless context.message&.session_id == context.session.id
 
         recent_confirmation_requests = context.professional.messages.outbound
           .where(client: context.client, session: context.session)
           .where("created_at >= ?", 14.days.ago)
           .where("metadata ->> 'automation_key' = ?", "confirm_session")
-        recent_confirmation_requests.exists?
+        return false unless recent_confirmation_requests.exists?
+
+        context.professional.messages.outbound
+          .where(client: context.client)
+          .where("created_at >= ?", 14.days.ago)
+          .where("metadata ->> 'automation_key' = ?", "confirm_session")
+          .distinct.count(:session_id) == 1
       end
 
       def grounded_target_slot?(target, evidence_ids)

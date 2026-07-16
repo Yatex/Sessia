@@ -20,7 +20,6 @@ export function validateDecision(decision: unknown, request: DecideRequest): Dec
   }
 
   if (STATE_UPDATE_ACTIONS.includes(parsed.data.action)) {
-    parsed.data.message_body = null;
     parsed.data.note_body = null;
     parsed.data.alert_body = null;
     parsed.data.follow_up_at = null;

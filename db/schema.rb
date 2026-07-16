@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_12_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_16_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -65,12 +65,69 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_12_120000) do
     t.text "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "idempotency_key"
+    t.string "trace_id"
+    t.string "decision_status"
+    t.string "validation_status"
+    t.string "execution_status"
+    t.string "delivery_status"
+    t.string "error_category"
+    t.integer "retry_count", default: 0, null: false
+    t.datetime "next_retry_at"
+    t.datetime "last_error_at"
+    t.datetime "claimed_at"
     t.index ["client_id"], name: "index_ai_tasks_on_client_id"
+    t.index ["idempotency_key"], name: "index_ai_tasks_on_idempotency_key_unique", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["session_id", "automation_key"], name: "index_ai_tasks_on_session_id_and_automation_key"
     t.index ["session_id"], name: "index_ai_tasks_on_session_id"
+    t.index ["status", "scheduled_for", "next_retry_at"], name: "index_ai_tasks_on_pipeline_schedule"
+    t.index ["trace_id"], name: "index_ai_tasks_on_trace_id", unique: true, where: "(trace_id IS NOT NULL)"
     t.index ["user_id", "status", "scheduled_for"], name: "index_ai_tasks_on_user_id_and_status_and_scheduled_for"
     t.index ["user_id", "trigger_event"], name: "index_ai_tasks_on_user_id_and_trigger_event"
     t.index ["user_id"], name: "index_ai_tasks_on_user_id"
+  end
+
+  create_table "ai_traces", force: :cascade do |t|
+    t.bigint "ai_task_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "client_id"
+    t.bigint "session_id"
+    t.string "trace_id", null: false
+    t.string "idempotency_key"
+    t.string "trigger"
+    t.string "channel"
+    t.string "prompt_version"
+    t.string "schema_version"
+    t.string "provider"
+    t.string "model"
+    t.string "decision_status"
+    t.string "validation_status"
+    t.string "execution_status"
+    t.string "delivery_status"
+    t.string "error_category"
+    t.boolean "fallback_used", default: false, null: false
+    t.integer "latency_ms"
+    t.jsonb "context_scope", default: {}, null: false
+    t.jsonb "allowed_actions", default: [], null: false
+    t.jsonb "tools_requested", default: [], null: false
+    t.jsonb "tools_completed", default: [], null: false
+    t.jsonb "tool_errors", default: [], null: false
+    t.jsonb "evidence_found", default: [], null: false
+    t.jsonb "evidence_used", default: [], null: false
+    t.jsonb "candidate_decision", default: {}, null: false
+    t.jsonb "validation_results", default: {}, null: false
+    t.jsonb "final_decision", default: {}, null: false
+    t.jsonb "execution_result", default: {}, null: false
+    t.jsonb "delivery_result", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ai_task_id"], name: "index_ai_traces_on_ai_task_id"
+    t.index ["client_id"], name: "index_ai_traces_on_client_id"
+    t.index ["delivery_status", "created_at"], name: "index_ai_traces_on_delivery_status_and_created_at"
+    t.index ["session_id"], name: "index_ai_traces_on_session_id"
+    t.index ["trace_id"], name: "index_ai_traces_on_trace_id", unique: true
+    t.index ["user_id", "created_at"], name: "index_ai_traces_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_ai_traces_on_user_id"
   end
 
   create_table "audit_logs", force: :cascade do |t|
@@ -208,6 +265,27 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_12_120000) do
     t.index ["related_session_id"], name: "index_credit_ledger_entries_on_related_session_id"
     t.index ["user_id", "created_at"], name: "index_credit_ledger_entries_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_credit_ledger_entries_on_user_id"
+  end
+
+  create_table "message_delivery_attempts", force: :cascade do |t|
+    t.bigint "message_id", null: false
+    t.bigint "ai_task_id"
+    t.integer "attempt_number", null: false
+    t.string "status", null: false
+    t.string "error_category"
+    t.boolean "retryable", default: false, null: false
+    t.datetime "next_retry_at"
+    t.string "provider_message_id"
+    t.string "provider_error_code"
+    t.text "provider_error_message"
+    t.jsonb "request_data", default: {}, null: false
+    t.jsonb "response_data", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ai_task_id"], name: "index_message_delivery_attempts_on_ai_task_id"
+    t.index ["message_id", "attempt_number"], name: "index_delivery_attempts_on_message_and_number", unique: true
+    t.index ["message_id"], name: "index_message_delivery_attempts_on_message_id"
+    t.index ["retryable", "next_retry_at"], name: "index_delivery_attempts_on_retry_schedule"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -406,6 +484,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_12_120000) do
   add_foreign_key "ai_tasks", "clients"
   add_foreign_key "ai_tasks", "sessions"
   add_foreign_key "ai_tasks", "users"
+  add_foreign_key "ai_traces", "ai_tasks"
+  add_foreign_key "ai_traces", "clients"
+  add_foreign_key "ai_traces", "sessions"
+  add_foreign_key "ai_traces", "users"
   add_foreign_key "audit_logs", "users"
   add_foreign_key "audit_logs", "users", column: "actor_id"
   add_foreign_key "availability_rules", "users"
@@ -422,6 +504,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_12_120000) do
   add_foreign_key "credit_ledger_entries", "sessions", column: "related_session_id"
   add_foreign_key "credit_ledger_entries", "users"
   add_foreign_key "credit_ledger_entries", "users", column: "created_by_id"
+  add_foreign_key "message_delivery_attempts", "ai_tasks"
+  add_foreign_key "message_delivery_attempts", "messages"
   add_foreign_key "messages", "ai_tasks"
   add_foreign_key "messages", "clients"
   add_foreign_key "messages", "sessions"

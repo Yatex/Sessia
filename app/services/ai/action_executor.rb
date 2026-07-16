@@ -12,12 +12,15 @@ module Ai
       do_nothing
     ].freeze
 
-    Result = Struct.new(:status, :activity_summary, :performed_action, :error_message, keyword_init: true) do
+    Result = Struct.new(:status, :activity_summary, :performed_action, :error_message, :error_category, :execution_status, :delivery_status, keyword_init: true) do
       def to_h
         {
           "activity_summary" => activity_summary,
           "performed_action" => performed_action,
-          "error_message" => error_message
+          "error_message" => error_message,
+          "error_category" => error_category,
+          "execution_status" => execution_status,
+          "delivery_status" => delivery_status
         }.compact
       end
     end
@@ -37,20 +40,32 @@ module Ai
       Result.new(
         status: action_name == "do_nothing" ? "skipped" : "completed",
         activity_summary: summary,
-        performed_action: action_name
+        performed_action: action_name,
+        execution_status: action_name == "do_nothing" ? "not_required" : "completed",
+        delivery_status: delivery_status_for(action_name)
       )
     rescue StandardError => error
+      classification = Ai::ErrorClassifier.call(error)
+      delivery_failure = classification.category.start_with?("provider_")
       Result.new(
-        status: "failed",
-        activity_summary: "Action execution failed.",
+        status: delivery_failure ? "completed" : "failed",
+        activity_summary: delivery_failure ? "Action completed, but WhatsApp delivery failed." : "Action execution failed.",
         performed_action: decision&.fetch("action", nil),
-        error_message: error.message
+        error_message: error.message,
+        error_category: classification.category,
+        execution_status: delivery_failure ? "completed" : "failed",
+        delivery_status: classification.delivery_status
       )
     end
 
     private
 
     attr_reader :task, :context, :instruction, :dispatcher
+
+    def delivery_status_for(action_name)
+      return "not_required" unless action_name.in?(%w[send_message mark_session_confirmed mark_session_maybe mark_session_declined reschedule_session alert_professional])
+      task.reload.delivery_status.presence || "pending"
+    end
 
     def validate_action!(action_name)
       raise ArgumentError, "Unsupported action: #{action_name}" unless ACTION_NAMES.include?(action_name)
@@ -62,11 +77,11 @@ module Ai
       when "send_message"
         send_message!(decision.fetch("message_body"))
       when "mark_session_confirmed"
-        update_confirmation!("confirmed")
+        update_confirmation!("confirmed", acknowledgement_body: decision["message_body"])
       when "mark_session_maybe"
-        update_confirmation!("maybe")
+        update_confirmation!("maybe", acknowledgement_body: decision["message_body"])
       when "mark_session_declined"
-        update_confirmation!("declined")
+        update_confirmation!("declined", acknowledgement_body: decision["message_body"])
       when "reschedule_session"
         reschedule_session!(decision.fetch("target_start_at"))
       when "create_client_note"
@@ -100,12 +115,13 @@ module Ai
       "Queued #{task.automation_key.presence || task.trigger_event} message for #{client.name} (#{message.status})."
     end
 
-    def update_confirmation!(status)
+    def update_confirmation!(status, acknowledgement_body: nil)
       session = context[:session]
       raise "Cannot update confirmation without a session." if session.blank?
 
       session.update!(confirmation_status: status)
-      acknowledgement = send_acknowledgement(confirmation_acknowledgement(status), event: "confirmation_#{status}")
+      body = acknowledgement_body.presence || (Ai::Grounded::Feature.v2_for?(task) ? nil : confirmation_acknowledgement(status))
+      acknowledgement = send_acknowledgement(body, event: "confirmation_#{status}")
       "#{session.client.name} marked #{status.humanize.downcase}#{acknowledgement ? ' and acknowledged' : ''}."
     end
 

@@ -133,13 +133,13 @@ module Ai
     end
 
     def create_task_once(user:, session:, trigger_event:, automation_key:, scheduled_for:, context_data:)
-      duplicate_scope = user.ai_tasks.where(
-        session: session,
-        trigger_event: trigger_event,
-        automation_key: automation_key
-      ).where(status: %w[pending processing completed])
-
-      return if duplicate_scope.where("created_at >= ?", DUPLICATE_WINDOW.ago(now)).exists?
+      idempotency_key = Ai::IdempotencyKey.for_task(
+        user: user, client: session.client, session: session,
+        automation_key: automation_key, trigger_event: trigger_event,
+        scheduled_window: Ai::IdempotencyKey.scheduled_window(session),
+        channel: Client::WHATSAPP_CHANNEL
+      )
+      return if user.ai_tasks.exists?(idempotency_key: idempotency_key)
 
       user.ai_tasks.create!(
         client: session.client,
@@ -147,8 +147,11 @@ module Ai
         trigger_event: trigger_event,
         automation_key: automation_key,
         scheduled_for: scheduled_for,
-        context_data: context_data
+        context_data: context_data.merge("scheduled_window" => Ai::IdempotencyKey.scheduled_window(session)),
+        idempotency_key: idempotency_key
       )
+    rescue ActiveRecord::RecordNotUnique
+      nil
     end
   end
 end

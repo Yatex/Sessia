@@ -59,6 +59,7 @@ module Messaging
       end
 
       message.update!(attributes)
+      update_delivery_pipeline(message)
       Result.new(status: :accepted, message: message, client: message.client, reason: "Delivery status updated to #{provider_status}.")
     end
 
@@ -70,6 +71,26 @@ module Messaging
       return if candidates.empty?
 
       candidates.find { |client| professional_number_matches?(client) }
+    end
+
+    def update_delivery_pipeline(message)
+      task = message.ai_task
+      attempt = message.delivery_attempts.order(:attempt_number).last
+      if provider_status.in?(%w[sent delivered read])
+        normalized = provider_status.in?(%w[delivered read]) ? "delivered" : "sent"
+        attempt&.update!(status: normalized, retryable: false, provider_message_id: message_sid, response_data: params.slice("MessageStatus", "SmsStatus"))
+        task&.update!(delivery_status: normalized, error_category: nil, next_retry_at: nil)
+      elsif provider_status.in?(%w[failed undelivered])
+        error = Messaging::TwilioWhatsappProvider::DeliveryError.new(
+          provider_error_message.presence || "Twilio delivery failed.",
+          provider_metadata: { error_code: provider_error_code, error_message: provider_error_message }
+        )
+        classification = Ai::ErrorClassifier.call(error)
+        attempt&.update!(status: "failed", error_category: classification.category, retryable: classification.retryable, provider_error_code: provider_error_code, provider_error_message: provider_error_message)
+        task&.update!(delivery_status: classification.delivery_status, error_category: classification.category, last_error_at: Time.current, next_retry_at: classification.retryable ? 2.minutes.from_now : nil)
+      end
+      trace = task&.ai_traces&.order(created_at: :desc)&.first
+      trace&.update!(delivery_status: task.delivery_status, error_category: task.error_category, delivery_result: message.metadata.to_h["provider"] || {})
     end
 
     def professional_number_matches?(client)
