@@ -349,8 +349,20 @@ es:
       title: "No hay sesiones este día"
       body: "Ningún profesor tiene sesiones agendadas para el día seleccionado."
     views:
+      agenda: "Agenda"
       week: "Semana"
       month: "Mes"
+    display:
+      label: "Vista y densidad de la agenda"
+      range: "Rango"
+      density: "Densidad"
+      ranges:
+        week: "Semana"
+        three_days: "3 días"
+        day: "Día"
+      densities:
+        compact: "Compacta"
+        comfortable: "Cómoda"
     counts:
       sessions:
         one: "1 sesión"

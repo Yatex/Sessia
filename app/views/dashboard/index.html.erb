@@ -6,12 +6,12 @@
 
   <div class="calendar-actions">
     <div class="segmented-control" aria-label="<%= t("dashboard.calendar_view") %>">
-      <%= link_to t("dashboard.views.week"), dashboard_path(view: "week", date: @selected_date.iso8601, user_id: @selected_professional_id), class: @view_mode == "week" ? "active" : nil %>
-      <%= link_to t("dashboard.views.month"), dashboard_path(view: "month", date: @selected_date.iso8601, user_id: @selected_professional_id), class: @view_mode == "month" ? "active" : nil %>
+      <%= link_to t("dashboard.views.agenda"), dashboard_path(view: "week", date: @selected_date.iso8601, user_id: @selected_professional_id, agenda_span: @agenda_span, agenda_density: @agenda_density), class: @view_mode == "week" ? "active" : nil %>
+      <%= link_to t("dashboard.views.month"), dashboard_path(view: "month", date: @selected_date.iso8601, user_id: @selected_professional_id, agenda_density: @agenda_density), class: @view_mode == "month" ? "active" : nil %>
     </div>
-    <%= link_to t("dashboard.previous"), dashboard_path(view: @view_mode, date: @previous_date.iso8601, user_id: @selected_professional_id), class: "secondary-button" %>
-    <%= link_to t("dashboard.today"), dashboard_path(view: @view_mode, date: Date.current.iso8601, user_id: @selected_professional_id), class: "secondary-button" %>
-    <%= link_to t("dashboard.next"), dashboard_path(view: @view_mode, date: @next_date.iso8601, user_id: @selected_professional_id), class: "secondary-button" %>
+    <%= link_to t("dashboard.previous"), dashboard_path(view: @view_mode, date: @previous_date.iso8601, user_id: @selected_professional_id, agenda_span: @agenda_span, agenda_density: @agenda_density), class: "secondary-button" %>
+    <%= link_to t("dashboard.today"), dashboard_path(view: @view_mode, date: Date.current.iso8601, user_id: @selected_professional_id, agenda_span: @agenda_span, agenda_density: @agenda_density), class: "secondary-button" %>
+    <%= link_to t("dashboard.next"), dashboard_path(view: @view_mode, date: @next_date.iso8601, user_id: @selected_professional_id, agenda_span: @agenda_span, agenda_density: @agenda_density), class: "secondary-button" %>
     <% unless @studio_resource_view %>
       <details class="agenda-block-menu">
         <summary class="secondary-button"><%= t("dashboard.block_time.action") %></summary>
@@ -76,6 +76,8 @@
     <%= form_with url: dashboard_path, method: :get, local: true, class: "filter-form" do %>
       <%= hidden_field_tag :view, @view_mode %>
       <%= hidden_field_tag :date, @selected_date.iso8601 %>
+      <%= hidden_field_tag :agenda_span, @agenda_span %>
+      <%= hidden_field_tag :agenda_density, @agenda_density %>
       <div class="filter-grid">
         <div class="field">
           <%= label_tag :user_id, t("team.professor") %>
@@ -89,6 +91,29 @@
   </section>
 <% end %>
 
+<% if @view_mode == "week" %>
+  <section class="agenda-display-toolbar" aria-label="<%= t("dashboard.display.label") %>">
+    <% unless @studio_resource_view %>
+      <div class="agenda-display-group">
+        <span><%= t("dashboard.display.range") %></span>
+        <div class="segmented-control agenda-range-control">
+          <% DashboardController::AGENDA_SPANS.each do |span| %>
+            <%= link_to t("dashboard.display.ranges.#{span}"), dashboard_path(view: "week", date: @selected_date.iso8601, user_id: @selected_professional_id, agenda_span: span, agenda_density: @agenda_density), class: @agenda_span == span ? "active" : nil %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+    <div class="agenda-display-group">
+      <span><%= t("dashboard.display.density") %></span>
+      <div class="segmented-control agenda-density-control">
+        <% DashboardController::AGENDA_DENSITIES.each do |density| %>
+          <%= link_to t("dashboard.display.densities.#{density}"), dashboard_path(view: "week", date: @selected_date.iso8601, user_id: @selected_professional_id, agenda_span: @agenda_span, agenda_density: density), class: @agenda_density == density ? "active" : nil %>
+        <% end %>
+      </div>
+    </div>
+  </section>
+<% end %>
+
 <% if @view_mode == "month" %>
   <section class="month-calendar">
     <% I18n.t("date.abbr_day_names").rotate(1).each do |day_name| %>
@@ -97,7 +122,7 @@
 
     <% @calendar_days.each do |day| %>
       <% day_sessions = @sessions_by_day.fetch(day, []) %>
-      <%= link_to dashboard_path(view: "week", date: day.iso8601, user_id: @selected_professional_id), class: "month-day #{'today' if day == Date.current} #{'outside-month' if day.month != @month_start.month}" do %>
+      <%= link_to dashboard_path(view: "week", date: day.iso8601, user_id: @selected_professional_id, agenda_span: "day", agenda_density: @agenda_density), class: "month-day #{'today' if day == Date.current} #{'outside-month' if day.month != @month_start.month}" do %>
         <header>
           <span><%= day.day %></span>
           <% if day == Date.current %>
@@ -120,7 +145,7 @@
 <% elsif @studio_resource_view %>
   <section class="studio-day-strip" aria-label="<%= t("dashboard.weekly_agenda") %>">
     <% @calendar_days.each do |day| %>
-      <%= link_to dashboard_path(view: "week", date: day.iso8601), class: "studio-day-tab #{'active' if day == @resource_day} #{'today' if day == Date.current}" do %>
+      <%= link_to dashboard_path(view: "week", date: day.iso8601, agenda_density: @agenda_density), class: "studio-day-tab #{'active' if day == @resource_day} #{'today' if day == Date.current}" do %>
         <span><%= l(day, format: "%a") %></span>
         <strong><%= day.day %></strong>
       <% end %>
@@ -141,7 +166,7 @@
         <%= link_to t("actions.new_session"), new_session_path(date: @resource_day.iso8601), class: "primary-button" %>
       </div>
     <% else %>
-      <div class="week-grid resource-grid" style="grid-template-columns: 76px repeat(<%= @resource_professionals.size %>, minmax(180px, 1fr));">
+      <div class="week-grid resource-grid agenda-density-<%= @agenda_density %>" style="--agenda-column-count: <%= @resource_professionals.size %>;">
         <div class="week-grid-corner"><%= t("dashboard.time") %></div>
 
         <% @resource_professionals.each do |professional| %>
@@ -202,8 +227,8 @@
     <% end %>
   </section>
 <% else %>
-  <section class="week-scheduler" aria-label="<%= t("dashboard.weekly_agenda") %>">
-    <div class="week-grid">
+  <section class="week-scheduler agenda-scheduler agenda-span-<%= @agenda_span %> agenda-density-<%= @agenda_density %>" aria-label="<%= t("dashboard.weekly_agenda") %>">
+    <div class="week-grid agenda-grid agenda-span-<%= @agenda_span %> agenda-density-<%= @agenda_density %>" style="--agenda-column-count: <%= @calendar_days.size %>;">
       <div class="week-grid-corner"><%= t("dashboard.time") %></div>
 
       <% @calendar_days.each do |day| %>

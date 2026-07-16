@@ -356,8 +356,20 @@ en:
       title: "No sessions this day"
       body: "None of the professors has sessions scheduled for the selected day."
     views:
+      agenda: "Agenda"
       week: "Week"
       month: "Month"
+    display:
+      label: "Agenda view and density"
+      range: "Range"
+      density: "Density"
+      ranges:
+        week: "Week"
+        three_days: "3 days"
+        day: "Day"
+      densities:
+        compact: "Compact"
+        comfortable: "Comfortable"
     counts:
       sessions:
         one: "1 session"

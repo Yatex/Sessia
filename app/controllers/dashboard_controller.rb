@@ -2,9 +2,13 @@ class DashboardController < ApplicationController
   before_action :authenticate_user!
 
   SLOT_MINUTES = 30
+  AGENDA_SPANS = %w[week three_days day].freeze
+  AGENDA_DENSITIES = %w[compact comfortable].freeze
 
   def index
     @view_mode = params[:view] == "month" ? "month" : "week"
+    @agenda_span = agenda_preference(:agenda_span, params[:agenda_span], AGENDA_SPANS, "week")
+    @agenda_density = agenda_preference(:agenda_density, params[:agenda_density], AGENDA_DENSITIES, "compact")
     @selected_date = parse_date_param
     @filter_professionals = workspace_professionals
     @selected_professional_id = scoped_professional_id(params[:user_id])
@@ -58,12 +62,10 @@ class DashboardController < ApplicationController
 
   def prepare_week_view
     @week_start = @selected_date.beginning_of_week(:monday)
-    @calendar_days = (@week_start..(@week_start + 6.days)).to_a
-    @period_title = "#{I18n.l(@week_start, format: :short)} - #{I18n.l(@week_start + 6.days, format: :short)}"
-    @previous_date = @week_start - 7.days
-    @next_date = @week_start + 7.days
+    prepare_agenda_range
     @availability_calendar = Availability::Calendar.new(@dashboard_user)
     if @studio_resource_view
+      @calendar_days = (@week_start..(@week_start + 6.days)).to_a
       prepare_studio_resource_day_view
       return
     end
@@ -107,6 +109,33 @@ class DashboardController < ApplicationController
     Date.parse(params[:date].presence || params[:week].to_s)
   rescue ArgumentError
     Date.current
+  end
+
+  def prepare_agenda_range
+    case @agenda_span
+    when "day"
+      @calendar_days = [@selected_date]
+      @period_title = I18n.l(@selected_date, format: :long)
+      @previous_date = @selected_date - 1.day
+      @next_date = @selected_date + 1.day
+    when "three_days"
+      range_end = @selected_date + 2.days
+      @calendar_days = (@selected_date..range_end).to_a
+      @period_title = "#{I18n.l(@selected_date, format: :short)} - #{I18n.l(range_end, format: :short)}"
+      @previous_date = @selected_date - 3.days
+      @next_date = @selected_date + 3.days
+    else
+      range_end = @week_start + 6.days
+      @calendar_days = (@week_start..range_end).to_a
+      @period_title = "#{I18n.l(@week_start, format: :short)} - #{I18n.l(range_end, format: :short)}"
+      @previous_date = @week_start - 7.days
+      @next_date = @week_start + 7.days
+    end
+  end
+
+  def agenda_preference(key, requested_value, allowed_values, default)
+    session[key] = requested_value if allowed_values.include?(requested_value)
+    allowed_values.include?(session[key]) ? session[key] : default
   end
 
   def sessions_in_current_month

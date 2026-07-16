@@ -69,6 +69,38 @@ class AuthenticationAndScopeTest < ActionDispatch::IntegrationTest
     assert_no_match "Hidden Client", response.body
   end
 
+  test "dashboard supports reusable agenda ranges and remembers density" do
+    user = User.create!(name: "Mobile Agenda", email: "mobile-agenda@example.com", password: "password123")
+    post sign_in_url, params: { email: user.email, password: "password123" }
+    selected_date = Date.new(2026, 7, 15)
+
+    get dashboard_url(view: "week", date: selected_date.iso8601, agenda_span: "three_days", agenda_density: "comfortable")
+
+    assert_response :success
+    assert_select ".agenda-grid.agenda-span-three_days.agenda-density-comfortable"
+    assert_select ".agenda-grid .week-grid-day", count: 3
+    assert_select ".agenda-range-control .active", text: "3 days"
+    assert_select ".agenda-density-control .active", text: "Comfortable"
+
+    get dashboard_url(view: "week", date: selected_date.iso8601)
+
+    assert_response :success
+    assert_select ".agenda-grid.agenda-span-three_days.agenda-density-comfortable"
+    assert_select ".agenda-grid .week-grid-day", count: 3
+  end
+
+  test "day agenda renders one day while week agenda renders seven" do
+    user = User.create!(name: "Agenda Ranges", email: "agenda-ranges@example.com", password: "password123")
+    post sign_in_url, params: { email: user.email, password: "password123" }
+    selected_date = Date.new(2026, 7, 15)
+
+    get dashboard_url(view: "week", date: selected_date.iso8601, agenda_span: "day")
+    assert_select ".agenda-grid.agenda-span-day .week-grid-day", count: 1
+
+    get dashboard_url(view: "week", date: selected_date.iso8601, agenda_span: "week")
+    assert_select ".agenda-grid.agenda-span-week .week-grid-day", count: 7
+  end
+
   test "payments page is scoped to current professional charges" do
     user = User.create!(name: "Payments Scope", email: "payments-scope@example.com", password: "password123")
     client = user.clients.create!(name: "Visible Payer", phone: "+598 99 111 600")
