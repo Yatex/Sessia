@@ -110,27 +110,17 @@ class AiGroundedTaskProcessorTest < ActiveSupport::TestCase
     assert_includes task.reload.result_data.dig("validation", "errors"), "confidence_below_threshold"
   end
 
-  test "feature flag off preserves the legacy inbound processor" do
-    user, _client, session_record, task = confirmation_context("yes")
-    decision_client = PayloadDecisionClient.new do |_payload|
-      {
-        "action" => "mark_session_confirmed",
-        "message_body" => nil,
-        "note_body" => nil,
-        "alert_body" => nil,
-        "follow_up_at" => nil,
-        "target_start_at" => nil,
-        "confidence" => 0.99,
-        "reasoning_summary" => "Legacy decision"
-      }
-    end
+  test "environment variables cannot disable grounded v2" do
+    _user, _client, _session_record, task = confirmation_context("yes")
 
-    with_env("SESSIA_AI_GROUNDED_INBOUND_ENABLED" => "false") do
-      Ai::TaskProcessor.new(task: task, decision_client: decision_client).call
+    with_env(
+      "SESSIA_AI_GROUNDED_INBOUND_ENABLED" => "false",
+      "SESSIA_GROUNDED_INBOUND_V2" => "false",
+      "SESSIA_GROUNDED_BEFORE_SESSION_V2" => "false"
+    ) do
+      assert Ai::Grounded::Feature.grounded_for?(task)
+      assert Ai::Grounded::Feature.v2_for?(task)
     end
-
-    assert_equal "confirmed", session_record.reload.confirmation_status
-    assert_nil task.reload.result_data["architecture_version"]
   end
 
   test "rejects a model supplied session id outside the signed context" do
@@ -234,7 +224,12 @@ class AiGroundedTaskProcessorTest < ActiveSupport::TestCase
   end
 
   def with_grounded_inbound(&block)
-    with_env("SESSIA_AI_GROUNDED_INBOUND_ENABLED" => "true", &block)
+    singleton = Ai::Grounded::Feature.singleton_class
+    original = singleton.instance_method(:v2_for?)
+    singleton.define_method(:v2_for?) { |_task| false }
+    block.call
+  ensure
+    singleton.define_method(:v2_for?, original)
   end
 
   def with_env(values)

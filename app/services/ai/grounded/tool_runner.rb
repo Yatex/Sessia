@@ -1,7 +1,18 @@
 module Ai
   module Grounded
     class ToolRunner
-      ALLOWED_TOOLS = %w[client_context session_context conversation_history pending_interaction professional_settings].freeze
+      AVAILABILITY_DAYS = 14
+      AVAILABILITY_LIMIT = 6
+      ALLOWED_TOOLS = %w[
+        client_context
+        session_context
+        conversation_history
+        pending_interaction
+        professional_settings
+        availability_options
+        payment_status
+        workspace_policies
+      ].freeze
 
       def initialize(context_token:, tool_name:)
         @scope = ContextResolver.verify!(context_token)
@@ -31,6 +42,17 @@ module Ai
 
       def item(source, field, value, metadata = {})
         { evidence_id: "#{source.class.model_name.singular}.#{source.id}.#{field}", source_type: source.class.model_name.singular, source_id: source.id.to_s, field: field.to_s, value: serialize(value), metadata: metadata }
+      end
+
+      def virtual_item(id:, source_type:, field:, value:, metadata: {})
+        {
+          evidence_id: id,
+          source_type: source_type,
+          source_id: nil,
+          field: field.to_s,
+          value: serialize(value),
+          metadata: metadata
+        }
       end
 
       def client_context
@@ -64,6 +86,67 @@ module Ai
         setting = professional.ai_setting || professional.create_ai_setting!
         evidence = [item(setting, :instructions, setting.instructions), item(setting, :confirm_sessions, setting.confirm_sessions?)]
         [{ instructions: setting.instructions, confirm_sessions: setting.confirm_sessions?, locale: professional.locale, time_zone: professional.time_zone }, evidence]
+      end
+
+      def availability_options
+        return [{ options: [] }, []] if session_record.blank?
+
+        duration = session_record.duration_minutes.positive? ? session_record.duration_minutes : 50
+        slots = Availability::FreeSlotFinder.new(professional).call(
+          from: Time.current,
+          days: AVAILABILITY_DAYS,
+          duration_minutes: duration,
+          limit: AVAILABILITY_LIMIT,
+          exclude_session: session_record
+        )
+        evidence = slots.map do |slot|
+          virtual_item(
+            id: "availability.#{professional.id}.#{slot.starts_at.to_i}.#{duration}",
+            source_type: "availability",
+            field: :available_slot,
+            value: { starts_at: slot.starts_at.iso8601, ends_at: slot.ends_at.iso8601 },
+            metadata: { professional_id: professional.id, duration_minutes: duration }
+          )
+        end
+        options = slots.zip(evidence).map do |slot, item|
+          {
+            evidence_id: item.fetch(:evidence_id),
+            starts_at: slot.starts_at.iso8601,
+            ends_at: slot.ends_at.iso8601,
+            label: slot.label
+          }
+        end
+        [{ options: options }, evidence]
+      end
+
+      def payment_status
+        return [{ tracked: false }, []] if session_record.blank?
+
+        charge = session_record.main_charge
+        evidence = [item(session_record, :payment_status, session_record.payment_status)]
+        if charge.present?
+          %i[status amount_cents currency due_date payment_url].each do |field|
+            evidence << item(charge, field, charge.public_send(field))
+          end
+        end
+        [{
+          tracked: charge.present? || !session_record.payment_not_tracked?,
+          status: session_record.payment_status,
+          amount_cents: charge&.amount_cents || session_record.price_cents,
+          currency: charge&.currency || session_record.currency,
+          due_date: charge&.due_date&.iso8601,
+          payment_required_before_session: session_record.payment_required_before_session?,
+          payment_link: charge&.payment_url.presence
+        }.compact, evidence]
+      end
+
+      def workspace_policies
+        [{
+          workspace_type: (professional.studio_owner || professional).account_type,
+          professional_scope_id: professional.id.to_s,
+          payments_read_only: true,
+          recurring_changes_apply_to_occurrence_only: true
+        }, []]
       end
 
       def serialize(value)

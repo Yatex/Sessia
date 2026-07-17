@@ -68,7 +68,9 @@ class AiPipelineV2Test < ActiveSupport::TestCase
     decision = {
       "action" => "send_message", "message_body" => "Can you confirm?", "note_body" => nil,
       "alert_body" => nil, "follow_up_at" => nil, "target_start_at" => nil,
-      "confidence" => 0.98, "reasoning_summary" => "Ask for confirmation."
+      "confidence" => 0.98, "reasoning_summary" => "Ask for confirmation.",
+      "evidence_ids" => ["session.#{session_record.id}.start_time"],
+      "_trace" => { "tools_requested" => ["session_context"] }
     }
     dispatcher = Messaging::Dispatcher.new(provider: ConfigurationFailureProvider.new)
 
@@ -77,7 +79,7 @@ class AiPipelineV2Test < ActiveSupport::TestCase
 
     assert_equal "completed", task.status
     assert_equal "completed", task.decision_status
-    assert_equal "not_required", task.validation_status
+    assert_equal "accepted", task.validation_status
     assert_equal "completed", task.execution_status
     assert_equal "failed_configuration", task.delivery_status
     assert_equal "provider_configuration", task.error_category

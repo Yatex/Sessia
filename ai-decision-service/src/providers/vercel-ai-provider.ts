@@ -144,7 +144,10 @@ function toolDescription(name: string): string {
     session_context: "Read the authorized session date, time, status and confirmation state. Required for date or time answers.",
     conversation_history: "Read recent authorized conversation messages. Required to interpret short replies.",
     pending_interaction: "Read whether the current reply answers a pending session confirmation. Required for short confirmations.",
-    professional_settings: "Read the professional's assistant settings, locale and instructions."
+    professional_settings: "Read the professional's assistant settings, locale and instructions.",
+    availability_options: "Read currently available replacement times for the authorized professional and session.",
+    payment_status: "Read the authorized session payment status and payment link. Payment data is read-only.",
+    workspace_policies: "Read the authorized workspace safety and scheduling policies."
   } as Record<string, string>)[name] ?? "Read authorized Sessia context.";
 }
 

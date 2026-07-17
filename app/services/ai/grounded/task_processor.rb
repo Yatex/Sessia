@@ -36,7 +36,7 @@ module Ai
           "error_message" => executor_result.error_message,
           "activity_summary" => executor_result.activity_summary,
           "performed_action" => executor_result.performed_action,
-          "architecture_version" => "grounded_v1",
+          "architecture_version" => architecture_version,
           "trigger" => context.trigger,
           "context_scope" => context_scope(context),
           "tools_executed" => tools.executed_tools,
@@ -56,7 +56,7 @@ module Ai
           "status" => "failed",
           "error_message" => error.message,
           "activity_summary" => "Grounded AI task failed safely.",
-          "architecture_version" => "grounded_v1",
+          "architecture_version" => architecture_version,
           "failure_details" => { "error_class" => error.class.name, "error_message" => error.message },
           "latency_ms" => elapsed_ms(started_at)
         }
@@ -88,7 +88,7 @@ module Ai
         {
           "status" => "skipped",
           "activity_summary" => "AI decision rejected by Rails validation.",
-          "architecture_version" => "grounded_v1",
+          "architecture_version" => architecture_version,
           "trigger" => context.trigger,
           "context_scope" => context_scope(context),
           "tools_executed" => tools.executed_tools,
@@ -102,7 +102,11 @@ module Ai
       end
 
       def skipped_result(reason)
-        { "status" => "skipped", "activity_summary" => reason, "architecture_version" => "grounded_v1" }
+        { "status" => "skipped", "activity_summary" => reason, "architecture_version" => architecture_version }
+      end
+
+      def architecture_version
+        Ai::Grounded::Feature.v2_for?(task) ? "grounded_v2" : "grounded_v1"
       end
 
       def legacy_context(context)
@@ -115,7 +119,7 @@ module Ai
           "professional_id" => context.professional.id,
           "client_id" => context.client.id,
           "session_id" => context.session&.id,
-          "message_id" => context.message.id
+          "message_id" => context.message&.id
         }.compact
       end
 

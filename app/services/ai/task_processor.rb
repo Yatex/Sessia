@@ -81,8 +81,7 @@ module Ai
     attr_reader :task, :decision_client, :dispatcher
 
     def grounded_task?
-      (task.trigger_event == "client_replied" && Ai::Grounded::Feature.inbound_enabled?) ||
-        (task.trigger_event == "before_session" && task.automation_key == "confirm_session" && Ai::Grounded::Feature.before_session_v2_enabled?)
+      Ai::Grounded::Feature.grounded_for?(task)
     end
 
     def finalize!(status, result_data, error_message: nil, pipeline: {})

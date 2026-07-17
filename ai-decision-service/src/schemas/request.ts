@@ -110,9 +110,18 @@ export const decideRequestSchema = z.object({
   tool_results: z.record(z.unknown()).optional(),
   evidence: z.array(evidenceSchema).max(200).optional(),
   required_evidence_citations: z.boolean().optional(),
-  safety_rules: z.array(nonEmptyStringSchema).max(20).optional()
-  ,allowed_tools: z.array(z.enum(["client_context", "session_context", "conversation_history", "pending_interaction", "professional_settings"])).max(5).optional()
-  ,tool_endpoint: z.string().url().optional()
+  safety_rules: z.array(nonEmptyStringSchema).max(20).optional(),
+  allowed_tools: z.array(z.enum([
+    "client_context",
+    "session_context",
+    "conversation_history",
+    "pending_interaction",
+    "professional_settings",
+    "availability_options",
+    "payment_status",
+    "workspace_policies"
+  ])).max(8).optional(),
+  tool_endpoint: z.string().url().optional()
 }).strict().superRefine((request, ctx) => {
   if (request.instruction.trigger_event !== request.trigger_event) {
     ctx.addIssue({
