@@ -2,6 +2,33 @@ require "test_helper"
 require "rake"
 
 class MessagingWhatsappTemplateManagerTest < ActiveSupport::TestCase
+  test "catalog adopts the four existing confirmation and reminder templates" do
+    expected = {
+      [:session_confirmation, :es] => [
+        "copy_of_sessia_session_confirmation_es_v1",
+        "Hola {{1}}, ¿podés confirmar tu sesión de {{2}} del {{3}} a las {{4}}? Cualquier otra consulta puedes hacerla aqui"
+      ],
+      [:session_confirmation, :en] => [
+        "copy_of_sessia_session_confirmation_en_v1",
+        "Hi {{1}}, can you confirm your {{2}} session on {{3}} at {{4}}? Any other questions can be answered here"
+      ],
+      [:session_reminder, :es] => [
+        "copy_of_sessia_session_reminder_es_v1",
+        "Hola {{1}}, te recordamos tu sesión de {{2}} del {{3}} a las {{4}}. Cualquier pregunta puedes hacerla aqui."
+      ],
+      [:session_reminder, :en] => [
+        "copy_of_sessia_session_reminder_en_v1",
+        "Hi {{1}}, this is a reminder for your {{2}} session on {{3}} at {{4}}. See you soon"
+      ]
+    }
+
+    expected.each do |(key, locale), (friendly_name, body)|
+      definition = Messaging::WhatsappTemplateCatalog.fetch(key, locale)
+      assert_equal friendly_name, definition.friendly_name
+      assert_equal body, definition.body
+    end
+  end
+
   class FakeClient
     attr_reader :calls, :created
 

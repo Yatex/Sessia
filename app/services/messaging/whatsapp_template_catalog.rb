@@ -57,13 +57,20 @@ module Messaging
       "blocked_time_rebooking" => :session_change
     }.freeze
 
+    FRIENDLY_NAME_OVERRIDES = {
+      [:session_confirmation, :es] => "copy_of_sessia_session_confirmation_es_v1",
+      [:session_confirmation, :en] => "copy_of_sessia_session_confirmation_en_v1",
+      [:session_reminder, :es] => "copy_of_sessia_session_reminder_es_v1",
+      [:session_reminder, :en] => "copy_of_sessia_session_reminder_en_v1"
+    }.freeze
+
     CONTRACTS = {
       session_confirmation: {
         workflow: "confirm_session",
         variables: %i[client_name session_name session_date session_time],
         bodies: {
-          es: "Hola {{1}}, ¿podés confirmar tu sesión de {{2}} del {{3}} a las {{4}}?",
-          en: "Hi {{1}}, can you confirm your {{2}} session on {{3}} at {{4}}?"
+          es: "Hola {{1}}, ¿podés confirmar tu sesión de {{2}} del {{3}} a las {{4}}? Cualquier otra consulta puedes hacerla aqui",
+          en: "Hi {{1}}, can you confirm your {{2}} session on {{3}} at {{4}}? Any other questions can be answered here"
         }
       },
       session_follow_up: {
@@ -78,8 +85,8 @@ module Messaging
         workflow: "send_pre_session_reminder",
         variables: %i[client_name session_name session_date session_time],
         bodies: {
-          es: "Hola {{1}}, te recordamos tu sesión de {{2}} del {{3}} a las {{4}}.",
-          en: "Hi {{1}}, this is a reminder for your {{2}} session on {{3}} at {{4}}."
+          es: "Hola {{1}}, te recordamos tu sesión de {{2}} del {{3}} a las {{4}}. Cualquier pregunta puedes hacerla aqui.",
+          en: "Hi {{1}}, this is a reminder for your {{2}} session on {{3}} at {{4}}. See you soon"
         }
       },
       session_feedback: {
@@ -123,7 +130,7 @@ module Messaging
             Definition.new(
               key,
               locale,
-              "sessia_#{key}_#{locale}_v1",
+              FRIENDLY_NAME_OVERRIDES.fetch([key, locale], "sessia_#{key}_#{locale}_v1"),
               "UTILITY",
               body,
               contract.fetch(:variables),
